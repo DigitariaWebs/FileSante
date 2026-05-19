@@ -10,17 +10,20 @@ export function Countdown({
   prefix?: string;
 }) {
   const s = useFileSante();
-  if (target === null) return <span className="text-[var(--fs-ink-3)]">—</span>;
+  if (target === null)
+    return <span className="text-[var(--ap-ink-muted-48)]">—</span>;
   const remainingMs = target - s.simClock;
   if (remainingMs <= 0)
-    return <span className="text-red-600 font-medium">échu</span>;
+    return <span className="text-[#c8102e] font-medium">échu</span>;
   const totalSec = Math.floor(remainingMs / 1000);
   const min = Math.floor(totalSec / 60);
   const sec = totalSec % 60;
   return (
-    <span className="font-mono text-[13px] tabular-nums">
-      {prefix && <span className="text-[var(--fs-ink-3)]">{prefix} </span>}
-      {min}m {sec.toString().padStart(2, "0")}s
+    <span className="font-mono text-[12.5px] tabular-nums tracking-[-0.1px]">
+      {prefix && (
+        <span className="text-[var(--ap-ink-muted-48)] font-sans"> {prefix} </span>
+      )}
+      {min}:{sec.toString().padStart(2, "0")}
     </span>
   );
 }

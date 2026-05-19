@@ -658,6 +658,368 @@
   }
 }
 
+/* ─────────── Apple-style Dashboard system (FileSanté palette) ─────────── */
+
+:root {
+  --ap-canvas: #ffffff;
+  --ap-canvas-parchment: #f5f5f7;
+  --ap-surface-pearl: #fafafc;
+  --ap-tile-1: #272729;
+  --ap-tile-2: #2a2a2c;
+  --ap-ink: #1d1d1f;
+  --ap-ink-muted-80: #424245;
+  --ap-ink-muted-48: #6e6e73;
+  --ap-divider-soft: rgba(0, 0, 0, 0.04);
+  --ap-hairline: #d2d2d7;
+  --ap-product-shadow: rgba(0, 0, 0, 0.22) 3px 5px 30px 0;
+  --ap-font-display:
+    system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI",
+    "Helvetica Neue", Arial, sans-serif;
+  --ap-font-text:
+    system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+@layer components {
+  /* Page surfaces */
+  .fs-dash-page {
+    background: var(--ap-canvas-parchment);
+    font-family: var(--ap-font-text);
+    color: var(--ap-ink);
+  }
+  .fs-dash-page h1,
+  .fs-dash-page h2,
+  .fs-dash-page h3,
+  .fs-dash-page h4 {
+    font-family: var(--ap-font-display);
+    color: var(--ap-ink);
+    margin: 0;
+    text-wrap: balance;
+  }
+  .fs-dash-page p {
+    color: var(--ap-ink-muted-48);
+  }
+  .fs-dash-page .text-ap-ink {
+    color: var(--ap-ink);
+  }
+  .fs-dash-page .text-ap-muted {
+    color: var(--ap-ink-muted-48);
+  }
+  .fs-dash-page .text-ap-muted-80 {
+    color: var(--ap-ink-muted-80);
+  }
+
+  /* Utility cards: hairline border, rounded-lg 18px, no shadow */
+  .fs-dash-card {
+    background: var(--ap-canvas);
+    border: 1px solid var(--ap-hairline);
+    border-radius: 18px;
+  }
+  .fs-dash-card-flush {
+    background: var(--ap-canvas);
+    border: 1px solid var(--ap-hairline);
+    border-radius: 18px;
+    overflow: hidden;
+  }
+  .fs-dash-divider {
+    border-top: 1px solid var(--ap-hairline);
+  }
+
+  /* Full-bleed dark tile (used sparingly on dashboard home hero strip) */
+  .fs-tile-dark {
+    background: var(--ap-tile-1);
+    color: #ffffff;
+    border-radius: 18px;
+    overflow: hidden;
+  }
+  .fs-tile-dark h1,
+  .fs-tile-dark h2,
+  .fs-tile-dark h3 {
+    color: #ffffff;
+  }
+  .fs-tile-dark p {
+    color: #cccccc;
+  }
+
+  /* Table: hairline rows, generous padding, no zebra */
+  .fs-dash-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-family: var(--ap-font-text);
+    font-size: 14px;
+    color: var(--ap-ink);
+  }
+  .fs-dash-table thead th {
+    background: var(--ap-canvas);
+    border-bottom: 1px solid var(--ap-hairline);
+    color: var(--ap-ink-muted-48);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: -0.08px;
+    text-transform: uppercase;
+    padding: 14px 20px;
+    text-align: left;
+  }
+  .fs-dash-table tbody td {
+    border-bottom: 1px solid var(--ap-divider-soft);
+    padding: 16px 20px;
+    vertical-align: middle;
+  }
+  .fs-dash-table tbody tr:last-child td {
+    border-bottom: 0;
+  }
+  .fs-dash-table tbody tr:hover td {
+    background: var(--ap-canvas-parchment);
+  }
+
+  /* Segmented tabs — Apple-style pill group */
+  .fs-tabs {
+    display: inline-flex;
+    gap: 2px;
+    padding: 4px;
+    background: var(--ap-canvas-parchment);
+    border: 1px solid var(--ap-hairline);
+    border-radius: 9999px;
+  }
+  .fs-dash-card .fs-tabs,
+  .fs-dash-card-flush .fs-tabs {
+    background: rgba(0, 0, 0, 0.04);
+    border: 0;
+  }
+  .fs-tabs button {
+    border: 0;
+    background: transparent;
+    color: var(--ap-ink-muted-48);
+    font-family: var(--ap-font-text);
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: -0.08px;
+    padding: 7px 14px;
+    border-radius: 9999px;
+    cursor: pointer;
+    transition: color 0.2s, background 0.2s;
+  }
+  .fs-tabs button[data-active="true"] {
+    background: var(--ap-canvas);
+    color: var(--ap-ink);
+    font-weight: 600;
+  }
+  .fs-tabs button:hover:not([data-active="true"]) {
+    color: var(--ap-ink);
+  }
+
+  /* Chips */
+  .fs-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 22px;
+    padding: 0 9px;
+    border-radius: 9999px;
+    background: var(--ap-canvas-parchment);
+    color: var(--ap-ink-muted-80);
+    font-family: var(--ap-font-text);
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: -0.1px;
+  }
+  .fs-chip-primary {
+    background: rgba(30, 144, 214, 0.1);
+    color: var(--fs-primary);
+  }
+
+  /* Apple pill buttons — pill primary, pill secondary (ghost), dark utility */
+  .fs-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 40px;
+    padding: 0 22px;
+    border-radius: 9999px;
+    border: 1px solid transparent;
+    font-family: var(--ap-font-text);
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: -0.224px;
+    cursor: pointer;
+    transition: transform 0.15s, background 0.15s, border-color 0.15s, color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .fs-btn:active {
+    transform: scale(0.95);
+  }
+  .fs-btn:focus-visible {
+    outline: 2px solid #0071e3;
+    outline-offset: 2px;
+  }
+  .fs-btn-primary {
+    background: var(--fs-primary);
+    color: #ffffff;
+  }
+  .fs-btn-primary:hover {
+    background: var(--fs-primary-2);
+  }
+  .fs-btn-ghost {
+    background: transparent;
+    color: var(--fs-primary);
+    border-color: var(--fs-primary);
+  }
+  .fs-btn-ghost:hover {
+    background: rgba(30, 144, 214, 0.06);
+  }
+  .fs-btn-utility {
+    background: var(--ap-ink);
+    color: #ffffff;
+    border-radius: 8px;
+    height: 32px;
+    padding: 0 15px;
+    font-size: 14px;
+  }
+  .fs-btn-utility:hover {
+    background: #000000;
+  }
+  .fs-btn-pearl {
+    background: var(--ap-surface-pearl);
+    color: var(--ap-ink-muted-80);
+    border: 3px solid var(--ap-divider-soft);
+    border-radius: 11px;
+    height: 34px;
+    padding: 0 16px;
+    font-size: 14px;
+    font-weight: 400;
+  }
+  .fs-btn-pearl:hover {
+    border-color: rgba(0, 0, 0, 0.1);
+  }
+  .fs-btn-danger {
+    background: transparent;
+    color: #c8102e;
+    border-color: rgba(200, 16, 46, 0.4);
+  }
+  .fs-btn-danger:hover {
+    background: rgba(200, 16, 46, 0.06);
+    border-color: #c8102e;
+  }
+  .fs-btn-sm {
+    height: 32px;
+    padding: 0 14px;
+    font-size: 13px;
+  }
+  .fs-btn-icon {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: 9999px;
+    background: rgba(210, 210, 215, 0.4);
+    color: var(--ap-ink);
+    border: 0;
+  }
+  .fs-btn-icon:hover {
+    background: rgba(210, 210, 215, 0.6);
+  }
+
+  /* Input — pill search, hairline rect for forms */
+  .fs-input {
+    height: 44px;
+    border-radius: 9999px;
+    border: 1px solid var(--ap-hairline);
+    background: var(--ap-canvas);
+    padding: 0 20px;
+    font-family: var(--ap-font-text);
+    font-size: 15px;
+    color: var(--ap-ink);
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    width: 100%;
+  }
+  .fs-input:focus {
+    border-color: var(--fs-primary);
+    box-shadow: 0 0 0 3px rgba(30, 144, 214, 0.15);
+  }
+  .fs-input-rect {
+    border-radius: 12px;
+    padding: 0 16px;
+  }
+
+  /* Stat tile (utility card variant) */
+  .fs-stat-tile {
+    background: var(--ap-canvas);
+    border: 1px solid var(--ap-hairline);
+    border-radius: 18px;
+    padding: 24px;
+  }
+
+  /* Frosted sub-nav strip */
+  .fs-sub-nav {
+    background: rgba(245, 245, 247, 0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  }
+
+  /* Eyebrow label (uppercase tracker) */
+  .fs-eyebrow {
+    font-family: var(--ap-font-text);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ap-ink-muted-48);
+  }
+
+  /* Display type — Apple-tight tracking */
+  .fs-display-hero {
+    font-family: var(--ap-font-display);
+    font-size: 56px;
+    font-weight: 600;
+    line-height: 1.07;
+    letter-spacing: -0.28px;
+    color: var(--ap-ink);
+  }
+  .fs-display-lg {
+    font-family: var(--ap-font-display);
+    font-size: 40px;
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: -0.4px;
+    color: var(--ap-ink);
+  }
+  .fs-display-md {
+    font-family: var(--ap-font-display);
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.14;
+    letter-spacing: -0.374px;
+    color: var(--ap-ink);
+  }
+  .fs-tagline {
+    font-family: var(--ap-font-text);
+    font-size: 21px;
+    font-weight: 600;
+    line-height: 1.19;
+    letter-spacing: 0.011em;
+    color: var(--ap-ink);
+  }
+  .fs-lead {
+    font-family: var(--ap-font-text);
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.47;
+    letter-spacing: -0.022em;
+    color: var(--ap-ink-muted-80);
+  }
+  .fs-body {
+    font-family: var(--ap-font-text);
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.43;
+    letter-spacing: -0.016em;
+    color: var(--ap-ink-muted-80);
+  }
+}
+
 @media (max-width: 780px) {
   .fs-flow-rail {
     grid-template-columns: 1fr 1fr !important;

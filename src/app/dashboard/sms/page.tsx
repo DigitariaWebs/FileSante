@@ -1,64 +1,106 @@
 "use client";
 
-import { useMemo } from "react";
+import { MessageSquare, Search } from "lucide-react";
+import { useMemo, useState } from "react";
 
-import { Topbar } from "@/components/dashboard/Topbar";
+import { EmptyState } from "@/components/dashboard/EmptyState";
+import { PageHeader } from "@/components/dashboard/PageHeader";
+import { Input } from "@/components/ui/input";
 import { useFileSante } from "@/hooks/useFileSante";
 
 export default function SmsPage() {
   const s = useFileSante();
+  const [q, setQ] = useState("");
+
   const items = useMemo(() => {
     const byId = new Map(s.patients.map((p) => [p.id, p]));
-    return [...s.sms]
+    const list = [...s.sms]
       .sort((a, b) => b.at - a.at)
       .map((m) => ({ ...m, patient: byId.get(m.patientId) }));
-  }, [s.sms, s.patients]);
+    if (!q.trim()) return list;
+    const term = q.trim().toLowerCase();
+    return list.filter((m) => {
+      const name = m.patient
+        ? `${m.patient.firstName} ${m.patient.lastName}`.toLowerCase()
+        : "";
+      const phone = m.patient?.phone.toLowerCase() ?? "";
+      return (
+        m.body.toLowerCase().includes(term) ||
+        name.includes(term) ||
+        phone.includes(term)
+      );
+    });
+  }, [s.sms, s.patients, q]);
 
   return (
     <>
-      <Topbar title="Journal SMS · simulé" />
-      <div className="px-8 py-8">
-        <div className="rounded-2xl border border-[var(--fs-line)] bg-white">
-          <div className="border-b border-[var(--fs-line)] px-6 py-4">
-            <h2 className="font-display text-lg font-semibold text-[var(--fs-ink)]">
-              {items.length} messages
+      <PageHeader
+        title="Journal SMS"
+        description="Notifications générées par FileSanté (simulation pilote)."
+        actions={
+          <div className="relative">
+            <Search
+              size={14}
+              className="absolute top-1/2 left-3 -translate-y-1/2 text-[#8b9aab]"
+            />
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Rechercher (nom, téléphone, texte)"
+              className="h-9 w-[280px] pl-9"
+            />
+          </div>
+        }
+      />
+
+      <div className="px-8 py-6">
+        <div className="fs-dash-card-flush">
+          <div className="flex items-center justify-between border-b border-[#eef2f6] px-5 py-3.5">
+            <h2 className="text-[13.5px] font-semibold text-[#0c2535]">
+              {items.length} message{items.length === 1 ? "" : "s"}
             </h2>
-            <p className="text-xs text-[var(--fs-ink-3)]">
-              Tous les messages générés par le routage. En production →
-              fournisseur SMS (Twilio, Telnyx ou équivalent).
-            </p>
+            <span className="text-[11.5px] text-[#7a8898]">
+              En prod → Twilio · Telnyx · équivalent.
+            </span>
           </div>
           {items.length === 0 ? (
-            <div className="px-6 py-10 text-center text-sm text-[var(--fs-ink-3)]">
-              Aucun message envoyé pour l&apos;instant.
-            </div>
+            <EmptyState
+              icon={<MessageSquare size={18} />}
+              title="Aucun message"
+              description={
+                q
+                  ? "Aucun résultat pour cette recherche."
+                  : "Inscrivez un patient pour voir l'activité SMS."
+              }
+            />
           ) : (
-            <ul className="divide-y divide-[var(--fs-line)]">
+            <ul className="divide-y divide-[#eef2f6]">
               {items.map((m) => (
-                <li key={m.id} className="flex gap-4 px-6 py-4">
-                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[var(--fs-bg-soft)] text-[var(--fs-primary)]">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8z" />
-                    </svg>
+                <li
+                  key={m.id}
+                  className="flex items-start gap-3 px-5 py-3.5 transition-colors hover:bg-[#fbfdff]"
+                >
+                  <div className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#e8f3fb] text-[#1e90d6]">
+                    <MessageSquare size={15} />
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="text-sm font-semibold text-[var(--fs-ink)]">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[13px] font-semibold text-[#0c2535]">
                         {m.patient
                           ? `${m.patient.firstName} ${m.patient.lastName}`
                           : "Patient inconnu"}
-                        <span className="ml-2 font-normal text-[var(--fs-ink-3)]">
-                          {m.patient?.phone ?? ""}
+                      </span>
+                      {m.patient && (
+                        <span className="font-mono text-[11.5px] text-[#7a8898] tabular-nums">
+                          {m.patient.phone}
                         </span>
-                      </div>
-                      <div className="font-mono text-[11px] text-[var(--fs-ink-3)]">
-                        {fmt(m.at)}
-                      </div>
+                      )}
                     </div>
-                    <p className="mt-1 text-sm text-[var(--fs-ink-2)]">
-                      {m.body}
-                    </p>
+                    <p className="mt-0.5 text-[13px] text-[#36546b]">{m.body}</p>
                   </div>
+                  <span className="shrink-0 self-start font-mono text-[11px] text-[#8b9aab]">
+                    {formatT(m.at)}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -69,8 +111,8 @@ export default function SmsPage() {
   );
 }
 
-function fmt(simMs: number): string {
+function formatT(simMs: number): string {
   const min = Math.floor(simMs / 60000);
   const sec = Math.floor((simMs % 60000) / 1000);
-  return `T+${min}m${sec.toString().padStart(2, "0")}s`;
+  return `T+${min}m${sec.toString().padStart(2, "0")}`;
 }

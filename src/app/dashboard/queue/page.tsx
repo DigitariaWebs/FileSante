@@ -1,10 +1,14 @@
 "use client";
 
-import { useMemo } from "react";
+import { Check, Inbox, QrCode, UserPlus, X } from "lucide-react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useMemo, useState } from "react";
 
 import { Countdown } from "@/components/dashboard/Countdown";
+import { EmptyState } from "@/components/dashboard/EmptyState";
+import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
-import { Topbar } from "@/components/dashboard/Topbar";
 import { useFileSante } from "@/hooks/useFileSante";
 import {
   cancelPatient,
@@ -12,95 +16,134 @@ import {
   confirmPatient,
   isActive,
 } from "@/lib/filesante/store";
-import type { Patient } from "@/lib/filesante/types";
+import type { Patient, PatientStatus } from "@/lib/filesante/types";
+
+type TabKey = "all" | "registered" | "awaiting" | "confirmed" | "closed";
+
+const TABS: {
+  key: TabKey;
+  label: string;
+  statuses?: PatientStatus[];
+  closed?: boolean;
+}[] = [
+  { key: "all", label: "Tous actifs" },
+  { key: "registered", label: "Inscrits", statuses: ["REGISTERED"] },
+  {
+    key: "awaiting",
+    label: "À confirmer",
+    statuses: ["AWAITING_CONFIRMATION", "AWAITING_CONFIRMATION_FINAL"],
+  },
+  { key: "confirmed", label: "Confirmés", statuses: ["CONFIRMED"] },
+  { key: "closed", label: "Fermés", closed: true },
+];
 
 export default function QueuePage() {
+  return (
+    <Suspense fallback={null}>
+      <QueuePageInner />
+    </Suspense>
+  );
+}
+
+function QueuePageInner() {
   const s = useFileSante();
-  const { active, recent } = useMemo(() => {
-    const sorted = [...s.patients].sort(
-      (a, b) => a.estimatedSlotAt - b.estimatedSlotAt,
+  const params = useSearchParams();
+  const initialTab: TabKey = (() => {
+    const t = params.get("tab");
+    return t && TABS.some((x) => x.key === t) ? (t as TabKey) : "all";
+  })();
+  const [tab, setTab] = useState<TabKey>(initialTab);
+
+  const counts = useMemo(() => {
+    return TABS.reduce<Record<TabKey, number>>(
+      (acc, t) => {
+        acc[t.key] = filterPatients(s.patients, t).length;
+        return acc;
+      },
+      { all: 0, registered: 0, awaiting: 0, confirmed: 0, closed: 0 },
     );
-    return {
-      active: sorted.filter(isActive),
-      recent: sorted
-        .filter((p) => !isActive(p))
-        .sort((a, b) => (b.closedAt ?? 0) - (a.closedAt ?? 0))
-        .slice(0, 8),
-    };
   }, [s.patients]);
+
+  const list = useMemo(() => {
+    const def = TABS.find((t) => t.key === tab)!;
+    return filterPatients(s.patients, def);
+  }, [s.patients, tab]);
 
   return (
     <>
-      <Topbar title="File d'attente · P4 / P5" />
-      <div className="px-8 py-8">
-        <div className="rounded-2xl border border-[var(--fs-line)] bg-white">
-          <div className="flex items-center justify-between border-b border-[var(--fs-line)] px-6 py-4">
-            <div>
-              <h2 className="font-display text-lg font-semibold text-[var(--fs-ink)]">
-                Patients actifs
-              </h2>
-              <p className="text-xs text-[var(--fs-ink-3)]">
-                {active.length} dans la file · tri par créneau estimé
-              </p>
-            </div>
-          </div>
+      <PageHeader
+        eyebrow="Opérations"
+        title="File d'attente"
+        description="Patients P4 / P5 routés via FileSanté."
+        actions={
+          <>
+            <Link href="/dashboard/scan" className="fs-btn fs-btn-ghost">
+              <QrCode size={14} strokeWidth={1.8} />
+              Retour patient
+            </Link>
+            <Link href="/dashboard/register" className="fs-btn fs-btn-primary">
+              <UserPlus size={14} strokeWidth={1.8} />
+              Inscrire
+            </Link>
+          </>
+        }
+      />
 
-          {active.length === 0 ? (
-            <Empty />
-          ) : (
-            <Table>
-              <Thead
-                cols={[
-                  "Patient",
-                  "Priorité",
-                  "Code",
-                  "Statut",
-                  "Échéance",
-                  "Téléphone",
-                  "Actions",
-                ]}
-              />
-              <tbody>
-                {active.map((p) => (
-                  <ActiveRow key={p.id} p={p} />
-                ))}
-              </tbody>
-            </Table>
-          )}
+      <div className="flex flex-col gap-6 px-10 py-8">
+        <div className="fs-tabs">
+          {TABS.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              data-active={tab === t.key}
+              onClick={() => setTab(t.key)}
+            >
+              {t.label}
+              <span className="ml-1.5 text-[11px] text-[var(--ap-ink-muted-48)] tabular-nums">
+                {counts[t.key]}
+              </span>
+            </button>
+          ))}
         </div>
 
-        <div className="mt-6 rounded-2xl border border-[var(--fs-line)] bg-white">
-          <div className="border-b border-[var(--fs-line)] px-6 py-4">
-            <h2 className="font-display text-lg font-semibold text-[var(--fs-ink)]">
-              Récents · fermés
-            </h2>
-            <p className="text-xs text-[var(--fs-ink-3)]">
-              Annulés, no-show, arrivés ou terminés
-            </p>
-          </div>
-          {recent.length === 0 ? (
-            <Empty label="Aucun dossier fermé pour l'instant." />
+        <div className="fs-dash-card-flush">
+          {list.length === 0 ? (
+            <EmptyState
+              icon={<Inbox size={20} strokeWidth={1.6} />}
+              title="Aucun patient dans cette vue"
+              description="Inscrivez un patient ou changez d'onglet."
+              action={
+                <Link
+                  href="/dashboard/register"
+                  className="fs-btn fs-btn-primary"
+                >
+                  <UserPlus size={14} strokeWidth={1.8} />
+                  Nouvelle inscription
+                </Link>
+              }
+            />
           ) : (
-            <Table>
-              <Thead
-                cols={["Patient", "Priorité", "Code", "Statut", "Hôpital"]}
-              />
-              <tbody>
-                {recent.map((p) => (
-                  <tr key={p.id} className="border-t border-[var(--fs-line)]">
-                    <td className="px-6 py-3 text-sm font-medium text-[var(--fs-ink)]">
-                      {p.firstName} {p.lastName}
-                    </td>
-                    <td className="px-6 py-3 text-sm">{p.priority}</td>
-                    <td className="px-6 py-3 font-mono text-sm">{p.code}</td>
-                    <td className="px-6 py-3">
-                      <StatusBadge status={p.status} />
-                    </td>
-                    <td className="px-6 py-3 text-sm">{p.hospital}</td>
+            <div className="overflow-x-auto">
+              <table className="fs-dash-table">
+                <thead>
+                  <tr>
+                    <th>Patient</th>
+                    <th>Priorité</th>
+                    <th>Code</th>
+                    <th>Statut</th>
+                    <th>Échéance</th>
+                    <th>Contact</th>
+                    <th>Hôpital</th>
+                    <th className="text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </Table>
+                </thead>
+                <tbody>
+                  {list.map((p) => (
+                    <Row key={p.id} p={p} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>
@@ -108,7 +151,22 @@ export default function QueuePage() {
   );
 }
 
-function ActiveRow({ p }: { p: Patient }) {
+function filterPatients(
+  patients: Patient[],
+  def: (typeof TABS)[number],
+): Patient[] {
+  const filtered = patients.filter((p) => {
+    if (def.closed) return !isActive(p);
+    if (def.statuses) return def.statuses.includes(p.status);
+    return isActive(p);
+  });
+  return [...filtered].sort((a, b) => {
+    if (def.closed) return (b.closedAt ?? 0) - (a.closedAt ?? 0);
+    return a.estimatedSlotAt - b.estimatedSlotAt;
+  });
+}
+
+function Row({ p }: { p: Patient }) {
   const deadlineTarget =
     p.status === "AWAITING_CONFIRMATION"
       ? p.confirmDeadlineAt
@@ -116,131 +174,123 @@ function ActiveRow({ p }: { p: Patient }) {
         ? p.finalDeadlineAt
         : p.status === "CONFIRMED"
           ? p.arrivalDeadlineAt
-          : p.askConfirmAt;
+          : p.status === "REGISTERED"
+            ? p.askConfirmAt
+            : null;
   const deadlinePrefix =
     p.status === "REGISTERED"
-      ? "Confirmation dans"
+      ? "Confirm. dans"
       : p.status === "CONFIRMED"
         ? "Arrivée avant"
-        : "Réponse dans";
+        : p.status === "AWAITING_CONFIRMATION" ||
+            p.status === "AWAITING_CONFIRMATION_FINAL"
+          ? "Réponse dans"
+          : "—";
 
   return (
-    <tr className="border-t border-[var(--fs-line)]">
-      <td className="px-6 py-3">
-        <div className="text-sm font-medium text-[var(--fs-ink)]">
-          {p.firstName} {p.lastName}
+    <tr>
+      <td>
+        <div className="flex items-center gap-3">
+          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--ap-canvas-parchment)] text-[12px] font-semibold text-[var(--ap-ink-muted-80)]">
+            {p.firstName.charAt(0)}
+            {p.lastName.charAt(0)}
+          </div>
+          <div>
+            <div className="text-[14.5px] font-semibold text-[var(--ap-ink)] tracking-[-0.016em]">
+              {p.firstName} {p.lastName}
+            </div>
+            <div className="text-[12.5px] text-[var(--ap-ink-muted-48)]">
+              {p.motif}
+            </div>
+          </div>
         </div>
-        <div className="text-xs text-[var(--fs-ink-3)]">{p.motif}</div>
       </td>
-      <td className="px-6 py-3">
-        <span className="inline-flex h-6 items-center rounded-full bg-[var(--fs-bg-soft)] px-2 text-xs font-semibold text-[var(--fs-primary-ink)]">
-          {p.priority}
+      <td>
+        <span className="fs-chip fs-chip-primary">{p.priority}</span>
+      </td>
+      <td>
+        <span className="font-mono text-[14px] font-semibold tracking-[0.03em] text-[var(--fs-primary)] tabular-nums">
+          {p.code}
         </span>
       </td>
-      <td className="px-6 py-3 font-mono text-sm font-semibold text-[var(--fs-primary)]">
-        {p.code}
-      </td>
-      <td className="px-6 py-3">
+      <td>
         <StatusBadge status={p.status} />
       </td>
-      <td className="px-6 py-3">
-        <Countdown target={deadlineTarget} prefix={deadlinePrefix} />
+      <td>
+        {deadlineTarget !== null ? (
+          <Countdown target={deadlineTarget} prefix={deadlinePrefix} />
+        ) : (
+          <span className="text-[var(--ap-ink-muted-48)]">—</span>
+        )}
       </td>
-      <td className="px-6 py-3 text-sm text-[var(--fs-ink-2)]">
-        {p.phone}
-        <div className="text-xs text-[var(--fs-ink-3)]">{p.contact}</div>
-      </td>
-      <td className="px-6 py-3">
-        <div className="flex gap-1.5">
-          {(p.status === "AWAITING_CONFIRMATION" ||
-            p.status === "AWAITING_CONFIRMATION_FINAL") && (
-            <>
-              <ActionBtn
-                onClick={() => confirmPatient(p.id)}
-                variant="primary"
-              >
-                OUI
-              </ActionBtn>
-              <ActionBtn onClick={() => cancelPatient(p.id)} variant="danger">
-                NON
-              </ActionBtn>
-            </>
-          )}
-          {p.status === "REGISTERED" && (
-            <ActionBtn onClick={() => cancelPatient(p.id)} variant="ghost">
-              Annuler
-            </ActionBtn>
-          )}
-          {p.status === "CONFIRMED" && (
-            <ActionBtn
-              onClick={() => completePatient(p.id)}
-              variant="ghost"
-              title="Marquer terminé sans passage à l'urgence"
-            >
-              Terminer
-            </ActionBtn>
-          )}
+      <td>
+        <div className="font-mono text-[13px] text-[var(--ap-ink-muted-80)] tabular-nums">
+          {p.phone}
         </div>
+        <div className="text-[11px] text-[var(--ap-ink-muted-48)]">
+          {p.contact}
+        </div>
+      </td>
+      <td>
+        <span className="text-[14px] font-medium text-[var(--ap-ink-muted-80)]">
+          {p.hospital}
+        </span>
+      </td>
+      <td className="text-right">
+        <RowActions p={p} />
       </td>
     </tr>
   );
 }
 
-function Table({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full">{children}</table>
-    </div>
-  );
-}
-
-function Thead({ cols }: { cols: string[] }) {
-  return (
-    <thead>
-      <tr className="text-left text-[11px] font-semibold tracking-[0.06em] text-[var(--fs-ink-3)] uppercase">
-        {cols.map((c) => (
-          <th key={c} className="px-6 py-3">
-            {c}
-          </th>
-        ))}
-      </tr>
-    </thead>
-  );
-}
-
-function Empty({ label }: { label?: string }) {
-  return (
-    <div className="px-6 py-10 text-center text-sm text-[var(--fs-ink-3)]">
-      {label ?? "Aucun patient dans la file. Inscrivez un patient pour commencer."}
-    </div>
-  );
-}
-
-function ActionBtn({
-  children,
-  onClick,
-  variant,
-  title,
-}: {
-  children: React.ReactNode;
-  onClick: () => void;
-  variant: "primary" | "danger" | "ghost";
-  title?: string;
-}) {
-  const cls =
-    variant === "primary"
-      ? "bg-[var(--fs-primary)] text-white hover:bg-[var(--fs-primary-2)]"
-      : variant === "danger"
-        ? "bg-red-50 text-red-700 hover:bg-red-100"
-        : "bg-white text-[var(--fs-ink-2)] border border-[var(--fs-line)] hover:border-[var(--fs-primary)] hover:text-[var(--fs-primary)]";
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={title}
-      className={`h-8 rounded-full px-3 text-xs font-semibold transition-colors ${cls}`}
-    >
-      {children}
-    </button>
-  );
+function RowActions({ p }: { p: Patient }) {
+  if (
+    p.status === "AWAITING_CONFIRMATION" ||
+    p.status === "AWAITING_CONFIRMATION_FINAL"
+  ) {
+    return (
+      <div className="inline-flex gap-1.5">
+        <button
+          type="button"
+          onClick={() => confirmPatient(p.id)}
+          className="fs-btn fs-btn-primary fs-btn-sm"
+        >
+          <Check size={13} strokeWidth={2} />
+          OUI
+        </button>
+        <button
+          type="button"
+          onClick={() => cancelPatient(p.id)}
+          className="fs-btn fs-btn-danger fs-btn-sm"
+        >
+          <X size={13} strokeWidth={2} />
+          NON
+        </button>
+      </div>
+    );
+  }
+  if (p.status === "REGISTERED") {
+    return (
+      <button
+        type="button"
+        onClick={() => cancelPatient(p.id)}
+        className="fs-btn fs-btn-pearl fs-btn-sm"
+      >
+        Annuler
+      </button>
+    );
+  }
+  if (p.status === "CONFIRMED") {
+    return (
+      <button
+        type="button"
+        onClick={() => completePatient(p.id)}
+        className="fs-btn fs-btn-pearl fs-btn-sm"
+        title="Marquer terminé sans passage à l'urgence"
+      >
+        Terminer
+      </button>
+    );
+  }
+  return <span className="text-[var(--ap-ink-muted-48)]">—</span>;
 }

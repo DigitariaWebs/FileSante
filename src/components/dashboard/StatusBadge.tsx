@@ -5,58 +5,58 @@ const STYLES: Record<
   { label: string; bg: string; fg: string; dot: string }
 > = {
   REGISTERED: {
-    label: "Inscrit · Domicile",
-    bg: "#e8f3fb",
+    label: "Inscrit",
+    bg: "rgba(30, 144, 214, 0.08)",
     fg: "#0a3a5e",
     dot: "#1e90d6",
   },
   AWAITING_CONFIRMATION: {
-    label: "Attente confirmation",
-    bg: "#fff7e6",
-    fg: "#7a5b14",
-    dot: "#d99814",
+    label: "À confirmer",
+    bg: "rgba(255, 159, 10, 0.1)",
+    fg: "#7a4a00",
+    dot: "#ff9f0a",
   },
   AWAITING_CONFIRMATION_FINAL: {
     label: "Dernière chance",
-    bg: "#ffeed6",
-    fg: "#7a3f0a",
-    dot: "#e07a14",
+    bg: "rgba(255, 69, 58, 0.1)",
+    fg: "#a02016",
+    dot: "#ff453a",
   },
   CONFIRMED: {
-    label: "Confirmé · 60 min",
-    bg: "#e6f7ee",
-    fg: "#0a6b39",
-    dot: "#108a52",
+    label: "Confirmé",
+    bg: "rgba(52, 199, 89, 0.1)",
+    fg: "#1a6d2f",
+    dot: "#34c759",
   },
   CANCELLED_BY_PATIENT: {
-    label: "Annulé (patient)",
-    bg: "#f1f3f5",
-    fg: "#536270",
-    dot: "#7a92a4",
+    label: "Annulé",
+    bg: "rgba(142, 142, 147, 0.12)",
+    fg: "#6e6e73",
+    dot: "#8e8e93",
   },
   NO_RESPONSE: {
     label: "Pas de réponse",
-    bg: "#fbe9e9",
-    fg: "#7a1414",
-    dot: "#c83333",
+    bg: "rgba(255, 69, 58, 0.1)",
+    fg: "#a02016",
+    dot: "#ff453a",
   },
   ARRIVED: {
     label: "Arrivé",
-    bg: "#e3edff",
-    fg: "#0b3b8c",
-    dot: "#2756d0",
+    bg: "rgba(0, 122, 255, 0.1)",
+    fg: "#0040a0",
+    dot: "#007aff",
   },
   NO_SHOW: {
     label: "Non-présentation",
-    bg: "#fbe9e9",
-    fg: "#7a1414",
-    dot: "#c83333",
+    bg: "rgba(255, 69, 58, 0.1)",
+    fg: "#a02016",
+    dot: "#ff453a",
   },
   COMPLETED: {
     label: "Terminé",
-    bg: "#f1f3f5",
-    fg: "#536270",
-    dot: "#7a92a4",
+    bg: "rgba(142, 142, 147, 0.12)",
+    fg: "#6e6e73",
+    dot: "#8e8e93",
   },
 };
 
@@ -64,7 +64,7 @@ export function StatusBadge({ status }: { status: PatientStatus }) {
   const s = STYLES[status];
   return (
     <span
-      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-semibold"
+      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-medium tracking-[-0.1px]"
       style={{ background: s.bg, color: s.fg }}
     >
       <span

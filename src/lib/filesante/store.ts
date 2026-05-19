@@ -1,5 +1,7 @@
 "use client";
 
+import { buildSeed } from "@/data/seed";
+
 import type { Patient, Store } from "./types";
 
 const KEY = "filesante.store.v1";
@@ -13,6 +15,15 @@ const initial: Store = {
   sms: [],
   lwbs: 0,
 };
+
+function seeded(): Store {
+  const seed = buildSeed();
+  return {
+    ...initial,
+    ...seed,
+    realAnchor: Date.now(),
+  };
+}
 
 type Listener = (s: Store) => void;
 const listeners = new Set<Listener>();
@@ -40,9 +51,17 @@ function hydrate() {
     if (raw) {
       const parsed = JSON.parse(raw) as Partial<Store>;
       state = { ...initial, ...parsed };
+      if (!state.patients || state.patients.length === 0) {
+        state = seeded();
+        persist();
+      }
+    } else {
+      state = seeded();
+      persist();
     }
   } catch {
-    /* corrupted — keep initial */
+    state = seeded();
+    persist();
   }
   // Anchor real clock now so tick deltas start fresh.
   state.realAnchor = Date.now();
@@ -65,7 +84,7 @@ export const store = {
     emit();
   },
   reset() {
-    state = { ...initial, realAnchor: Date.now() };
+    state = seeded();
     persist();
     emit();
   },

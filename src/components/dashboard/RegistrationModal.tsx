@@ -21,35 +21,33 @@ export function RegistrationModal({ patient, onClose }: Props) {
   const qrPayload = `filesante:${patient.id}:${patient.code}`;
   return (
     <Dialog open={!!patient} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-[520px]">
+      <DialogContent className="fs-dash-page sm:max-w-[560px]">
         <DialogHeader>
-          <DialogTitle className="text-2xl tracking-[-0.02em]">
+          <DialogTitle className="fs-display-md text-[26px]!">
             Patient inscrit
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="fs-body text-[var(--ap-ink-muted-48)]">
             Remettez le code et le QR au patient. SMS envoyé au {patient.phone}.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="mt-3 flex items-center gap-5">
+        <div className="mt-4 flex items-center gap-6">
           <QrCard value={qrPayload} />
-          <div className="flex flex-1 flex-col gap-3">
+          <div className="flex flex-1 flex-col gap-4">
             <div>
-              <div className="text-xs font-semibold tracking-[0.04em] text-[var(--fs-ink-3)] uppercase">
-                Code retour
-              </div>
-              <div className="mt-1 font-display text-[44px] leading-none font-semibold tracking-[0.04em] text-[var(--fs-primary)]">
+              <div className="fs-eyebrow">Code retour</div>
+              <div className="mt-1.5 font-[var(--ap-font-display)] text-[44px] leading-none font-semibold tracking-[0.04em] text-[var(--fs-primary)] tabular-nums">
                 {patient.code}
               </div>
             </div>
-            <div className="rounded-xl border border-[var(--fs-line)] bg-[var(--fs-bg-soft-2)] p-3 text-[13px]">
-              <div className="font-semibold text-[var(--fs-ink)]">
+            <div className="rounded-xl border border-[var(--ap-hairline)] bg-[var(--ap-canvas-parchment)] p-3.5 text-[13.5px]">
+              <div className="font-semibold text-[var(--ap-ink)]">
                 {patient.firstName} {patient.lastName}
               </div>
-              <div className="mt-1 text-[var(--fs-ink-2)]">
+              <div className="mt-1 text-[var(--ap-ink-muted-80)]">
                 {patient.priority} · {patient.motif}
               </div>
-              <div className="mt-1 text-[var(--fs-ink-3)]">
+              <div className="mt-1 text-[var(--ap-ink-muted-48)]">
                 {patient.hospital} ·{" "}
                 {patient.origin === "DESK" ? "Triage sur place" : "Origine 811"}
               </div>
@@ -57,8 +55,8 @@ export function RegistrationModal({ patient, onClose }: Props) {
           </div>
         </div>
 
-        <div className="mt-4 flex justify-end">
-          <button type="button" onClick={onClose} className="fs-pill">
+        <div className="mt-5 flex justify-end">
+          <button type="button" onClick={onClose} className="fs-btn fs-btn-primary">
             Terminé
           </button>
         </div>

@@ -1,9 +1,10 @@
 "use client";
 
+import { ArrowRight } from "lucide-react";
 import { useState } from "react";
 
+import { PageHeader } from "@/components/dashboard/PageHeader";
 import { RegistrationModal } from "@/components/dashboard/RegistrationModal";
-import { Topbar } from "@/components/dashboard/Topbar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,7 +41,7 @@ export default function RegisterPage() {
   const [contact, setContact] = useState<ContactMethod>("SMS");
   const [hospital, setHospital] = useState<HospitalCode>("HMR");
   const [consent, setConsent] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [created, setCreated] = useState<Patient | null>(null);
 
   function reset() {
@@ -51,24 +52,31 @@ export default function RegisterPage() {
     setPriority("P4");
     setContact("SMS");
     setConsent(false);
-    setError(null);
+    setErrors({});
   }
 
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!firstName || !lastName || !phone || !motif) {
-      setError("Tous les champs sont requis.");
-      return;
-    }
-    if (!consent) {
-      setError("Consentement Loi 25 requis.");
-      return;
-    }
+  function validate(): Record<string, string> {
+    const e: Record<string, string> = {};
+    if (!firstName.trim()) e.firstName = "Requis";
+    if (!lastName.trim()) e.lastName = "Requis";
+    if (!phone.trim()) e.phone = "Requis";
+    else if (!/[0-9]{7,}/.test(phone.replace(/\D/g, "")))
+      e.phone = "Numéro invalide";
+    if (!motif.trim()) e.motif = "Requis";
+    if (!consent) e.consent = "Consentement requis";
+    return e;
+  }
+
+  function submit(ev: React.FormEvent) {
+    ev.preventDefault();
+    const e = validate();
+    setErrors(e);
+    if (Object.keys(e).length > 0) return;
     const p = addPatient({
-      firstName,
-      lastName,
-      phone,
-      motif,
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      phone: phone.trim(),
+      motif: motif.trim(),
       priority,
       contact,
       origin,
@@ -81,180 +89,194 @@ export default function RegisterPage() {
 
   return (
     <>
-      <Topbar title="Inscription patient P4 / P5" />
-      <div className="px-8 py-8">
-        <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-          <form
-            onSubmit={submit}
-            className="rounded-2xl border border-[var(--fs-line)] bg-white p-6"
-          >
-            <div className="mb-6">
-              <Label className="mb-2 inline-block">Origine</Label>
-              <div className="grid grid-cols-2 gap-2">
-                <OriginButton
-                  active={origin === "DESK"}
-                  onClick={() => setOrigin("DESK")}
-                  title="Sur place"
-                  sub="Patient au triage"
-                />
-                <OriginButton
-                  active={origin === "HOME_811"}
-                  onClick={() => setOrigin("HOME_811")}
-                  title="811 / Domicile"
-                  sub="Appel ou portail patient"
-                />
-              </div>
-            </div>
+      <PageHeader
+        eyebrow="Opérations"
+        title="Nouvelle inscription"
+        description="Saisissez un patient P4 ou P5 dans la file FileSanté."
+      />
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Prénom" htmlFor="first">
-                <Input
-                  id="first"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="Marie"
-                  className="h-11"
-                />
-              </Field>
-              <Field label="Nom" htmlFor="last">
-                <Input
-                  id="last"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  placeholder="Tremblay"
-                  className="h-11"
-                />
-              </Field>
-              <Field label="Téléphone" htmlFor="phone">
-                <Input
-                  id="phone"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+1 514 555 4218"
-                  className="h-11"
-                />
-              </Field>
-              <Field label="Hôpital de destination" htmlFor="hosp">
-                <Select
-                  value={hospital}
-                  onValueChange={(v) => setHospital(v as HospitalCode)}
-                >
-                  <SelectTrigger id="hosp" className="h-11 w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {HOSPITALS.map((h) => (
-                      <SelectItem key={h.code} value={h.code}>
-                        {h.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Field label="Priorité (CTAS)" htmlFor="prio">
-                <Select
-                  value={priority}
-                  onValueChange={(v) => setPriority(v as Priority)}
-                >
-                  <SelectTrigger id="prio" className="h-11 w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="P4">P4 — moins urgent</SelectItem>
-                    <SelectItem value="P5">P5 — non urgent</SelectItem>
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Field label="Méthode de contact" htmlFor="contact">
-                <Select
-                  value={contact}
-                  onValueChange={(v) => setContact(v as ContactMethod)}
-                >
-                  <SelectTrigger id="contact" className="h-11 w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="SMS">SMS</SelectItem>
-                    <SelectItem value="CALL">Appel</SelectItem>
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Field label="Motif de consultation" htmlFor="motif" full>
-                <Input
-                  id="motif"
-                  value={motif}
-                  onChange={(e) => setMotif(e.target.value)}
-                  placeholder="Douleur lombaire persistante depuis 3 jours"
-                  className="h-11"
-                />
-              </Field>
-            </div>
+      <div className="px-10 py-10">
+        <form onSubmit={submit} className="fs-dash-card mx-auto max-w-[760px]">
+          <SectionHeader
+            title="Origine"
+            description="Où se trouve actuellement le patient ?"
+          />
+          <div className="grid grid-cols-2 gap-3 px-8 pb-7">
+            <OriginButton
+              active={origin === "DESK"}
+              onClick={() => setOrigin("DESK")}
+              title="Sur place"
+              sub="Patient présent au triage"
+            />
+            <OriginButton
+              active={origin === "HOME_811"}
+              onClick={() => setOrigin("HOME_811")}
+              title="811 / Domicile"
+              sub="Appel ou portail patient"
+            />
+          </div>
 
-            <label className="mt-6 flex cursor-pointer items-start gap-2.5 rounded-xl border border-[var(--fs-line)] bg-[var(--fs-bg-soft-2)] p-3.5 text-[13px]">
+          <Divider />
+
+          <SectionHeader title="Identité et contact" />
+          <div className="grid gap-5 px-8 pb-7 md:grid-cols-2">
+            <Field label="Prénom" htmlFor="first" error={errors.firstName}>
+              <Input
+                id="first"
+                value={firstName}
+                onChange={(ev) => setFirstName(ev.target.value)}
+                placeholder="Marie"
+                className="h-11"
+                aria-invalid={!!errors.firstName}
+              />
+            </Field>
+            <Field label="Nom" htmlFor="last" error={errors.lastName}>
+              <Input
+                id="last"
+                value={lastName}
+                onChange={(ev) => setLastName(ev.target.value)}
+                placeholder="Tremblay"
+                className="h-11"
+                aria-invalid={!!errors.lastName}
+              />
+            </Field>
+            <Field label="Téléphone" htmlFor="phone" error={errors.phone}>
+              <Input
+                id="phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                value={phone}
+                onChange={(ev) => setPhone(ev.target.value)}
+                placeholder="+1 514 555 4218"
+                className="h-11 font-mono tabular-nums"
+                aria-invalid={!!errors.phone}
+              />
+            </Field>
+            <Field label="Méthode de contact" htmlFor="contact">
+              <Select
+                value={contact}
+                onValueChange={(v) => setContact(v as ContactMethod)}
+              >
+                <SelectTrigger id="contact" className="h-11 w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="SMS">SMS</SelectItem>
+                  <SelectItem value="CALL">Appel</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+          </div>
+
+          <Divider />
+
+          <SectionHeader
+            title="Clinique"
+            description="Hôpital de destination · priorité CTAS."
+          />
+          <div className="grid gap-5 px-8 pb-7 md:grid-cols-2">
+            <Field label="Hôpital" htmlFor="hosp">
+              <Select
+                value={hospital}
+                onValueChange={(v) => setHospital(v as HospitalCode)}
+              >
+                <SelectTrigger id="hosp" className="h-11 w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {HOSPITALS.map((h) => (
+                    <SelectItem key={h.code} value={h.code}>
+                      {h.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Priorité CTAS" htmlFor="prio">
+              <Select
+                value={priority}
+                onValueChange={(v) => setPriority(v as Priority)}
+              >
+                <SelectTrigger id="prio" className="h-11 w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="P4">P4 — moins urgent</SelectItem>
+                  <SelectItem value="P5">P5 — non urgent</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field
+              label="Motif de consultation"
+              htmlFor="motif"
+              full
+              error={errors.motif}
+            >
+              <Input
+                id="motif"
+                value={motif}
+                onChange={(ev) => setMotif(ev.target.value)}
+                placeholder="Douleur lombaire persistante depuis 3 jours"
+                className="h-11"
+                aria-invalid={!!errors.motif}
+              />
+            </Field>
+          </div>
+
+          <Divider />
+
+          <SectionHeader title="Consentement" />
+          <div className="px-8 pb-7">
+            <label
+              className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 text-[14px] transition-colors ${
+                errors.consent
+                  ? "border-[#ff453a] bg-[rgba(255,69,58,0.04)]"
+                  : "border-[var(--ap-hairline)] bg-[var(--ap-canvas-parchment)] hover:border-[var(--ap-ink-muted-48)]"
+              }`}
+            >
               <Checkbox
                 checked={consent}
                 onCheckedChange={(v) => setConsent(v === true)}
                 className="mt-0.5"
               />
-              <span className="text-[var(--fs-ink-2)]">
-                <b className="text-[var(--fs-ink)]">Consentement Loi 25.</b> Le
-                patient autorise la collecte de ses renseignements personnels
-                pour le routage vers une ressource de première ligne et la
-                réception de notifications SMS.
+              <span className="text-[var(--ap-ink-muted-80)]">
+                <b className="text-[var(--ap-ink)] font-semibold">
+                  Loi 25 — consentement.
+                </b>{" "}
+                Le patient autorise la collecte de ses renseignements
+                personnels pour le routage vers une ressource de première ligne
+                et la réception de notifications SMS. Tous les accès sont
+                journalisés.
               </span>
             </label>
-
-            {error && (
-              <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                {error}
-              </div>
+            {errors.consent && (
+              <p className="mt-2 text-[12.5px] text-[#c8102e]">
+                {errors.consent}
+              </p>
             )}
+          </div>
 
-            <div className="mt-6 flex items-center justify-end gap-2.5">
-              <button
-                type="button"
-                onClick={reset}
-                className="h-11 rounded-full border border-[var(--fs-line)] bg-white px-5 text-sm font-medium text-[var(--fs-ink-2)] hover:border-[var(--fs-primary)]"
-              >
-                Effacer
-              </button>
-              <button type="submit" className="fs-pill" style={{ height: 46 }}>
-                Inscrire
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M5 12h14" />
-                  <path d="m13 6 6 6-6 6" />
-                </svg>
-              </button>
+          {Object.keys(errors).length > 0 && (
+            <div className="mx-8 mb-5 rounded-xl border border-[#ffcfca] bg-[rgba(255,69,58,0.06)] px-4 py-3 text-[13px] text-[#a02016]">
+              Veuillez corriger les champs surlignés.
             </div>
-          </form>
+          )}
 
-          <aside className="rounded-2xl border border-[var(--fs-line)] bg-white p-6">
-            <div className="fs-sec-eyebrow">Rappel — workflow</div>
-            <ol className="mt-3 space-y-3 text-[13.5px] text-[var(--fs-ink-2)]">
-              <Step n={1} title="Triage CTAS">
-                P1–P3 → urgence standard. P4–P5 → FileSanté.
-              </Step>
-              <Step n={2} title="Inscription">
-                Saisir identité, motif, priorité et consentement Loi 25.
-              </Step>
-              <Step n={3} title="Code + QR">
-                Système génère un code à 4 chiffres et un QR. SMS envoyé.
-              </Step>
-              <Step n={4} title="Statut: REGISTERED">
-                Patient quitte l&apos;urgence. T-60 → demande de confirmation.
-              </Step>
-            </ol>
-          </aside>
-        </div>
+          <div className="flex items-center justify-end gap-2 border-t border-[var(--ap-hairline)] px-8 py-5">
+            <button
+              type="button"
+              onClick={reset}
+              className="fs-btn fs-btn-pearl"
+            >
+              Effacer
+            </button>
+            <button type="submit" className="fs-btn fs-btn-primary">
+              Inscrire le patient
+              <ArrowRight size={14} strokeWidth={1.8} />
+            </button>
+          </div>
+        </form>
 
         <RegistrationModal patient={created} onClose={() => setCreated(null)} />
       </div>
@@ -262,21 +284,52 @@ export default function RegisterPage() {
   );
 }
 
+function SectionHeader({
+  title,
+  description,
+}: {
+  title: string;
+  description?: string;
+}) {
+  return (
+    <div className="px-8 pt-7 pb-4">
+      <h3 className="fs-tagline text-[17px]!">{title}</h3>
+      {description && (
+        <p className="fs-body mt-1 text-[var(--ap-ink-muted-48)]">
+          {description}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function Divider() {
+  return <div className="border-t border-[var(--ap-hairline)]" />;
+}
+
 function Field({
   label,
   htmlFor,
   full,
+  error,
   children,
 }: {
   label: string;
   htmlFor: string;
   full?: boolean;
+  error?: string;
   children: React.ReactNode;
 }) {
   return (
     <div className={`flex flex-col gap-1.5 ${full ? "md:col-span-2" : ""}`}>
-      <Label htmlFor={htmlFor}>{label}</Label>
+      <Label
+        htmlFor={htmlFor}
+        className="text-[12.5px] font-medium text-[var(--ap-ink-muted-80)]"
+      >
+        {label}
+      </Label>
       {children}
+      {error && <span className="text-[12px] text-[#c8102e]">{error}</span>}
     </div>
   );
 }
@@ -296,37 +349,18 @@ function OriginButton({
     <button
       type="button"
       onClick={onClick}
-      className={`flex flex-col items-start rounded-xl border px-4 py-3 text-left transition-colors ${
+      className={`flex flex-col items-start rounded-xl border p-4 text-left transition-colors ${
         active
-          ? "border-[var(--fs-primary)] bg-[var(--fs-bg-soft)]"
-          : "border-[var(--fs-line)] bg-white hover:border-[var(--fs-primary)]"
+          ? "border-[var(--fs-primary)] bg-[rgba(30,144,214,0.06)]"
+          : "border-[var(--ap-hairline)] bg-[var(--ap-canvas)] hover:border-[var(--ap-ink-muted-48)]"
       }`}
     >
-      <span className="text-sm font-semibold text-[var(--fs-ink)]">
+      <span className="text-[15px] font-semibold text-[var(--ap-ink)] tracking-[-0.016em]">
         {title}
       </span>
-      <span className="text-xs text-[var(--fs-ink-3)]">{sub}</span>
+      <span className="mt-0.5 text-[12.5px] text-[var(--ap-ink-muted-48)]">
+        {sub}
+      </span>
     </button>
-  );
-}
-
-function Step({
-  n,
-  title,
-  children,
-}: {
-  n: number;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <li className="flex gap-3">
-      <span className="mt-0.5 inline-grid h-6 w-6 shrink-0 place-items-center rounded-full border border-[var(--fs-primary)] bg-white text-xs font-semibold text-[var(--fs-primary)]">
-        {n}
-      </span>
-      <span>
-        <b className="text-[var(--fs-ink)]">{title}.</b> {children}
-      </span>
-    </li>
   );
 }
