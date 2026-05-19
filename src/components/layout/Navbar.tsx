@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 
 type Props = {
@@ -10,30 +11,15 @@ export function Navbar({ onOpenLogin }: Props) {
   return (
     <nav className="sticky top-0 z-50 border-b border-[rgba(219,231,240,0.7)] bg-white/[0.78] backdrop-blur-md backdrop-saturate-150">
       <div className="mx-auto flex h-[72px] max-w-[1280px] items-center justify-between px-8">
-        <Link
-          href="/"
-          className="flex items-center gap-2.5 font-display text-[22px] font-semibold tracking-[-0.02em]"
-        >
-          <span className="fs-brand-mark" aria-hidden="true">
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M5 4v6a4 4 0 0 0 8 0V4" />
-              <path d="M5 4h2M11 4h2" />
-              <path d="M9 14v2a5 5 0 0 0 10 0v-1.5" />
-              <circle cx="19" cy="11.5" r="2" />
-            </svg>
-          </span>
-          <b className="font-semibold text-[var(--fs-ink)]">
-            File<span className="text-[var(--fs-primary)]">Santé</span>
-          </b>
+        <Link href="/" className="flex items-center" aria-label="FileSanté">
+          <Image
+            src="/Logo.png"
+            alt="FileSanté"
+            width={160}
+            height={40}
+            priority
+            className="h-9 w-auto"
+          />
         </Link>
 
         <div className="hidden gap-9 text-[14.5px] font-medium text-[var(--fs-ink-2)] md:flex">

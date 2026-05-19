@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export function Footer() {
@@ -6,28 +7,13 @@ export function Footer() {
       <div className="fs-shell">
         <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div>
-            <div className="flex items-center gap-2.5 font-display text-[22px] font-semibold text-white">
-              <span className="fs-brand-mark" aria-hidden="true">
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M5 4v6a4 4 0 0 0 8 0V4" />
-                  <path d="M5 4h2M11 4h2" />
-                  <path d="M9 14v2a5 5 0 0 0 10 0v-1.5" />
-                  <circle cx="19" cy="11.5" r="2" />
-                </svg>
-              </span>
-              <b>
-                File<span className="text-[#7ec4ec]">Santé</span>
-              </b>
-            </div>
+            <Image
+              src="/Logo.png"
+              alt="FileSanté"
+              width={180}
+              height={45}
+              className="h-10 w-auto brightness-0 invert"
+            />
             <p className="mt-3.5 max-w-[280px] text-sm text-[#92a8bd]">
               Plateforme de routage des patients P4/P5 vers les ressources de
               première ligne — projet pilote 2026.
