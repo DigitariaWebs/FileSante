@@ -10,7 +10,7 @@ type Props = {
 export function Navbar({ onOpenLogin }: Props) {
   return (
     <nav className="sticky top-0 z-50 border-b border-[rgba(219,231,240,0.7)] bg-white/[0.78] backdrop-blur-md backdrop-saturate-150">
-      <div className="mx-auto flex h-[72px] max-w-[1280px] items-center justify-between px-8">
+      <div className="mx-auto flex h-[72px] max-w-[1440px] items-center justify-between px-10">
         <Link href="/" className="flex items-center" aria-label="FileSanté">
           <Image
             src="/Logo.png"
