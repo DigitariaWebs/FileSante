@@ -34,10 +34,8 @@ export function Topbar() {
   const currentSpeed = SPEEDS.find((sp) => sp.value === s.speed) ?? SPEEDS[1];
 
   return (
-    <div className="fs-sub-nav sticky top-0 z-10 flex h-[52px] items-center justify-between px-10">
+    <div className="flex h-13 items-center justify-between border-b border-(--ap-hairline) bg-(--ap-canvas) px-10">
       <div className="flex items-center gap-3 text-[13px] tracking-[-0.016em] text-[var(--ap-ink-muted-80)]">
-        <span className="fs-tagline text-[15px]! font-semibold">FileSanté</span>
-        <span className="text-[var(--ap-hairline)]">·</span>
         <span className="inline-flex items-center gap-1.5">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--fs-primary)]" />
           <span>En direct</span>

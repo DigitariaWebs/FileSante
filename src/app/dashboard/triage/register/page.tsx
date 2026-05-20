@@ -128,7 +128,7 @@ export default function RegisterPage() {
       />
 
       <div className="px-10 py-10">
-        <form onSubmit={submit} className="fs-dash-card mx-auto max-w-[760px]">
+        <form onSubmit={submit} className="fs-dash-card mx-auto w-full">
           <SectionHeader
             title="Origine"
             description="Où se trouve actuellement le patient ?"
@@ -299,7 +299,7 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <div className="flex items-center justify-end gap-2 border-t border-[var(--ap-hairline)] px-8 py-5">
+          <div className="flex items-center justify-end gap-3 border-t border-(--ap-hairline) px-8 py-5">
             <button
               type="button"
               onClick={reset}
@@ -422,26 +422,27 @@ function ContactButton({
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left transition-colors ${
+      className={`flex h-11 items-center gap-2 rounded-xl border px-3 text-left transition-colors ${
         active
-          ? "border-[var(--fs-primary)] bg-[rgba(30,144,214,0.06)]"
-          : "border-[var(--ap-hairline)] bg-[var(--ap-canvas)] hover:border-[var(--ap-ink-muted-48)]"
+          ? "border-fs-primary bg-[rgba(30,144,214,0.06)]"
+          : "border-(--ap-hairline) bg-(--ap-canvas) hover:border-(--ap-ink-muted-48)"
       }`}
     >
       <span
-        className={`grid h-8 w-8 place-items-center rounded-full ${
+        className={`grid h-6 w-6 shrink-0 place-items-center rounded-full ${
           active
-            ? "bg-[var(--fs-primary)] text-white"
-            : "bg-[var(--ap-canvas-parchment)] text-[var(--ap-ink-muted-80)]"
+            ? "bg-fs-primary text-white"
+            : "bg-(--ap-canvas-parchment) text-(--ap-ink-muted-80)"
         }`}
       >
-        <Icon name={icon} size={14} />
+        <Icon name={icon} size={12} />
       </span>
-      <span className="min-w-0">
-        <span className="block text-[13.5px] font-semibold text-[var(--ap-ink)]">
+      <span className="flex min-w-0 items-baseline gap-1.5">
+        <span className="shrink-0 text-[13px] font-semibold text-(--ap-ink)">
           {title}
         </span>
-        <span className="block text-[11.5px] text-[var(--ap-ink-muted-48)]">
+        <span className="shrink-0 text-(--ap-ink-muted-48)">·</span>
+        <span className="truncate text-[11.5px] text-(--ap-ink-muted-48)">
           {sub}
         </span>
       </span>
