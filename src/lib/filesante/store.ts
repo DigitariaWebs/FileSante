@@ -77,6 +77,58 @@ function seeded(): Store {
   };
 }
 
+// Section 14 demo reset: 5 patients at HMR (Marie/Fatima/Sophie P4; Jean/Roger P5).
+function seededDemo(): Store {
+  const now = 0;
+  const DAY = 24 * 60 * MIN;
+  const make = (
+    id: string,
+    firstName: string,
+    lastName: string,
+    phone: string,
+    priority: Patient["priority"],
+    motif: string,
+  ): Patient => ({
+    id,
+    code: Math.floor(1000 + Math.random() * 9000).toString(),
+    firstName,
+    lastName,
+    phone,
+    motif,
+    priority,
+    contact: "SMS",
+    origin: "DESK",
+    hospital: "HMR",
+    consent: true,
+    status: "REGISTERED",
+    manualNotify: false,
+    registeredAt: now,
+    activatedAt: now,
+    notifiedAt: null,
+    ttlAt: now + DAY,
+    estimatedSlotAt: now + 90 * MIN,
+    askConfirmAt: now + 30 * MIN,
+    confirmDeadlineAt: null,
+    finalDeadlineAt: null,
+    arrivalDeadlineAt: null,
+    arrivedAt: null,
+    closedAt: null,
+  });
+  const patients: Patient[] = [
+    make("demo_p1", "Marie", "Tremblay", "+1 514 555 0001", "P4", "Douleur lombaire"),
+    make("demo_p2", "Fatima", "El-Amrani", "+1 514 555 0002", "P4", "Migraine persistante"),
+    make("demo_p3", "Sophie", "Roy", "+1 514 555 0003", "P4", "Otite — adulte"),
+    make("demo_p4", "Jean", "Bouchard", "+1 514 555 0004", "P5", "Éraflure profonde"),
+    make("demo_p5", "Roger", "Lavoie", "+1 514 555 0005", "P5", "Toux > 2 semaines"),
+  ];
+  return {
+    ...initial,
+    patients,
+    simClock: now,
+    realAnchor: Date.now(),
+  };
+}
+
 type Listener = (s: Store) => void;
 const listeners = new Set<Listener>();
 
@@ -171,6 +223,13 @@ export const store = {
     persist();
     emit();
   },
+  // Demo-specific reset: 5 HMR patients (Marie/Fatima/Sophie P4, Jean/Roger P5).
+  // Used by /demo/reset button.
+  resetDemo() {
+    state = seededDemo();
+    persist();
+    emit();
+  },
 };
 
 export function randomCode(): string {
@@ -253,6 +312,7 @@ export function pickNextForHospital(code: HospitalCode): Patient | null {
 
 // Manual or scheduled notify: REGISTERED -> AWAITING_CONFIRMATION immediately,
 // starts 15-min confirm timer. Idempotent: noop if already notified.
+// For contact=CALL: no SMS auto-send; nurse calls manually (Section 9).
 export function notifyPatient(
   id: string,
   opts: { manual?: boolean } = {},
@@ -268,16 +328,23 @@ export function notifyPatient(
     notifiedAt: now,
     manualNotify: opts.manual === true || p.manualNotify,
   });
-  // Neutral, no medical detail.
-  logSms(
-    id,
-    "Votre tour approche. Répondez OUI pour confirmer ou NON pour annuler. Vous avez 15 min pour répondre.",
-  );
-  // Best-effort browser notification (no real Web Push backend in demo).
-  fireBrowserNotification({
-    title: "FileSanté — votre tour approche",
-    body: `Code retour ${p.code}. Répondez OUI pour confirmer.`,
-  });
+  if (p.contact === "CALL") {
+    // Nurse-side alert; no SMS goes to patient.
+    fireBrowserNotification({
+      title: "FileSanté — patient à rappeler",
+      body: `${p.firstName} ${p.lastName} (${p.priority}) · ${p.phone}`,
+    });
+  } else {
+    // Neutral SMS, no medical detail.
+    logSms(
+      id,
+      "Votre tour approche. Répondez OUI pour confirmer ou NON pour annuler. Vous avez 15 min pour répondre.",
+    );
+    fireBrowserNotification({
+      title: "FileSanté — votre tour approche",
+      body: `Code retour ${p.code}. Répondez OUI pour confirmer.`,
+    });
+  }
   return true;
 }
 
@@ -772,6 +839,15 @@ export function clearSurge(code: HospitalCode) {
       surgeEvents,
     };
   });
+}
+
+// Section 14 demo: trigger notify on next HMR REGISTERED patient. Returns id
+// of notified patient, or null if nobody available.
+export function triggerDemoNotify(code: HospitalCode = "HMR"): string | null {
+  const next = pickNextForHospital(code);
+  if (!next) return null;
+  notifyPatient(next.id, { manual: true });
+  return next.id;
 }
 
 export function changeShift(firstName: string, lastName: string) {

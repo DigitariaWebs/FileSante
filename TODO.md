@@ -57,52 +57,55 @@
 - [x] Content: P4/P5 counts, attente moyenne+médiane, civières occupied/freed/avail, surge event log (`s.surgeEvents` per hospital), notifs sent + manualNotifs, économies (85$/h RAMQ + 1200$/nuit civière, baseline IEDM 323 min)
 
 ## 9. Mode appel téléphonique
-- [ ] Allow nurse to register phone-only patient (no QR)
-- [ ] On turn → dashboard alert with `tel:` link instead of push
-- [ ] No SMS auto-send required, nurse calls manually
+- [x] Register form supports `contact: "CALL"` toggle → `RegistrationModal` skips QR rendering for CALL patients
+- [x] `PendingCallsBar` dashboard alert with `tel:` links for CALL patients in AWAITING_CONFIRMATION; mounted on triage home + queue page. Dedicated [calls page](src/app/dashboard/triage/calls/page.tsx) lists all CALL patients with urgency banding
+- [x] `notifyPatient` skips SMS for `contact === "CALL"`; fires nurse-targeted browser notification with patient name + phone instead
 
 ## 10. Dashboard 811
-- [ ] Build `/dashboard-811.html`
-- [ ] Orientation form: symptoms, location, perceived urgency
-- [ ] `POST /api/orient` → algo returns GMF/CLSC/IPS, <5s
-- [ ] Output ranked recommendation to operator
+- [x] Built — [/dashboard/811](src/app/dashboard/811/page.tsx) home with KPIs (total/active/orientés/refusés/avg wait + sparkline + recent calls) + [/dashboard/811/calls](src/app/dashboard/811/calls/page.tsx)
+- [x] Orientation form at [/dashboard/811/new](src/app/dashboard/811/new/page.tsx): identité, secteur (location), tranche d'âge, symptômes multi-select, priorité CTAS, notes, hôpital fallback
+- [x] Client-side `ranked` algorithm — filters CLINICS by `loadInitial < 0.95`, sorts by sector match then lowest load, slice top 4. Synchronous = instant (<5s). GMF/CLSC/IPS/UMF types covered in [data/clinics.ts](src/data/clinics.ts)
+- [x] Recommendation panel: ranked clinic cards (load %, ETA, distance, next-slot, phone, hours, address) + "Recommandation prioritaire" badge on top result; selectable for `addReferral` linkage
 
 ## 11. Dashboard Directeur
-- [ ] Build `/dashboard-director.html`
-- [ ] `GET /api/hospitals/:code/stats` live KPIs via WebSocket
-- [ ] Alert visuel patient wait >3h
-- [ ] Chart.js hourly fréquentation graphs
-- [ ] Live savings calc (5h23 baseline IEDM 2025, 85$/h, 1200$/nuit)
-- [ ] Director PDF report (richer than shift report)
+- [x] Built — [/dashboard/direction](src/app/dashboard/direction/page.tsx) with per-hospital tabs (HMR/HND/HSC/HGM/Tous)
+- [x] Live KPIs via `useFileSante` reactive store (WebSocket equivalent in this client demo)
+- [x] Alerte patients > 3h — `overdue` list section with countdown + status; ranked by `registeredAt`
+- [x] Hourly graphs — custom SVG `ChartRow` rendering inscriptions + arrivées over 12 buckets (6 sim hours); replaces Chart.js
+- [x] `SavingsStrip` live (5h23 IEDM baseline, 85$/h RAMQ, 1200$/nuit civière); director report extends with 5-year projection
+- [x] Director PDF report at [/dashboard/direction/report](src/app/dashboard/direction/report/page.tsx) — richer: volumes & flux, alertes >3h table, civières per-hospital breakdown, surge events log, économies (jour/annuel/5 ans), performance par hôpital comparison
 
 ## 12. Dashboard Provincial
-- [ ] Build `/dashboard-provincial.html`
-- [ ] `GET /api/hospitals/all/admin-stats` aggregate
-- [ ] Per-hospital row + global totals
-- [ ] Network total savings figure
+- [x] Built — [/dashboard/msss](src/app/dashboard/msss/page.tsx) — vue provinciale 4 hôpitaux + ~58 cliniques
+- [x] Aggregate stats computed live from `useFileSante` (no API needed in client demo): total/active/arrivés/no-show réseau + per-CIUSSS heatmap
+- [x] Per-hospital row table (HMR/HND/HSC/HGM — inscrits, actifs, arrivés, no-show, attente moy.) + global KPI tiles
+- [x] Network total savings via `SavingsStrip` (économies du jour + projection annuelle + temps gagné/patient + civières × 1200$); inputs = `provincial.confirmed` × `(323 − avgWaitMin)` + DISCHARGED civières
+- [x] Bonus: `MultiLineChart` 12h inscriptions par hôpital, sector heatmap (12 secteurs), occupancy cards par hôpital
 
 ## 13. Délai confirmation ajustable
-- [ ] `PATCH /api/hospitals/:code/settings` → `confirm_delay` 1–15 min
-- [ ] Persist in `hospitals.confirm_delay`
-- [ ] Apply non-retroactively to next notifications
+- [x] `setConfirmDelay(code, minutes)` store action (clamped 1-15) replaces `PATCH /api/hospitals/:code/settings` ([store.ts](src/lib/filesante/store.ts))
+- [x] Persisted in `hospitalSettings[code].confirmDelayMin` (localStorage via store persist layer)
+- [x] Non-retroactive: `notifyPatient` reads `getConfirmDelayMin(p.hospital)` at notify time only; already-notified patients keep their `confirmDeadlineAt`
+- [x] UI: `ConfirmDelayCard` slider (1-15 min) on triage dashboard, scoped to bound hospital ([ConfirmDelayCard.tsx](src/components/dashboard/ConfirmDelayCard.tsx))
 
 ## 14. Reset démo
-- [ ] `POST /api/demo/reset` → wipe demo data, seed 5 patients HMR (Marie, Fatima, Sophie P4; Jean, Roger P5)
-- [ ] `POST /api/demo/trigger-notify` for manual push+SMS test
+- [x] `store.resetDemo()` wipes state and reseeds 5 HMR patients exactly: Marie Tremblay / Fatima El-Amrani / Sophie Roy (P4), Jean Bouchard / Roger Lavoie (P5) — REGISTERED, askConfirmAt +30 min ([store.ts](src/lib/filesante/store.ts))
+- [x] `triggerDemoNotify(code="HMR")` picks next REGISTERED via `pickNextForHospital` and fires `notifyPatient({manual:true})` → push notification + neutral SMS
+- [x] UI: `DemoTools` widget on triage dashboard with "Test notify" + confirm-gated "Reset démo" buttons ([DemoTools.tsx](src/components/dashboard/DemoTools.tsx))
 
 ## 15. URLs production
-- [ ] Deploy on `filesante-api-production-caf7.up.railway.app`
-- [ ] Routes: `/`, `/dashboard.html`, `/dashboard-811.html`, `/dashboard-director.html`, `/dashboard-provincial.html`, `/patient.html`, `/health`
-- [ ] `/health` returns 200 OK
+- [ ] Deploy on `filesante-api-production-caf7.up.railway.app` — hosting step, out of repo scope
+- [x] Routes available: `/`, `/dashboard/triage`, `/dashboard/811`, `/dashboard/direction`, `/dashboard/msss`, `/dashboard/patient`, `/health`; legacy `.html` aliases redirect via `next.config.ts` (`/dashboard.html` → `/dashboard/triage`, etc — permanent 308)
+- [x] `/health` returns 200 OK JSON `{status:"ok"}` via [src/app/health/route.ts](src/app/health/route.ts) (GET + HEAD)
 
 ## 16. Base de données
-- [ ] PostgreSQL 15 on Railway, SSL on
-- [ ] Tables: `hospitals`, `patients`, `users`, `civiere_patients`, `daily_stats`, `migrations`, `notifications`, `hospitals_settings`
-- [ ] Roles enum: nurse/director/admin/811/provincial
-- [ ] Pseudonymize token at creation
-- [ ] Phone column separate from medical data
-- [ ] Cron TTL: wipe personal data 24h post-visite
-- [ ] Loi 25 consent gate at QR scan
+- [ ] PostgreSQL 15 on Railway, SSL on — hosting/infra step, no backend in this Next.js client demo
+- [x] In-memory schema = TypeScript types ([types.ts](src/lib/filesante/types.ts)) — `Patient`, `Civiere` (≈ `civiere_patients`), `Referral`, `SmsLog` (≈ `notifications`), `HospitalSettings` (≈ `hospitals_settings`), `SurgeEvent`, `ExpiryAlert`. Persisted via `localStorage` (key `filesante.store.v5`). `hospitals`, `users`, `daily_stats`, `migrations` would be added with a real DB
+- [x] Roles enum: `Role = "nurse" | "director" | "admin" | "hotline_811" | "provincial"` ([types.ts](src/lib/filesante/types.ts))
+- [x] Pseudonymized at creation: 4-digit `randomCode()` + opaque `newPatientId()` UUID-ish — no PII in identifiers ([store.ts](src/lib/filesante/store.ts))
+- [x] Phone separate from medical data: `Patient.phone` distinct from `Patient.motif` field; `pseudonymizePhone()` helper for display
+- [x] TTL cron: `engine.purgeExpired` runs every tick — terminal patients past `ttlAt` get PII redacted via `redactPatientPii`
+- [x] Loi 25 consent gated at QR scan: `ActivationView` blocks queue join until checkbox accepted ([patient/page.tsx](src/app/dashboard/patient/page.tsx))
 
 ## Demo jeudi prep
 - [ ] Run `POST /api/demo/reset`

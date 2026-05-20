@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 
 import { PageHeader } from "@/components/dashboard/PageHeader";
+import { SavingsStrip } from "@/components/dashboard/SavingsStrip";
 import { Sparkline } from "@/components/dashboard/Sparkline";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { MultiLineChart } from "@/components/ui/MultiLineChart";
@@ -58,10 +59,44 @@ export default function MsssHome() {
       (p) => p.status === "ARRIVED" || p.status === "COMPLETED",
     ).length;
     const noShow = s.patients.filter((p) => p.status === "NO_SHOW").length;
+    const confirmed = s.patients.filter(
+      (p) =>
+        p.status === "CONFIRMED" ||
+        p.status === "ARRIVED" ||
+        p.status === "COMPLETED",
+    ).length;
+    const arrivedWith = s.patients.filter(
+      (p) =>
+        (p.status === "ARRIVED" || p.status === "COMPLETED") && p.arrivedAt,
+    );
+    const avgWaitMin =
+      arrivedWith.length > 0
+        ? Math.round(
+            arrivedWith.reduce(
+              (sum, p) => sum + (p.arrivedAt! - p.registeredAt),
+              0,
+            ) /
+              arrivedWith.length /
+              MIN,
+          )
+        : 0;
+    const civieresFreed = s.civieres.filter(
+      (c) => c.status === "DISCHARGED",
+    ).length;
     const totalSectorClinics = SECTORS.reduce((a, sec) => a + sec.clinics, 0);
     const inactive = SECTORS.reduce((a, sec) => a + sec.inactive, 0);
-    return { total, active, arrived, noShow, totalSectorClinics, inactive };
-  }, [s.patients]);
+    return {
+      total,
+      active,
+      arrived,
+      noShow,
+      confirmed,
+      avgWaitMin,
+      civieresFreed,
+      totalSectorClinics,
+      inactive,
+    };
+  }, [s.patients, s.civieres]);
 
   const byHospital = useMemo(() => {
     return HOSPITALS.map((h) => {
@@ -199,6 +234,13 @@ export default function MsssHome() {
             tone={provincial.inactive > 0 ? "warn" : "neutral"}
           />
         </section>
+
+        {/* Network savings — Section 12 spec */}
+        <SavingsStrip
+          patientsTreated={provincial.confirmed}
+          avgWaitMin={provincial.avgWaitMin || 220}
+          civieresAvoided={provincial.civieresFreed}
+        />
 
         {/* Provincial multi-hospital line chart */}
         <section className="fs-dash-card p-6">

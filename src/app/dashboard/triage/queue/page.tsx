@@ -7,6 +7,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { Countdown } from "@/components/dashboard/Countdown";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { ExpiryAlertBar } from "@/components/dashboard/ExpiryAlertBar";
+import { PendingCallsBar } from "@/components/dashboard/PendingCallsBar";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import { Icon } from "@/components/ui/Icon";
@@ -139,6 +140,7 @@ function QueuePageInner() {
       />
 
       <div className="flex flex-col gap-6 px-10 py-8">
+        <PendingCallsBar hospital={hospitalFilter} />
         <ExpiryAlertBar hospital={hospitalFilter} />
         <div className="fs-tabs">
           {TABS.map((t) => (

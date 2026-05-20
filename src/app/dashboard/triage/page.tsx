@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { CiviereAlertBar } from "@/components/dashboard/CiviereAlertBar";
+import { ConfirmDelayCard } from "@/components/dashboard/ConfirmDelayCard";
+import { DemoTools } from "@/components/dashboard/DemoTools";
+import { PendingCallsBar } from "@/components/dashboard/PendingCallsBar";
 import { Countdown } from "@/components/dashboard/Countdown";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { PageHeader } from "@/components/dashboard/PageHeader";
@@ -154,7 +157,10 @@ export default function DashboardHome() {
       />
 
       <div className="flex flex-col gap-10 px-10 py-10">
+        <PendingCallsBar hospital={hospital} />
         <CiviereAlertBar />
+        <ConfirmDelayCard hospital={hospital} />
+        <DemoTools />
 
         <section className="fs-dash-card flex flex-wrap items-center justify-between gap-5 p-6">
           <div className="flex items-center gap-5">

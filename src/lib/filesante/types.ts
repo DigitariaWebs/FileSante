@@ -17,6 +17,10 @@ export type Origin = "DESK" | "HOME_811";
 
 export type HospitalCode = "HMR" | "HND" | "HSC" | "HGM";
 
+// Section 16 — role enum. Maps to real Postgres `users.role` column when
+// a backend is added. Client-side it currently labels Sidebar entries.
+export type Role = "nurse" | "director" | "admin" | "hotline_811" | "provincial";
+
 export type AgeRange = "0-2" | "3-12" | "13-17" | "18-64" | "65+";
 
 export type Patient = {

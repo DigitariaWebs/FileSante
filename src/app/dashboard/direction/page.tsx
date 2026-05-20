@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 
+import Link from "next/link";
+
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { SavingsStrip } from "@/components/dashboard/SavingsStrip";
@@ -129,14 +131,13 @@ export default function DirectionHome() {
         title="Performance d'établissement"
         description="KPIs, alertes patients > 3 h et flux d'inscriptions."
         actions={
-          <button
-            type="button"
-            onClick={() => window.print()}
+          <Link
+            href={`/dashboard/direction/report?hospital=${hospital}`}
             className="fs-btn fs-btn-pearl"
           >
             <Icon name="archive" size={14} />
             Rapport PDF
-          </button>
+          </Link>
         }
       />
 
