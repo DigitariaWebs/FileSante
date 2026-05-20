@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { CLINICS, type Clinic } from "@/data/clinics";
 import { useFileSante } from "@/hooks/useFileSante";
 import {
+  activatePatient,
   cancelPatient,
   confirmPatient,
   markArrived,
@@ -25,6 +26,13 @@ import type {
 } from "@/lib/filesante/types";
 
 const DEFAULT_CODE = "1875"; // Olivier Bélanger — AWAITING_CONFIRMATION
+
+// Canadian phone: optional +1, then 10 digits. Accepts spaces/dashes/parens.
+const CANADIAN_PHONE_RE = /^\+?1?[\s().-]*(\d[\s().-]*){10}$/;
+
+function isValidCanadianPhone(v: string): boolean {
+  return CANADIAN_PHONE_RE.test(v.trim());
+}
 
 const STEPS: { key: PatientStatus[]; label: string; tag: string }[] = [
   { key: ["REGISTERED"], label: "Inscrit", tag: "À la maison" },
@@ -82,7 +90,7 @@ const PHASE_GRADIENT: Record<Phase, string> = {
 
 function statusToPhase(p?: Patient): Phase {
   if (!p) return "lookup";
-  if (!p.consent) return "activation";
+  if (p.activatedAt === null) return "activation";
   if (p.status === "REGISTERED") return "waiting";
   if (
     p.status === "AWAITING_CONFIRMATION" ||
@@ -104,7 +112,12 @@ export default function PatientPage() {
 function PatientInner() {
   const s = useFileSante();
   const params = useSearchParams();
-  const initialCode = (params.get("code") ?? DEFAULT_CODE).trim();
+  // Accept both ?code= (legacy) and ?token= (QR payload) as aliases.
+  const initialCode = (
+    params.get("code") ??
+    params.get("token") ??
+    DEFAULT_CODE
+  ).trim();
   const [codeInput, setCodeInput] = useState(initialCode);
   const [activeCode, setActiveCode] = useState(initialCode);
 
@@ -229,6 +242,7 @@ function LookupForm({
 }
 
 function NotFound({ code }: { code: string }) {
+  const looksLikeToken = code.trim().length > 0;
   return (
     <div className="fs-dash-card flex flex-col items-center gap-3 px-6 py-14 text-center">
       <div className="grid h-12 w-12 place-items-center rounded-full bg-[var(--ap-surface-strong)] text-[var(--ap-ink-muted-48)]">
@@ -236,11 +250,14 @@ function NotFound({ code }: { code: string }) {
       </div>
       <div>
         <div className="fs-tagline">
-          Aucun dossier pour le code {code || "—"}
+          {looksLikeToken
+            ? `QR ou code invalide : ${code}`
+            : "Aucun code fourni"}
         </div>
         <p className="mt-1 text-[14px] text-[var(--ap-ink-muted-80)]">
-          Vérifiez votre SMS d&apos;inscription ou composez 811 pour vous
-          réinscrire.
+          {looksLikeToken
+            ? "Ce QR n'est lié à aucun dossier actif. Présentez-vous au triage pour un nouveau code, ou composez 811."
+            : "Scannez votre QR d'inscription ou saisissez votre code retour à 4 chiffres."}
         </p>
       </div>
       <Link href="/" className="fs-btn fs-btn-ghost">
@@ -585,8 +602,8 @@ function ActivationView({ patient }: { patient: Patient }) {
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!/[0-9]{10,}/.test(phone.replace(/\D/g, ""))) {
-      setError("Numéro à 10 chiffres requis");
+    if (!isValidCanadianPhone(phone)) {
+      setError("Format canadien requis: +1 514 555 0118 (10 chiffres)");
       return;
     }
     if (!agree) {
@@ -594,9 +611,7 @@ function ActivationView({ patient }: { patient: Patient }) {
       return;
     }
     setError(null);
-    // In a real backend this would activate the patient. For the demo just
-    // surface a confirmation via SMS log — patient status flows naturally.
-    confirmPatient(patient.id);
+    activatePatient(patient.id, phone.trim());
   }
 
   return (
@@ -619,7 +634,7 @@ function ActivationView({ patient }: { patient: Patient }) {
           htmlFor="act-phone"
           className="fs-eyebrow inline-block"
         >
-          Téléphone (10 chiffres minimum)
+          Téléphone — format canadien (10 chiffres)
         </label>
         <Input
           id="act-phone"

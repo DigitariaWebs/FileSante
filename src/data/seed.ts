@@ -14,7 +14,9 @@ const HOUR = 60 * MIN;
 // All seeded timestamps are computed relative to this anchor.
 const NOW = 4 * HOUR;
 
-type SeedPatient = Omit<Patient, "id"> & { id: string };
+type SeedPatient = Omit<Patient, "id" | "activatedAt" | "ttlAt"> & {
+  id: string;
+};
 type SeedSms = Omit<SmsLog, "id"> & { id: string };
 type SeedReferral = Referral;
 
@@ -487,13 +489,21 @@ const CIVIERES: Civiere[] = [
   },
 ];
 
+const DAY = 24 * 60 * MIN;
+
 export function buildSeed(): Pick<
   Store,
   "simClock" | "patients" | "sms" | "lwbs" | "referrals" | "clinic" | "civieres"
 > {
+  // Demo seed: all pre-activated at registration time (24h TTL from then).
+  const patients: Patient[] = PATIENTS.map((p) => ({
+    ...p,
+    activatedAt: p.registeredAt,
+    ttlAt: p.registeredAt + DAY,
+  }));
   return {
     simClock: NOW,
-    patients: PATIENTS,
+    patients,
     sms: SMS,
     lwbs: 2, // 1 NO_SHOW + 1 historical (Pierre Dubois recent + one prior session)
     referrals: REFERRALS,

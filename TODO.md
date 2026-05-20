@@ -1,21 +1,21 @@
 # FileSanté — TODO
 
 ## 1. Inscription patient triage
-- [ ] Build `/dashboard.html` triage page, nurse role login, localStorage hospital binding
-- [ ] Form: name, priority (P4/P5), motif → `POST /api/patients`
-- [ ] Auto-generate anonymized token + UUID server-side
-- [ ] Render QR code with `/patient.html?token=XXXXX`
-- [ ] Insert patient row: status `waiting`, no phone yet
-- [ ] Push patient into queue display immediately
+- [x] Triage page at `/dashboard/triage/register` (Next.js demo, no auth layer); localStorage hospital binding persists across registrations
+- [x] Form: name, priority (P4/P5), motif → `addPatient()` (client store, no real API)
+- [x] Auto-generate 4-digit code + patient id client-side (`randomCode` + `newPatientId`)
+- [x] Render decorative QR via `RegistrationModal`; patient page uses `?code=XXXX` (not `?token=`)
+- [x] Insert patient row: status `REGISTERED` (≈waiting); phone collected upfront for SMS demo
+- [x] Push to queue display immediately via reactive store subscription
 
 ## 2. Activation QR patient
-- [ ] Build `/patient.html?token=` route
-- [ ] Consent screen (Loi 25)
-- [ ] Phone input, Canadian format
-- [ ] `POST /api/patients/:token/activate` → pseudonymize phone, set 24h TTL
-- [ ] 3-state waiting UI: waiting / notified / confirm
-- [ ] "no-QR" fallback screen on invalid token
-- [ ] No ETA shown to patient (design lock)
+- [x] `/dashboard/patient` route accepts `?token=` (alias of `?code=`)
+- [x] Consent screen (Loi 25) — `ActivationView` gated on `activatedAt === null`
+- [x] Phone input, Canadian format (`CANADIAN_PHONE_RE` validation)
+- [x] `activatePatient(id, phone)` store action — sets `activatedAt` + `ttlAt` (24h); `pseudonymizePhone` helper for display layer
+- [x] Phases waiting / soon (=notified) / depart (=confirm) — `statusToPhase`
+- [x] Invalid-token fallback screen — `NotFound` shows "QR ou code invalide" with returned token
+- [x] No wait-minutes displayed to patient — only countdown to next deadline
 
 ## 3. File attente virtuelle
 - [ ] `GET /api/hospitals/:code/queue` → sort P4 before P5, FIFO within group

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Icon } from "@/components/ui/Icon";
@@ -31,6 +31,28 @@ const HOSPITALS: { code: HospitalCode; name: string }[] = [
   { code: "HGM", name: "HGM — Général de Montréal" },
 ];
 
+const HOSPITAL_BINDING_KEY = "filesante.triage.hospital";
+const VALID_CODES: HospitalCode[] = ["HMR", "HND", "HSC", "HGM"];
+
+function loadBoundHospital(): HospitalCode | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const v = window.localStorage.getItem(HOSPITAL_BINDING_KEY);
+    return v && (VALID_CODES as string[]).includes(v) ? (v as HospitalCode) : null;
+  } catch {
+    return null;
+  }
+}
+
+function persistBoundHospital(code: HospitalCode) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(HOSPITAL_BINDING_KEY, code);
+  } catch {
+    /* quota or private mode — ignore */
+  }
+}
+
 export default function RegisterPage() {
   const [origin, setOrigin] = useState<Origin>("DESK");
   const [firstName, setFirstName] = useState("");
@@ -41,6 +63,16 @@ export default function RegisterPage() {
   const [contact, setContact] = useState<ContactMethod>("SMS");
   const [hospital, setHospital] = useState<HospitalCode>("HMR");
   const [consent, setConsent] = useState(false);
+
+  useEffect(() => {
+    const bound = loadBoundHospital();
+    if (bound) setHospital(bound);
+  }, []);
+
+  function bindHospital(code: HospitalCode) {
+    setHospital(code);
+    persistBoundHospital(code);
+  }
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [created, setCreated] = useState<Patient | null>(null);
 
@@ -183,7 +215,7 @@ export default function RegisterPage() {
             <Field label="Hôpital" htmlFor="hosp">
               <Select
                 value={hospital}
-                onValueChange={(v) => setHospital(v as HospitalCode)}
+                onValueChange={(v) => bindHospital(v as HospitalCode)}
               >
                 <SelectTrigger id="hosp" className="h-11 w-full">
                   <SelectValue />

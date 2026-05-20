@@ -35,6 +35,8 @@ export type Patient = {
 
   // sim-clock timestamps (ms)
   registeredAt: number;
+  activatedAt: number | null; // null until patient taps Loi 25 + phone via QR
+  ttlAt: number | null;       // activatedAt + 24h — personal data purge marker
   estimatedSlotAt: number;
   askConfirmAt: number | null;
   confirmDeadlineAt: number | null;

@@ -174,6 +174,8 @@ export function addPatient(
     | "code"
     | "status"
     | "registeredAt"
+    | "activatedAt"
+    | "ttlAt"
     | "estimatedSlotAt"
     | "askConfirmAt"
     | "confirmDeadlineAt"
@@ -193,6 +195,8 @@ export function addPatient(
     code: randomCode(),
     status: "REGISTERED",
     registeredAt: now,
+    activatedAt: draft.origin === "DESK" ? now : null,
+    ttlAt: draft.origin === "DESK" ? now + 24 * 60 * MIN : null,
     estimatedSlotAt: now + waitMin * MIN,
     askConfirmAt: now + Math.max(0, waitMin - 60) * MIN,
     confirmDeadlineAt: null,
@@ -208,6 +212,30 @@ export function addPatient(
     `Bienvenue chez FileSanté (${channel}). Code retour: ${patient.code}. Attente estimée: ${waitMin} min.`,
   );
   return patient;
+}
+
+export function activatePatient(id: string, phone: string): boolean {
+  const s = store.get();
+  const p = s.patients.find((x) => x.id === id);
+  if (!p) return false;
+  if (p.activatedAt !== null) return true;
+  const now = s.simClock;
+  updatePatient(id, {
+    phone,
+    activatedAt: now,
+    ttlAt: now + 24 * 60 * MIN,
+  });
+  logSms(
+    id,
+    `Activation confirmée. Vous êtes dans la file. Code retour: ${p.code}.`,
+  );
+  return true;
+}
+
+export function pseudonymizePhone(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length < 4) return "***";
+  return `***-***-${digits.slice(-4)}`;
 }
 
 export function isActive(p: Patient): boolean {
