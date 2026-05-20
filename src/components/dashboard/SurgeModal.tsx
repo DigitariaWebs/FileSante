@@ -8,19 +8,23 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Icon } from "@/components/ui/Icon";
-import { setSurge } from "@/lib/filesante/store";
+import { clearSurge, triggerSurge } from "@/lib/filesante/store";
+import type { SurgeMinutes } from "@/lib/filesante/store";
+import type { HospitalCode } from "@/lib/filesante/types";
 
 const DELAYS = [15, 30, 45] as const;
 
 type Props = {
   open: boolean;
   current: number;
+  hospital: HospitalCode;
   onClose: () => void;
 };
 
-export function SurgeModal({ open, current, onClose }: Props) {
-  function pick(min: 0 | 15 | 30 | 45) {
-    setSurge(min);
+export function SurgeModal({ open, current, hospital, onClose }: Props) {
+  function pick(min: SurgeMinutes) {
+    if (min === 0) clearSurge(hospital);
+    else triggerSurge(hospital, min);
     onClose();
   }
 

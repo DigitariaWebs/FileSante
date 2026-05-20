@@ -10,7 +10,11 @@ import { StaffIndicator } from "@/components/dashboard/StaffIndicator";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import { Icon } from "@/components/ui/Icon";
 import { useFileSante } from "@/hooks/useFileSante";
-import { isActive } from "@/lib/filesante/store";
+import {
+  getCivieresOccupancyAll,
+  getCivieresOccupancyByHospital,
+  isActive,
+} from "@/lib/filesante/store";
 import type { HospitalCode, Patient } from "@/lib/filesante/types";
 
 const HOSPITALS: { code: HospitalCode | "ALL"; label: string }[] = [
@@ -309,34 +313,58 @@ export default function DirectionHome() {
           </div>
         </section>
 
-        {/* Capacity bar */}
-        <section className="fs-dash-card p-6">
-          <div className="flex items-end justify-between">
-            <div>
-              <div className="fs-eyebrow">Capacité</div>
-              <h2 className="fs-tagline mt-1">Civières · 20 lits</h2>
-              <p className="mt-1 text-[12.5px] text-[var(--ap-ink-muted-80)]">
-                Occupation actuelle simulée.
-              </p>
-            </div>
-            <div className="text-right">
-              <div className="font-mono text-[28px] font-semibold leading-none tabular-nums text-[var(--ap-ink)]">
-                14<span className="text-[var(--ap-ink-muted-48)]">/20</span>
-              </div>
-              <div className="text-[12px] text-[var(--ap-ink-muted-48)]">
-                70% occupation
-              </div>
-            </div>
-          </div>
-          <div className="mt-5 flex h-2 overflow-hidden rounded-full bg-[var(--ap-surface-strong)]">
-            <div
-              className="h-full bg-[var(--fs-primary)]"
-              style={{ width: "70%" }}
-            />
-          </div>
-        </section>
+        {/* Capacity bar — live from store */}
+        <CapacityCard hospital={hospital} />
       </div>
     </>
+  );
+}
+
+function CapacityCard({ hospital }: { hospital: HospitalCode | "ALL" }) {
+  // Re-runs each render against the live store — driven by useFileSante in
+  // parent, so refresh on every dispatch.
+  const occ =
+    hospital === "ALL"
+      ? getCivieresOccupancyAll()
+      : getCivieresOccupancyByHospital(hospital);
+  const pct = Math.round(occ.rate * 100);
+  const tone =
+    pct >= 90 ? "danger" : pct >= 75 ? "warn" : "ok";
+  const fill =
+    tone === "danger"
+      ? "#c8102e"
+      : tone === "warn"
+        ? "#a06400"
+        : "var(--fs-primary)";
+  return (
+    <section className="fs-dash-card p-6">
+      <div className="flex items-end justify-between">
+        <div>
+          <div className="fs-eyebrow">Capacité</div>
+          <h2 className="fs-tagline mt-1">
+            Civières · {occ.total} lits
+          </h2>
+          <p className="mt-1 text-[12.5px] text-[var(--ap-ink-muted-80)]">
+            Occupation en direct.
+          </p>
+        </div>
+        <div className="text-right">
+          <div className="font-mono text-[28px] font-semibold leading-none tabular-nums text-[var(--ap-ink)]">
+            {occ.occupied}
+            <span className="text-[var(--ap-ink-muted-48)]">/{occ.total}</span>
+          </div>
+          <div className="text-[12px] text-[var(--ap-ink-muted-48)]">
+            {pct}% occupation
+          </div>
+        </div>
+      </div>
+      <div className="mt-5 flex h-2 overflow-hidden rounded-full bg-[var(--ap-surface-strong)]">
+        <div
+          className="h-full"
+          style={{ width: `${pct}%`, background: fill }}
+        />
+      </div>
+    </section>
   );
 }
 

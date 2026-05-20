@@ -2,6 +2,7 @@
 
 import {
   bumpSimClock,
+  clearSurge,
   incLwbs,
   isActive,
   logSms,
@@ -11,7 +12,7 @@ import {
   store,
   updatePatient,
 } from "./store";
-import type { Patient } from "./types";
+import type { HospitalCode, Patient } from "./types";
 
 const MIN = 60_000;
 
@@ -19,6 +20,24 @@ export function tick() {
   bumpSimClock();
   runTransitions();
   purgeExpired();
+  autoResumeSurge();
+}
+
+// Auto-resume: once a hospital's surge window has elapsed (startedAt + minutes),
+// clear the surge so notifications and ETAs return to normal.
+function autoResumeSurge() {
+  const s = store.get();
+  const now = s.simClock;
+  for (const code of Object.keys(s.surgeByHospital) as HospitalCode[]) {
+    const surge = s.surgeByHospital[code];
+    if (
+      surge.minutes > 0 &&
+      surge.startedAt !== null &&
+      now >= surge.startedAt + surge.minutes * MIN
+    ) {
+      clearSurge(code);
+    }
+  }
 }
 
 // 24h TTL purge: once a patient is terminal (closed dossier) and their

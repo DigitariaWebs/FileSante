@@ -445,7 +445,9 @@ const CLINIC: ClinicCapacity = {
   currentLoad: 0.62,
 };
 
-const CIVIERES: Civiere[] = [
+type SeedCiviere = Omit<Civiere, "transitions">;
+
+const CIVIERES_SEED: SeedCiviere[] = [
   {
     id: "seed_civ_01",
     patientName: "Jean Picard",
@@ -498,6 +500,13 @@ export function buildSeed(): Pick<
   Store,
   "simClock" | "patients" | "sms" | "lwbs" | "referrals" | "clinic" | "civieres"
 > {
+  // Civières get a synthetic single-transition history so the type stays
+  // satisfied — real per-status history only accrues from live actions.
+  const civieres: Civiere[] = CIVIERES_SEED.map((c) => ({
+    ...c,
+    transitions: [{ status: c.status, at: c.createdAt }],
+  }));
+
   // Demo seed: all pre-activated at registration time (24h TTL from then).
   // notifiedAt set for any patient past REGISTERED so badge logic stays
   // coherent. manualNotify defaults false (no human notify in seed).
@@ -525,6 +534,6 @@ export function buildSeed(): Pick<
     lwbs: 2, // 1 NO_SHOW + 1 historical (Pierre Dubois recent + one prior session)
     referrals: REFERRALS,
     clinic: CLINIC,
-    civieres: CIVIERES,
+    civieres,
   };
 }

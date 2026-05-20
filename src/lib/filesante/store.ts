@@ -15,6 +15,7 @@ import type {
   Referral,
   StaffIndicators,
   Store,
+  SurgeState,
 } from "./types";
 
 const KEY = "filesante.store.v5";
@@ -41,6 +42,14 @@ const DEFAULT_HOSPITAL_SETTINGS: HospitalSettingsMap = {
   HGM: { confirmDelayMin: 15 },
 };
 
+const ZERO_SURGE: SurgeState = { minutes: 0, startedAt: null };
+const DEFAULT_SURGE: Record<HospitalCode, SurgeState> = {
+  HMR: ZERO_SURGE,
+  HND: ZERO_SURGE,
+  HSC: ZERO_SURGE,
+  HGM: ZERO_SURGE,
+};
+
 const initial: Store = {
   simClock: 0,
   realAnchor: 0,
@@ -51,8 +60,8 @@ const initial: Store = {
   referrals: [],
   clinic: { totalDaily: 22, currentLoad: 0.62 },
   civieres: [],
-  surgeMinutes: 0,
-  surgeStartedAt: null,
+  surgeByHospital: DEFAULT_SURGE,
+  surgeEvents: [],
   nurseShift: DEFAULT_SHIFT,
   staff: DEFAULT_STAFF,
   hospitalSettings: DEFAULT_HOSPITAL_SETTINGS,
@@ -202,7 +211,8 @@ export function addPatient(
 ): Patient {
   const s = store.get();
   const active = s.patients.filter(isActive).length;
-  const waitMin = estimateWaitMin(active + 1) + s.surgeMinutes;
+  const surgeMin = s.surgeByHospital[draft.hospital]?.minutes ?? 0;
+  const waitMin = estimateWaitMin(active + 1) + surgeMin;
   const now = s.simClock;
   const patient: Patient = {
     ...draft,
@@ -593,6 +603,7 @@ export function addCiviere(draft: {
     createdAt: s.simClock,
     updatedAt: s.simClock,
     alertDismissedAt: null,
+    transitions: [{ status: "AWAITING_RESULTS", at: s.simClock }],
   };
   store.set((s) => ({
     ...s,
@@ -606,7 +617,17 @@ export function setCiviereStatus(id: string, status: CiviereStatus) {
   store.set((s) => ({
     ...s,
     civieres: s.civieres.map((c) =>
-      c.id === id ? { ...c, status, updatedAt: s.simClock } : c,
+      c.id === id
+        ? {
+            ...c,
+            status,
+            updatedAt: s.simClock,
+            transitions:
+              c.status === status
+                ? c.transitions
+                : [...c.transitions, { status, at: s.simClock }],
+          }
+        : c,
     ),
     staff:
       status === "DISCHARGED"
@@ -619,6 +640,33 @@ export function setCiviereStatus(id: string, status: CiviereStatus) {
           }
         : s.staff,
   }));
+}
+
+/* ─── Civière occupancy selectors (live, used by Director / Provincial KPIs) ─── */
+
+export function getCivieresOccupancyAll(): {
+  occupied: number;
+  total: number;
+  rate: number;
+} {
+  const s = store.get();
+  const occupied = Math.max(0, s.staff.civieresTotal - s.staff.civieresAvail);
+  const total = Math.max(1, s.staff.civieresTotal);
+  return { occupied, total, rate: occupied / total };
+}
+
+// Per-hospital occupancy. Uses active civières against a network-share of
+// total beds (proportional split — no per-hospital total tracked yet).
+export function getCivieresOccupancyByHospital(
+  code: HospitalCode,
+): { occupied: number; total: number; rate: number } {
+  const s = store.get();
+  const occupied = s.civieres.filter(
+    (c) => c.hospital === code && c.status !== "DISCHARGED",
+  ).length;
+  // Naive: assume even split across 4 hospitals when no per-hospital total exists.
+  const total = Math.max(1, Math.round(s.staff.civieresTotal / 4));
+  return { occupied, total, rate: Math.min(1, occupied / total) };
 }
 
 export function dismissCiviereAlert(id: string) {
@@ -639,13 +687,91 @@ export function removeCiviere(id: string) {
 
 /* ─── Surge mode + nurse shift ─── */
 
-export function setSurge(minutes: 0 | 15 | 30 | 45) {
+export type SurgeMinutes = 0 | 15 | 30 | 45;
+
+export function getSurge(code: HospitalCode): SurgeState {
+  return store.get().surgeByHospital[code] ?? ZERO_SURGE;
+}
+
+export function isSurgeActive(code: HospitalCode): boolean {
+  return getSurge(code).minutes > 0;
+}
+
+// Trigger a surge for one hospital. Side effects:
+//   1. Stamp surge state with startedAt (engine clears after window elapses).
+//   2. Push back askConfirmAt / estimatedSlotAt by `minutes` for every active
+//      patient at that hospital — automatically suspends notifications during
+//      the window (engine reads askConfirmAt).
+//   3. Broadcast neutral SMS to affected patients (no medical detail).
+export function triggerSurge(code: HospitalCode, minutes: SurgeMinutes) {
   const s = store.get();
+  if (minutes === 0) {
+    clearSurge(code);
+    return;
+  }
+  const now = s.simClock;
+  const deltaMs = minutes * MIN;
+  const surgeEvent = {
+    id: `sg_${Math.random().toString(36).slice(2, 9)}_${Date.now().toString(36)}`,
+    hospital: code,
+    minutes,
+    startedAt: now,
+    endedAt: null as number | null,
+  };
   store.set((cur) => ({
     ...cur,
-    surgeMinutes: minutes,
-    surgeStartedAt: minutes > 0 ? s.simClock : null,
+    surgeByHospital: {
+      ...cur.surgeByHospital,
+      [code]: { minutes, startedAt: now },
+    },
+    surgeEvents: [...cur.surgeEvents, surgeEvent].slice(-100),
+    patients: cur.patients.map((p) => {
+      if (p.hospital !== code) return p;
+      if (!isActive(p)) return p;
+      return {
+        ...p,
+        estimatedSlotAt: p.estimatedSlotAt + deltaMs,
+        askConfirmAt:
+          p.askConfirmAt !== null && p.status === "REGISTERED"
+            ? p.askConfirmAt + deltaMs
+            : p.askConfirmAt,
+      };
+    }),
   }));
+  // Broadcast neutral SMS to affected REGISTERED patients (haven't been
+  // notified yet — notify recipients already got their own messaging).
+  const affected = store
+    .get()
+    .patients.filter((p) => p.hospital === code && p.status === "REGISTERED");
+  for (const p of affected) {
+    logSms(
+      p.id,
+      `Surcharge à l'urgence. Votre attente est rallongée d'environ ${minutes} min. Merci de votre patience.`,
+    );
+  }
+}
+
+export function clearSurge(code: HospitalCode) {
+  store.set((cur) => {
+    const now = cur.simClock;
+    // Stamp endedAt on the most recent open event for this hospital.
+    let closed = false;
+    const surgeEvents = [...cur.surgeEvents].reverse().map((e) => {
+      if (!closed && e.hospital === code && e.endedAt === null) {
+        closed = true;
+        return { ...e, endedAt: now };
+      }
+      return e;
+    }).reverse();
+    return {
+      ...cur,
+      surgeByHospital: {
+        ...cur.surgeByHospital,
+        [code]: ZERO_SURGE,
+      },
+      surgeEvents,
+    };
+  });
 }
 
 export function changeShift(firstName: string, lastName: string) {

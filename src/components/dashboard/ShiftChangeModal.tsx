@@ -16,10 +16,11 @@ import { changeShift } from "@/lib/filesante/store";
 type Props = {
   open: boolean;
   current: { firstName: string; lastName: string };
+  hospital?: string;
   onClose: () => void;
 };
 
-export function ShiftChangeModal({ open, current, onClose }: Props) {
+export function ShiftChangeModal({ open, current, hospital = "HMR", onClose }: Props) {
   const [first, setFirst] = useState(current.firstName);
   const [last, setLast] = useState(current.lastName);
   const [error, setError] = useState<string | null>(null);
@@ -29,6 +30,14 @@ export function ShiftChangeModal({ open, current, onClose }: Props) {
     if (!first.trim() || !last.trim()) {
       setError("Prénom et nom requis");
       return;
+    }
+    // Auto-generate outgoing-nurse report in a new tab before flipping shift.
+    const outgoing = `${current.firstName} ${current.lastName}`;
+    if (typeof window !== "undefined") {
+      const url = `/dashboard/triage/report?hospital=${hospital}&nurse=${encodeURIComponent(
+        outgoing,
+      )}&autoprint=1`;
+      window.open(url, "_blank", "noopener");
     }
     changeShift(first.trim(), last.trim());
     setError(null);

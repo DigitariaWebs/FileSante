@@ -91,6 +91,11 @@ export type CiviereStatus =
 
 export type CiviereReason = "LABO" | "RADIO" | "CONSULTANT" | "OTHER";
 
+export type CiviereTransition = {
+  status: CiviereStatus;
+  at: number; // sim-clock
+};
+
 export type Civiere = {
   id: string;
   patientName: string;
@@ -101,6 +106,7 @@ export type Civiere = {
   createdAt: number;
   updatedAt: number;
   alertDismissedAt: number | null;
+  transitions: CiviereTransition[]; // append-only per-status log
 };
 
 /* ─── Triage operations state ─── */
@@ -119,6 +125,19 @@ export type StaffIndicators = {
   shiftLabel: string;
 };
 
+export type SurgeState = {
+  minutes: number;         // 0 | 15 | 30 | 45
+  startedAt: number | null; // sim-clock ms (null when inactive)
+};
+
+export type SurgeEvent = {
+  id: string;
+  hospital: HospitalCode;
+  minutes: number;
+  startedAt: number;       // sim-clock ms
+  endedAt: number | null;  // null until cleared / auto-resumed
+};
+
 export type HospitalSettings = {
   confirmDelayMin: number; // 1..15 — minutes patient has to confirm after notify
 };
@@ -135,8 +154,8 @@ export type Store = {
   referrals: Referral[];
   clinic: ClinicCapacity;
   civieres: Civiere[];
-  surgeMinutes: number; // 0 | 15 | 30 | 45 — active surge delay
-  surgeStartedAt: number | null;
+  surgeByHospital: Record<HospitalCode, SurgeState>;
+  surgeEvents: SurgeEvent[];
   nurseShift: NurseShift;
   staff: StaffIndicators;
   hospitalSettings: HospitalSettingsMap;

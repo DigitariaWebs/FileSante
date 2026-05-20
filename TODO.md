@@ -36,25 +36,25 @@
 - [x] Per-hospital `confirm_delay` (1-15 min) stored in `hospitalSettings`; `notifyPatient` reads `getConfirmDelayMin(hospital)` (UI control = Section 13)
 
 ## 6. Civières
-- [ ] Civières section on triage dashboard
-- [ ] Assign patient → civiere_num + reason, status `Occupée`
-- [ ] Status transitions: Occupée → Résultats signalés → Décision médicale → Libérée
-- [ ] Timestamp each transition
-- [ ] Compute occupancy rate live for director/provincial KPIs
-- [ ] Table `civiere_patients` schema
+- [x] Civières section at [/dashboard/triage/civieres](src/app/dashboard/triage/civieres/page.tsx) with `AddStretcherModal` for assignment
+- [x] Assign → `addCiviere({stretcherNum, reason, ...})` → starting status `AWAITING_RESULTS` (≈ Occupée), staff `civieresAvail` decremented
+- [x] Transitions: `AWAITING_RESULTS` → `RESULTS_IN` → `DECISION` → `DISCHARGED` (4 states match spec); `setCiviereStatus` advances
+- [x] `transitions: { status, at }[]` append-only history on each `Civiere` — timestamped per status change
+- [x] `getCivieresOccupancyAll()` + `getCivieresOccupancyByHospital(code)` selectors; Director `CapacityCard` consumes live values (no more hardcoded 14/20)
+- [x] In-memory schema = `Civiere` type ([types.ts](src/lib/filesante/types.ts)); real `civiere_patients` SQL table out of scope (no backend)
 
 ## 7. Surge button
-- [ ] `POST /api/hospitals/:code/surge` with +15/+30/+45
-- [ ] Suspend all notifications during surge window
-- [ ] Recalc internal ETAs
-- [ ] Twilio SMS broadcast to affected patients, neutral wording
-- [ ] Auto-resume after delay
+- [x] `triggerSurge(code, +15|+30|+45)` per-hospital ([store.ts](src/lib/filesante/store.ts)); state in `surgeByHospital[code]` (`SurgeState{minutes, startedAt}`)
+- [x] Notifications suspended automatically — `triggerSurge` pushes back `askConfirmAt` by `+minutes`, so engine's `notifyPatient` schedule shifts with it
+- [x] ETAs recalculated — `estimatedSlotAt` extended by `+minutes` for every active patient at that hospital
+- [x] Neutral SMS broadcast via `logSms` to REGISTERED patients of that hospital (no medical detail)
+- [x] Auto-resume: engine `autoResumeSurge` clears surge once `startedAt + minutes` elapses
 
 ## 8. Rapport quart PDF
-- [ ] `GET /api/hospitals/:code/report` → pdfkit generation
-- [ ] Manual download button on dashboard
-- [ ] Auto-generate on shift change, header = outgoing nurse name
-- [ ] Content: P4/P5 counts, avg wait, civières occupied/freed, surge events, notifs sent, $ saved (85$/h RAMQ, 1200$/nuit)
+- [x] Client-side printable report at `/dashboard/triage/report?hospital=...&nurse=...` ([report/page.tsx](src/app/dashboard/triage/report/page.tsx)); browser "Imprimer/PDF" used in place of pdfkit (no backend)
+- [x] "Rapport de quart" button on triage dashboard → opens report scoped to bound hospital + current nurse
+- [x] Auto-open on shift change: `ShiftChangeModal` opens new-tab report with `?autoprint=1` and `&nurse=<outgoing>` before flipping shift
+- [x] Content: P4/P5 counts, attente moyenne+médiane, civières occupied/freed/avail, surge event log (`s.surgeEvents` per hospital), notifs sent + manualNotifs, économies (85$/h RAMQ + 1200$/nuit civière, baseline IEDM 323 min)
 
 ## 9. Mode appel téléphonique
 - [ ] Allow nurse to register phone-only patient (no QR)

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { CiviereAlertBar } from "@/components/dashboard/CiviereAlertBar";
 import { Countdown } from "@/components/dashboard/Countdown";
@@ -15,12 +15,34 @@ import { SurgeModal } from "@/components/dashboard/SurgeModal";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { useFileSante } from "@/hooks/useFileSante";
 import { isActive } from "@/lib/filesante/store";
-import type { Patient } from "@/lib/filesante/types";
+import type { HospitalCode, Patient } from "@/lib/filesante/types";
+
+const HOSPITAL_BINDING_KEY = "filesante.triage.hospital";
+const VALID_HOSPITALS: HospitalCode[] = ["HMR", "HND", "HSC", "HGM"];
+
+function loadBoundHospital(): HospitalCode {
+  if (typeof window === "undefined") return "HMR";
+  try {
+    const v = window.localStorage.getItem(HOSPITAL_BINDING_KEY);
+    return v && (VALID_HOSPITALS as string[]).includes(v)
+      ? (v as HospitalCode)
+      : "HMR";
+  } catch {
+    return "HMR";
+  }
+}
 
 export default function DashboardHome() {
   const s = useFileSante();
   const [surgeOpen, setSurgeOpen] = useState(false);
   const [shiftOpen, setShiftOpen] = useState(false);
+  const [hospital, setHospital] = useState<HospitalCode>("HMR");
+
+  useEffect(() => {
+    setHospital(loadBoundHospital());
+  }, []);
+
+  const surgeMin = s.surgeByHospital[hospital]?.minutes ?? 0;
 
   const stats = useMemo(() => {
     const active = s.patients.filter(isActive);
@@ -112,20 +134,21 @@ export default function DashboardHome() {
             <button
               type="button"
               onClick={() => setSurgeOpen(true)}
-              className={`fs-btn ${s.surgeMinutes > 0 ? "fs-btn-danger" : "fs-btn-pearl"}`}
+              className={`fs-btn ${surgeMin > 0 ? "fs-btn-danger" : "fs-btn-pearl"}`}
               title="Mode surcharge"
             >
               <Icon name="warning" size={14} />
-              {s.surgeMinutes > 0 ? `Surcharge +${s.surgeMinutes}` : "Surcharge"}
+              {surgeMin > 0 ? `Surcharge +${surgeMin}` : "Surcharge"}
             </button>
-            <button
-              type="button"
-              onClick={() => window.print()}
+            <Link
+              href={`/dashboard/triage/report?hospital=${hospital}&nurse=${encodeURIComponent(
+                `${s.nurseShift.firstName} ${s.nurseShift.lastName}`,
+              )}`}
               className="fs-btn fs-btn-pearl"
             >
               <Icon name="archive" size={14} />
               Rapport de quart
-            </button>
+            </Link>
           </>
         }
       />
@@ -140,7 +163,7 @@ export default function DashboardHome() {
             </div>
             <div>
               <div className="fs-eyebrow">
-                Session en cours · HMR · {s.nurseShift.firstName} {s.nurseShift.lastName}
+                Session en cours · {hospital} · {s.nurseShift.firstName} {s.nurseShift.lastName}
               </div>
               <h2 className="fs-display-md mt-1 text-[24px]!">
                 {stats.active} patient{stats.active === 1 ? "" : "s"} dans la
@@ -149,10 +172,10 @@ export default function DashboardHome() {
               <p className="mt-1 text-[14px] text-[var(--ap-ink-muted-80)]">
                 {stats.awaiting} à confirmer · {stats.confirmed} confirmés ·{" "}
                 {stats.arrived24} arrivés
-                {s.surgeMinutes > 0 && (
+                {surgeMin > 0 && (
                   <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-[#fff8e6] px-2 py-0.5 text-[12px] font-semibold text-[#a06400]">
                     <Icon name="warning" size={11} />
-                    Surcharge +{s.surgeMinutes} min active
+                    Surcharge +{surgeMin} min active
                   </span>
                 )}
               </p>
@@ -292,12 +315,14 @@ export default function DashboardHome() {
 
       <SurgeModal
         open={surgeOpen}
-        current={s.surgeMinutes}
+        current={surgeMin}
+        hospital={hospital}
         onClose={() => setSurgeOpen(false)}
       />
       <ShiftChangeModal
         open={shiftOpen}
         current={s.nurseShift}
+        hospital={hospital}
         onClose={() => setShiftOpen(false)}
       />
     </>
