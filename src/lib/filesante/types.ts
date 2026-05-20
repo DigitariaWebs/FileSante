@@ -49,6 +49,31 @@ export type SmsLog = {
   body: string;
 };
 
+export type ReferralSource = "TRIAGE" | "HOTLINE_811" | "EMS_911";
+export type ReferralStatus = "PENDING" | "ACCEPTED" | "REFUSED" | "EXPIRED";
+export type ClinicType = "GMF" | "CLSC" | "IPS" | "UMF";
+
+export type Referral = {
+  id: string;
+  patientId: string; // links to Patient.id for cross-dashboard coherence
+  patientInitials: string;
+  patientName: string;
+  source: ReferralSource;
+  sourceLabel: string;
+  motif: string;
+  priority: Priority;
+  destinationId: string; // clinic id (only "default" supported for demo)
+  status: ReferralStatus;
+  receivedAt: number;
+  decidedAt: number | null;
+  slaDeadlineAt: number; // sim ms when PENDING expires
+};
+
+export type ClinicCapacity = {
+  totalDaily: number;
+  currentLoad: number; // 0..1 fraction
+};
+
 export type Store = {
   simClock: number; // simulated ms since epoch start of session
   realAnchor: number; // Date.now() at last tick
@@ -56,4 +81,6 @@ export type Store = {
   patients: Patient[];
   sms: SmsLog[];
   lwbs: number; // counter
+  referrals: Referral[];
+  clinic: ClinicCapacity;
 };

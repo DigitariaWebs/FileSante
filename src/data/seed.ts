@@ -1,4 +1,10 @@
-import type { Patient, SmsLog, Store } from "@/lib/filesante/types";
+import type {
+  ClinicCapacity,
+  Patient,
+  Referral,
+  SmsLog,
+  Store,
+} from "@/lib/filesante/types";
 
 const MIN = 60_000;
 const HOUR = 60 * MIN;
@@ -9,6 +15,7 @@ const NOW = 4 * HOUR;
 
 type SeedPatient = Omit<Patient, "id"> & { id: string };
 type SeedSms = Omit<SmsLog, "id"> & { id: string };
+type SeedReferral = Referral;
 
 const PATIENTS: SeedPatient[] = [
   {
@@ -364,14 +371,84 @@ const SMS: SeedSms[] = [
   },
 ];
 
+const REFERRALS: SeedReferral[] = [
+  {
+    id: "seed_r01",
+    patientId: "seed_p01",
+    patientInitials: "AG",
+    patientName: "Antoine Gagnon",
+    source: "TRIAGE",
+    sourceLabel: "Triage HMR",
+    motif: "Douleur lombaire persistante depuis 3 jours",
+    priority: "P4",
+    destinationId: "gmf_plateau",
+    status: "PENDING",
+    receivedAt: NOW - 2 * MIN,
+    decidedAt: null,
+    slaDeadlineAt: NOW + 3 * MIN,
+  },
+  {
+    id: "seed_r02",
+    patientId: "seed_p02",
+    patientInitials: "SR",
+    patientName: "Sophie Roy",
+    source: "HOTLINE_811",
+    sourceLabel: "Info-Santé 811",
+    motif: "Suspicion d'otite — adulte",
+    priority: "P5",
+    destinationId: "gmf_plateau",
+    status: "PENDING",
+    receivedAt: NOW - 4 * MIN,
+    decidedAt: null,
+    slaDeadlineAt: NOW + 1 * MIN,
+  },
+  {
+    id: "seed_r03",
+    patientId: "seed_p03",
+    patientInitials: "OB",
+    patientName: "Olivier Bélanger",
+    source: "TRIAGE",
+    sourceLabel: "Triage HMR",
+    motif: "Fièvre 38,5°C — adulte autonome",
+    priority: "P4",
+    destinationId: "gmf_plateau",
+    status: "ACCEPTED",
+    receivedAt: NOW - 38 * MIN,
+    decidedAt: NOW - 35 * MIN,
+    slaDeadlineAt: NOW - 33 * MIN,
+  },
+  {
+    id: "seed_r04",
+    patientId: "seed_p06",
+    patientInitials: "ÉP",
+    patientName: "Élise Pelletier",
+    source: "HOTLINE_811",
+    sourceLabel: "Info-Santé 811",
+    motif: "Migraine — antécédents connus",
+    priority: "P4",
+    destinationId: "gmf_plateau",
+    status: "REFUSED",
+    receivedAt: NOW - 62 * MIN,
+    decidedAt: NOW - 60 * MIN,
+    slaDeadlineAt: NOW - 57 * MIN,
+  },
+];
+
+const CLINIC: ClinicCapacity = {
+  totalDaily: 22,
+  currentLoad: 0.62,
+};
+
 export function buildSeed(): Pick<
   Store,
-  "simClock" | "patients" | "sms" | "lwbs"
+  "simClock" | "patients" | "sms" | "lwbs" | "referrals" | "clinic"
 > {
   return {
     simClock: NOW,
     patients: PATIENTS,
     sms: SMS,
     lwbs: 2, // 1 NO_SHOW + 1 historical (Pierre Dubois recent + one prior session)
+    referrals: REFERRALS,
+    clinic: CLINIC,
   };
 }

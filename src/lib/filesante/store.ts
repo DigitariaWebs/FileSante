@@ -2,9 +2,9 @@
 
 import { buildSeed } from "@/data/seed";
 
-import type { Patient, Store } from "./types";
+import type { Patient, Referral, Store } from "./types";
 
-const KEY = "filesante.store.v1";
+const KEY = "filesante.store.v3";
 const MIN = 60_000;
 
 const initial: Store = {
@@ -14,6 +14,8 @@ const initial: Store = {
   patients: [],
   sms: [],
   lwbs: 0,
+  referrals: [],
+  clinic: { totalDaily: 22, currentLoad: 0.62 },
 };
 
 function seeded(): Store {
@@ -57,7 +59,13 @@ function hydrate() {
     if (raw) {
       const parsed = JSON.parse(raw) as Partial<Store>;
       state = { ...initial, ...parsed };
-      if (!state.patients || state.patients.length === 0) {
+      // Schema check: if any required collection is missing/empty, reseed.
+      if (
+        !state.patients ||
+        state.patients.length === 0 ||
+        !state.referrals ||
+        !state.clinic
+      ) {
         state = seeded();
         persist();
       }
@@ -69,15 +77,23 @@ function hydrate() {
     state = seeded();
     persist();
   }
-  // Anchor real clock now so tick deltas start fresh.
+  // Anchor real clock so tick deltas start fresh.
   state.realAnchor = Date.now();
   emit();
 }
 
 export const store = {
+  // Hot snapshot used by both SSR and the client. Deterministic on the
+  // first render — localStorage is only consulted after a deferred
+  // `hydrate()` call, so server-rendered HTML matches the initial client
+  // render before any effect runs.
   get(): Store {
-    if (!hydrated) hydrate();
     return state;
+  },
+  // Called from a client-only useEffect to swap to localStorage state
+  // after the first paint. Safe to call repeatedly.
+  hydrate() {
+    hydrate();
   },
   subscribe(fn: Listener) {
     listeners.add(fn);
@@ -275,4 +291,55 @@ export function formatHhmm(simMs: number): string {
 
 export function incLwbs() {
   store.set((s) => ({ ...s, lwbs: s.lwbs + 1 }));
+}
+
+/* ─── Clinique (first-line destination) actions ─── */
+
+export function decideReferral(id: string, status: "ACCEPTED" | "REFUSED") {
+  store.set((s) => {
+    const next = s.referrals.map((r) =>
+      r.id === id ? { ...r, status, decidedAt: s.simClock } : r,
+    );
+    let load = s.clinic.currentLoad;
+    if (status === "ACCEPTED") {
+      load = Math.min(0.98, load + 1 / s.clinic.totalDaily);
+    }
+    return { ...s, referrals: next, clinic: { ...s.clinic, currentLoad: load } };
+  });
+}
+
+export function addReferral(
+  draft: Omit<Referral, "id" | "receivedAt" | "decidedAt" | "slaDeadlineAt" | "status"> & {
+    slaMinutes?: number;
+  },
+): Referral {
+  const s = store.get();
+  const slaMin = draft.slaMinutes ?? 5;
+  const referral: Referral = {
+    id: `r_${Math.random().toString(36).slice(2, 9)}_${Date.now().toString(36)}`,
+    patientId: draft.patientId,
+    patientInitials: draft.patientInitials,
+    patientName: draft.patientName,
+    source: draft.source,
+    sourceLabel: draft.sourceLabel,
+    motif: draft.motif,
+    priority: draft.priority,
+    destinationId: draft.destinationId,
+    status: "PENDING",
+    receivedAt: s.simClock,
+    decidedAt: null,
+    slaDeadlineAt: s.simClock + slaMin * MIN,
+  };
+  store.set((s) => ({ ...s, referrals: [...s.referrals, referral] }));
+  return referral;
+}
+
+export function setClinicLoad(load: number) {
+  const v = Math.max(0, Math.min(0.98, load));
+  store.set((s) => ({ ...s, clinic: { ...s.clinic, currentLoad: v } }));
+}
+
+export function setClinicCapacity(totalDaily: number) {
+  const v = Math.max(1, Math.floor(totalDaily));
+  store.set((s) => ({ ...s, clinic: { ...s.clinic, totalDaily: v } }));
 }

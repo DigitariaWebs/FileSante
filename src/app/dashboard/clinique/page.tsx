@@ -1,110 +1,45 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useMemo } from "react";
 
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Sparkline } from "@/components/dashboard/Sparkline";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { useFileSante } from "@/hooks/useFileSante";
-
-type ReferralStatus = "PENDING" | "ACCEPTED" | "REFUSED" | "EXPIRED";
-
-type Referral = {
-  id: string;
-  patientInitials: string;
-  patientName: string;
-  source: "TRIAGE" | "811" | "911";
-  sourceLabel: string;
-  motif: string;
-  priority: "P4" | "P5";
-  receivedAt: number; // minutes ago (sim)
-  slaSecondsLeft: number; // countdown until expiry
-  status: ReferralStatus;
-};
-
-const INITIAL_REFERRALS: Referral[] = [
-  {
-    id: "r_001",
-    patientInitials: "AG",
-    patientName: "Antoine Gagnon",
-    source: "TRIAGE",
-    sourceLabel: "Triage HMR",
-    motif: "Douleur lombaire persistante depuis 3 jours",
-    priority: "P4",
-    receivedAt: 2,
-    slaSecondsLeft: 24,
-    status: "PENDING",
-  },
-  {
-    id: "r_002",
-    patientInitials: "SR",
-    patientName: "Sophie Roy",
-    source: "811",
-    sourceLabel: "Info-Santé 811",
-    motif: "Suspicion d'otite — adulte",
-    priority: "P5",
-    receivedAt: 4,
-    slaSecondsLeft: 14,
-    status: "PENDING",
-  },
-  {
-    id: "r_003",
-    patientInitials: "OB",
-    patientName: "Olivier Bélanger",
-    source: "TRIAGE",
-    sourceLabel: "Triage HMR",
-    motif: "Fièvre 38,5°C — adulte autonome",
-    priority: "P4",
-    receivedAt: 7,
-    slaSecondsLeft: 0,
-    status: "ACCEPTED",
-  },
-  {
-    id: "r_004",
-    patientInitials: "ÉP",
-    patientName: "Élise Pelletier",
-    source: "811",
-    sourceLabel: "Info-Santé 811",
-    motif: "Migraine — antécédents connus",
-    priority: "P4",
-    receivedAt: 12,
-    slaSecondsLeft: 0,
-    status: "REFUSED",
-  },
-];
+import { decideReferral } from "@/lib/filesante/store";
+import type { Referral } from "@/lib/filesante/types";
 
 export default function CliniqueHome() {
   const s = useFileSante();
-  const [referrals, setReferrals] = useState<Referral[]>(INITIAL_REFERRALS);
-  const [load, setLoad] = useState(0.62); // 62% capacity start
 
   const counts = useMemo(() => {
-    const pending = referrals.filter((r) => r.status === "PENDING").length;
-    const accepted = referrals.filter((r) => r.status === "ACCEPTED").length;
-    const refused = referrals.filter((r) => r.status === "REFUSED").length;
-    return { pending, accepted, refused, total: referrals.length };
-  }, [referrals]);
+    const pending = s.referrals.filter((r) => r.status === "PENDING").length;
+    const accepted = s.referrals.filter((r) => r.status === "ACCEPTED").length;
+    const refused = s.referrals.filter((r) => r.status === "REFUSED").length;
+    return { pending, accepted, refused, total: s.referrals.length };
+  }, [s.referrals]);
 
-  function decide(id: string, status: "ACCEPTED" | "REFUSED") {
-    setReferrals((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, status, slaSecondsLeft: 0 } : r)),
-    );
-    if (status === "ACCEPTED") {
-      setLoad((l) => Math.min(0.98, l + 0.05));
-    }
-  }
+  const topPending = useMemo(
+    () =>
+      s.referrals
+        .filter((r) => r.status === "PENDING")
+        .sort((a, b) => a.slaDeadlineAt - b.slaDeadlineAt)
+        .slice(0, 3),
+    [s.referrals],
+  );
 
-  // Mock heartbeat series — last 12 sim hours of patient acceptance throughput
+  // Mock 12-bucket heartbeat that drifts with simClock
   const heartbeat = useMemo(() => {
     const buckets = 12;
-    const arr = new Array(buckets).fill(0).map((_, i) => {
+    return new Array(buckets).fill(0).map((_, i) => {
       const base = 2 + Math.sin(i * 0.7 + s.simClock / 600000) * 1.6;
       return Math.max(0, Math.round(base + (i % 3 === 0 ? 1 : 0)));
     });
-    return arr;
   }, [s.simClock]);
 
+  const load = s.clinic.currentLoad;
   const loadPct = Math.round(load * 100);
   const loadBarColor =
     load > 0.85 ? "#c8102e" : load > 0.65 ? "#ff9f0a" : "#34c759";
@@ -113,16 +48,16 @@ export default function CliniqueHome() {
     <>
       <PageHeader
         eyebrow="Première ligne · GMF Plateau"
-        title="Demandes de référencement"
-        description="Acceptez ou refusez les patients orientés par le triage hospitalier et 811."
+        title="Vue d'ensemble"
+        description="Demandes reçues, charge actuelle et heartbeat de la clinique."
         actions={
           <button
             type="button"
-            onClick={() => setLoad(0.62)}
+            onClick={() => window.print()}
             className="fs-btn fs-btn-pearl"
           >
-            <Icon name="refresh" size={14} />
-            Réinitialiser charge
+            <Icon name="archive" size={14} />
+            Rapport de quart
           </button>
         }
       />
@@ -132,7 +67,7 @@ export default function CliniqueHome() {
           <Tile
             label="En attente"
             value={counts.pending}
-            sub="Délai SLA 30 s par demande"
+            sub="Délai SLA 5 min par demande"
             icon="alarm"
             tone={counts.pending > 0 ? "warn" : "neutral"}
           />
@@ -154,7 +89,7 @@ export default function CliniqueHome() {
           <Tile
             label="Charge actuelle"
             value={`${loadPct}%`}
-            sub="14 / 22 patients aujourd'hui"
+            sub={`${Math.round(load * s.clinic.totalDaily)} / ${s.clinic.totalDaily} patients aujourd'hui`}
             icon="graphUp"
             tone={load > 0.85 ? "danger" : load > 0.65 ? "warn" : "success"}
           />
@@ -165,17 +100,18 @@ export default function CliniqueHome() {
           <div className="flex items-end justify-between">
             <div>
               <div className="fs-eyebrow">Capacité quotidienne</div>
-              <h2 className="fs-tagline mt-1">
-                Charge vs plages disponibles
-              </h2>
+              <h2 className="fs-tagline mt-1">Charge vs plages disponibles</h2>
               <p className="mt-1 text-[12.5px] text-[var(--ap-ink-muted-80)]">
-                Capacité totale: 22 patients/jour · 1 MD + 1 IPS sur place
+                Capacité totale: {s.clinic.totalDaily} patients/jour · 1 MD +
+                1 IPS sur place
               </p>
             </div>
             <div className="text-right">
-              <div className="font-mono text-[34px] font-semibold leading-none tabular-nums text-[var(--ap-ink)]">
-                {Math.round(load * 22)}
-                <span className="text-[var(--ap-ink-muted-48)]">/22</span>
+              <div className="fs-display-md leading-none tabular-nums">
+                {Math.round(load * s.clinic.totalDaily)}
+                <span className="text-[var(--ap-ink-muted-48)]">
+                  /{s.clinic.totalDaily}
+                </span>
               </div>
             </div>
           </div>
@@ -187,60 +123,50 @@ export default function CliniqueHome() {
           </div>
           <div className="mt-2 flex justify-between text-[11.5px] text-[var(--ap-ink-muted-48)]">
             <span>0</span>
-            <span>11</span>
-            <span>22</span>
+            <span>{Math.round(s.clinic.totalDaily / 2)}</span>
+            <span>{s.clinic.totalDaily}</span>
           </div>
         </section>
 
-        {/* Inbox */}
+        {/* Top pending + heartbeat */}
         <section className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
           <div className="fs-dash-card-flush">
             <div className="flex items-end justify-between border-b border-[var(--ap-hairline)] px-6 py-4">
               <div>
-                <div className="fs-eyebrow">Inbox</div>
-                <h2 className="fs-tagline mt-1">
-                  Demandes en attente de décision
-                </h2>
+                <div className="fs-eyebrow">À décider maintenant</div>
+                <h2 className="fs-tagline mt-1">Demandes urgentes</h2>
                 <p className="mt-1 text-[12.5px] text-[var(--ap-ink-muted-80)]">
-                  Acceptez en moins de 30 s — sinon la demande est routée
-                  ailleurs automatiquement.
+                  Triées par SLA — agissez avant expiration.
                 </p>
               </div>
-              <span
-                className="fs-chip"
-                style={
-                  counts.pending > 0
-                    ? { background: "rgba(255,159,10,0.16)", color: "#a06400" }
-                    : undefined
-                }
+              <Link
+                href="/dashboard/clinique/inbox"
+                className="text-[13px] font-medium text-[var(--fs-primary)] hover:underline"
               >
-                {counts.pending} en attente
-              </span>
+                Tout voir →
+              </Link>
             </div>
-
-            {referrals.filter((r) => r.status === "PENDING").length === 0 ? (
+            {topPending.length === 0 ? (
               <EmptyState
                 icon={<Icon name="checkCircle" size={18} />}
                 title="Aucune demande en attente"
-                description="Vous êtes à jour. Les nouvelles demandes arriveront ici en temps réel."
+                description="Vous êtes à jour. Les nouvelles demandes apparaîtront ici."
               />
             ) : (
               <ul className="divide-y divide-[var(--ap-hairline)]">
-                {referrals
-                  .filter((r) => r.status === "PENDING")
-                  .map((r) => (
-                    <ReferralRow
-                      key={r.id}
-                      ref={r}
-                      onAccept={() => decide(r.id, "ACCEPTED")}
-                      onRefuse={() => decide(r.id, "REFUSED")}
-                    />
-                  ))}
+                {topPending.map((r) => (
+                  <ReferralPreview
+                    key={r.id}
+                    referral={r}
+                    now={s.simClock}
+                    onAccept={() => decideReferral(r.id, "ACCEPTED")}
+                    onRefuse={() => decideReferral(r.id, "REFUSED")}
+                  />
+                ))}
               </ul>
             )}
           </div>
 
-          {/* Heartbeat + activity */}
           <div className="fs-dash-card p-6">
             <div className="fs-eyebrow">Activité 24 h</div>
             <h2 className="fs-tagline mt-1">Heartbeat</h2>
@@ -269,113 +195,77 @@ export default function CliniqueHome() {
               <dd className="text-right font-medium text-[var(--ap-ink)]">
                 08:00 – 20:00
               </dd>
-              <dt className="text-[var(--ap-ink-muted-80)]">Champ d&apos;exercice</dt>
+              <dt className="text-[var(--ap-ink-muted-80)]">
+                Champ d&apos;exercice
+              </dt>
               <dd className="text-right font-medium text-[var(--ap-ink)]">
                 P4 / P5
               </dd>
             </dl>
           </div>
         </section>
-
-        {/* Recent decisions */}
-        <section className="fs-dash-card-flush">
-          <div className="border-b border-[var(--ap-hairline)] px-6 py-4">
-            <div className="fs-eyebrow">Historique</div>
-            <h2 className="fs-tagline mt-1">Décisions récentes</h2>
-          </div>
-          <ul className="divide-y divide-[var(--ap-hairline)]">
-            {referrals
-              .filter((r) => r.status !== "PENDING")
-              .map((r) => (
-                <ReferralRow key={r.id} ref={r} />
-              ))}
-          </ul>
-        </section>
       </div>
     </>
   );
 }
 
-function ReferralRow({
-  ref,
+function ReferralPreview({
+  referral,
+  now,
   onAccept,
   onRefuse,
 }: {
-  ref: Referral;
-  onAccept?: () => void;
-  onRefuse?: () => void;
+  referral: Referral;
+  now: number;
+  onAccept: () => void;
+  onRefuse: () => void;
 }) {
-  const isPending = ref.status === "PENDING";
-  const sourceColor =
-    ref.source === "TRIAGE"
-      ? "#c8102e"
-      : ref.source === "811"
-        ? "#0d74ce"
-        : "#a06400";
+  const secLeft = Math.max(0, Math.floor((referral.slaDeadlineAt - now) / 1000));
+  const minLeft = Math.floor(secLeft / 60);
+  const sec = secLeft % 60;
+  const slaLabel =
+    secLeft > 60
+      ? `${minLeft}m ${sec.toString().padStart(2, "0")}s`
+      : `${secLeft}s`;
   return (
     <li className="flex items-center gap-4 px-6 py-4">
       <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[var(--ap-surface-strong)] text-[12.5px] font-semibold text-[var(--ap-ink-muted-80)]">
-        {ref.patientInitials}
+        {referral.patientInitials}
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="text-[14px] font-semibold tracking-[-0.016em] text-[var(--ap-ink)]">
-            {ref.patientName}
+          <span className="text-[14px] font-semibold text-[var(--ap-ink)]">
+            {referral.patientName}
           </span>
-          <span className="fs-chip fs-chip-primary">{ref.priority}</span>
-          <span
-            className="fs-chip"
-            style={{
-              background: `${sourceColor}1a`,
-              color: sourceColor,
-            }}
-          >
-            {ref.sourceLabel}
-          </span>
+          <span className="fs-chip fs-chip-primary">{referral.priority}</span>
+          <span className="fs-chip">{referral.sourceLabel}</span>
         </div>
         <div className="mt-0.5 text-[12.5px] text-[var(--ap-ink-muted-80)]">
-          {ref.motif}
+          {referral.motif}
         </div>
       </div>
-      {isPending ? (
-        <>
-          <div className="text-right">
-            <div className="font-mono text-[12.5px] font-semibold tabular-nums text-[#c8102e]">
-              {ref.slaSecondsLeft}s
-            </div>
-            <div className="text-[11px] text-[var(--ap-ink-muted-48)]">
-              SLA
-            </div>
-          </div>
-          <div className="flex gap-1.5">
-            <button
-              type="button"
-              onClick={onAccept}
-              className="fs-btn fs-btn-primary fs-btn-sm"
-            >
-              Accepter
-            </button>
-            <button
-              type="button"
-              onClick={onRefuse}
-              className="fs-btn fs-btn-danger fs-btn-sm"
-            >
-              Refuser
-            </button>
-          </div>
-        </>
-      ) : (
-        <span
-          className="fs-chip"
-          style={
-            ref.status === "ACCEPTED"
-              ? { background: "rgba(52,199,89,0.12)", color: "#1a6d2f" }
-              : { background: "rgba(200,16,46,0.1)", color: "#c8102e" }
-          }
+      <div className="text-right">
+        <div className="font-mono text-[12.5px] font-semibold tabular-nums text-[#c8102e]">
+          {slaLabel}
+        </div>
+        <div className="text-[11px] text-[var(--ap-ink-muted-48)]">SLA</div>
+      </div>
+      <div className="flex gap-1.5">
+        <button
+          type="button"
+          onClick={onAccept}
+          className="fs-btn fs-btn-primary fs-btn-sm"
         >
-          {ref.status === "ACCEPTED" ? "Accepté" : "Refusé"}
-        </span>
-      )}
+          Accepter
+        </button>
+        <button
+          type="button"
+          onClick={onRefuse}
+          className="fs-btn fs-btn-danger fs-btn-sm"
+        >
+          Refuser
+        </button>
+      </div>
     </li>
   );
 }
