@@ -2,10 +2,33 @@
 
 import { buildSeed } from "@/data/seed";
 
-import type { Patient, Referral, Store } from "./types";
+import type {
+  Civiere,
+  CiviereReason,
+  CiviereStatus,
+  NurseShift,
+  Patient,
+  Referral,
+  StaffIndicators,
+  Store,
+} from "./types";
 
-const KEY = "filesante.store.v3";
+const KEY = "filesante.store.v5";
 const MIN = 60_000;
+
+const DEFAULT_SHIFT: NurseShift = {
+  firstName: "Marie",
+  lastName: "Tremblay",
+  changedAt: 0,
+};
+
+const DEFAULT_STAFF: StaffIndicators = {
+  nurses: 6,
+  doctors: 3,
+  civieresAvail: 8,
+  civieresTotal: 20,
+  shiftLabel: "Jour · 07h–19h",
+};
 
 const initial: Store = {
   simClock: 0,
@@ -16,6 +39,11 @@ const initial: Store = {
   lwbs: 0,
   referrals: [],
   clinic: { totalDaily: 22, currentLoad: 0.62 },
+  civieres: [],
+  surgeMinutes: 0,
+  surgeStartedAt: null,
+  nurseShift: DEFAULT_SHIFT,
+  staff: DEFAULT_STAFF,
 };
 
 function seeded(): Store {
@@ -59,12 +87,18 @@ function hydrate() {
     if (raw) {
       const parsed = JSON.parse(raw) as Partial<Store>;
       state = { ...initial, ...parsed };
-      // Schema check: if any required collection is missing/empty, reseed.
+      // Schema check: reseed if any required collection missing OR no active
+      // patients remain (stale demo data from prior session).
+      const activeCount = (state.patients ?? []).filter(isActive).length;
       if (
         !state.patients ||
         state.patients.length === 0 ||
+        activeCount === 0 ||
         !state.referrals ||
-        !state.clinic
+        !state.clinic ||
+        !state.civieres ||
+        !state.nurseShift ||
+        !state.staff
       ) {
         state = seeded();
         persist();
@@ -82,13 +116,17 @@ function hydrate() {
   emit();
 }
 
+// Stable empty snapshot for SSR + client hydration first render. Real
+// (seeded/localStorage) state takes over after mount via a post-hydration
+// re-render, preventing SSR/client drift in dev.
+const EMPTY_STATE: Store = Object.freeze({ ...initial }) as Store;
+
 export const store = {
-  // Hot snapshot used by both SSR and the client. Deterministic on the
-  // first render — localStorage is only consulted after a deferred
-  // `hydrate()` call, so server-rendered HTML matches the initial client
-  // render before any effect runs.
   get(): Store {
     return state;
+  },
+  getServer(): Store {
+    return EMPTY_STATE;
   },
   // Called from a client-only useEffect to swap to localStorage state
   // after the first paint. Safe to call repeatedly.
@@ -147,7 +185,7 @@ export function addPatient(
 ): Patient {
   const s = store.get();
   const active = s.patients.filter(isActive).length;
-  const waitMin = estimateWaitMin(active + 1);
+  const waitMin = estimateWaitMin(active + 1) + s.surgeMinutes;
   const now = s.simClock;
   const patient: Patient = {
     ...draft,
@@ -164,9 +202,10 @@ export function addPatient(
     closedAt: null,
   };
   store.set((s) => ({ ...s, patients: [...s.patients, patient] }));
+  const channel = draft.contact === "CALL" ? "Appel" : "SMS";
   logSms(
     patient.id,
-    `Bienvenue chez FileSanté. Code retour: ${patient.code}. Attente estimée: ${waitMin} min.`,
+    `Bienvenue chez FileSanté (${channel}). Code retour: ${patient.code}. Attente estimée: ${waitMin} min.`,
   );
   return patient;
 }
@@ -231,7 +270,8 @@ export function cancelPatient(id: string) {
   if (
     p.status !== "AWAITING_CONFIRMATION" &&
     p.status !== "AWAITING_CONFIRMATION_FINAL" &&
-    p.status !== "REGISTERED"
+    p.status !== "REGISTERED" &&
+    p.status !== "CONFIRMED"
   )
     return;
   updatePatient(id, { status: "CANCELLED_BY_PATIENT", closedAt: s.simClock });
@@ -342,4 +382,90 @@ export function setClinicLoad(load: number) {
 export function setClinicCapacity(totalDaily: number) {
   const v = Math.max(1, Math.floor(totalDaily));
   store.set((s) => ({ ...s, clinic: { ...s.clinic, totalDaily: v } }));
+}
+
+/* ─── Civière (in-facility stretcher) actions ─── */
+
+export function newCiviereId(): string {
+  return `civ_${Math.random().toString(36).slice(2, 9)}_${Date.now().toString(36)}`;
+}
+
+export function addCiviere(draft: {
+  patientName: string;
+  stretcherNum: number;
+  reason: CiviereReason;
+  hospital: Civiere["hospital"];
+}): Civiere {
+  const s = store.get();
+  const civiere: Civiere = {
+    id: newCiviereId(),
+    patientName: draft.patientName,
+    stretcherNum: draft.stretcherNum,
+    reason: draft.reason,
+    status: "AWAITING_RESULTS",
+    hospital: draft.hospital,
+    createdAt: s.simClock,
+    updatedAt: s.simClock,
+    alertDismissedAt: null,
+  };
+  store.set((s) => ({
+    ...s,
+    civieres: [...s.civieres, civiere],
+    staff: { ...s.staff, civieresAvail: Math.max(0, s.staff.civieresAvail - 1) },
+  }));
+  return civiere;
+}
+
+export function setCiviereStatus(id: string, status: CiviereStatus) {
+  store.set((s) => ({
+    ...s,
+    civieres: s.civieres.map((c) =>
+      c.id === id ? { ...c, status, updatedAt: s.simClock } : c,
+    ),
+    staff:
+      status === "DISCHARGED"
+        ? {
+            ...s.staff,
+            civieresAvail: Math.min(
+              s.staff.civieresTotal,
+              s.staff.civieresAvail + 1,
+            ),
+          }
+        : s.staff,
+  }));
+}
+
+export function dismissCiviereAlert(id: string) {
+  store.set((s) => ({
+    ...s,
+    civieres: s.civieres.map((c) =>
+      c.id === id ? { ...c, alertDismissedAt: s.simClock } : c,
+    ),
+  }));
+}
+
+export function removeCiviere(id: string) {
+  store.set((s) => ({
+    ...s,
+    civieres: s.civieres.filter((c) => c.id !== id),
+  }));
+}
+
+/* ─── Surge mode + nurse shift ─── */
+
+export function setSurge(minutes: 0 | 15 | 30 | 45) {
+  const s = store.get();
+  store.set((cur) => ({
+    ...cur,
+    surgeMinutes: minutes,
+    surgeStartedAt: minutes > 0 ? s.simClock : null,
+  }));
+}
+
+export function changeShift(firstName: string, lastName: string) {
+  const s = store.get();
+  store.set((cur) => ({
+    ...cur,
+    nurseShift: { firstName, lastName, changedAt: s.simClock },
+  }));
 }

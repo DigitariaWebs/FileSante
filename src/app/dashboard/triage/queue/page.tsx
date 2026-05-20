@@ -280,14 +280,24 @@ function RowActions({ p }: { p: Patient }) {
   }
   if (p.status === "CONFIRMED") {
     return (
-      <button
-        type="button"
-        onClick={() => completePatient(p.id)}
-        className="fs-btn fs-btn-pearl fs-btn-sm"
-        title="Marquer terminé sans passage à l'urgence"
-      >
-        Terminer
-      </button>
+      <div className="inline-flex gap-1.5">
+        <button
+          type="button"
+          onClick={() => completePatient(p.id)}
+          className="fs-btn fs-btn-pearl fs-btn-sm"
+          title="Marquer terminé sans passage à l'urgence"
+        >
+          Terminer
+        </button>
+        <button
+          type="button"
+          onClick={() => cancelPatient(p.id)}
+          className="fs-btn fs-btn-danger fs-btn-sm"
+          title="Annuler — patient ne se présente pas"
+        >
+          Annuler
+        </button>
+      </div>
     );
   }
   return <span className="text-[var(--ap-ink-muted-48)]">—</span>;

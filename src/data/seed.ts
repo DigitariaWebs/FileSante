@@ -1,4 +1,5 @@
 import type {
+  Civiere,
   ClinicCapacity,
   Patient,
   Referral,
@@ -439,9 +440,56 @@ const CLINIC: ClinicCapacity = {
   currentLoad: 0.62,
 };
 
+const CIVIERES: Civiere[] = [
+  {
+    id: "seed_civ_01",
+    patientName: "Jean Picard",
+    stretcherNum: 3,
+    reason: "LABO",
+    status: "AWAITING_RESULTS",
+    hospital: "HMR",
+    createdAt: NOW - 95 * MIN,
+    updatedAt: NOW - 95 * MIN,
+    alertDismissedAt: null,
+  },
+  {
+    id: "seed_civ_02",
+    patientName: "Marie Lavigne",
+    stretcherNum: 7,
+    reason: "RADIO",
+    status: "AWAITING_RESULTS",
+    hospital: "HMR",
+    createdAt: NOW - 145 * MIN,
+    updatedAt: NOW - 145 * MIN,
+    alertDismissedAt: null,
+  },
+  {
+    id: "seed_civ_03",
+    patientName: "Robert Tanguay",
+    stretcherNum: 12,
+    reason: "CONSULTANT",
+    status: "RESULTS_IN",
+    hospital: "HMR",
+    createdAt: NOW - 220 * MIN,
+    updatedAt: NOW - 30 * MIN,
+    alertDismissedAt: NOW - 25 * MIN,
+  },
+  {
+    id: "seed_civ_04",
+    patientName: "Hélène Fortin",
+    stretcherNum: 15,
+    reason: "OTHER",
+    status: "DECISION",
+    hospital: "HMR",
+    createdAt: NOW - 260 * MIN,
+    updatedAt: NOW - 12 * MIN,
+    alertDismissedAt: NOW - 12 * MIN,
+  },
+];
+
 export function buildSeed(): Pick<
   Store,
-  "simClock" | "patients" | "sms" | "lwbs" | "referrals" | "clinic"
+  "simClock" | "patients" | "sms" | "lwbs" | "referrals" | "clinic" | "civieres"
 > {
   return {
     simClock: NOW,
@@ -450,5 +498,6 @@ export function buildSeed(): Pick<
     lwbs: 2, // 1 NO_SHOW + 1 historical (Pierre Dubois recent + one prior session)
     referrals: REFERRALS,
     clinic: CLINIC,
+    civieres: CIVIERES,
   };
 }

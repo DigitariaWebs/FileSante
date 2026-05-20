@@ -4,7 +4,9 @@ import { useMemo, useState } from "react";
 
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { PageHeader } from "@/components/dashboard/PageHeader";
+import { SavingsStrip } from "@/components/dashboard/SavingsStrip";
 import { Sparkline } from "@/components/dashboard/Sparkline";
+import { StaffIndicator } from "@/components/dashboard/StaffIndicator";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import { Icon } from "@/components/ui/Icon";
 import { useFileSante } from "@/hooks/useFileSante";
@@ -179,6 +181,16 @@ export default function DirectionHome() {
             tone={kpi.noShow > 0 || s.lwbs > 0 ? "danger" : "neutral"}
           />
         </section>
+
+        {/* Staff indicator bar */}
+        <StaffIndicator />
+
+        {/* Savings calculator (IEDM-based) */}
+        <SavingsStrip
+          patientsTreated={kpi.confirmed}
+          avgWaitMin={kpi.avgWaitMin || 220}
+          civieresAvoided={s.civieres.filter((c) => c.status === "DISCHARGED").length}
+        />
 
         {/* Two-col: overdue alerts + hourly chart */}
         <section className="grid gap-5 lg:grid-cols-[1fr_1.2fr]">

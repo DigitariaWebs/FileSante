@@ -44,6 +44,11 @@ const DEFAULT_SECTIONS: SidebarSection[] = [
         icon: "taskList",
       },
       { href: "/dashboard/triage/kpi", label: "Indicateurs", icon: "graphUp" },
+      {
+        href: "/dashboard/triage/analytics",
+        label: "Analytique",
+        icon: "gauge",
+      },
     ],
   },
   {
@@ -55,6 +60,16 @@ const DEFAULT_SECTIONS: SidebarSection[] = [
         icon: "userPlus",
       },
       { href: "/dashboard/triage/scan", label: "Retour patient", icon: "qr" },
+      {
+        href: "/dashboard/triage/civieres",
+        label: "Civières",
+        icon: "archive",
+      },
+      {
+        href: "/dashboard/triage/calls",
+        label: "Rappels téléphone",
+        icon: "phoneOff",
+      },
       { href: "/dashboard/triage/sms", label: "Journal SMS", icon: "chat" },
     ],
   },

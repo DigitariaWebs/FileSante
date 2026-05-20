@@ -1,13 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
+import { CiviereAlertBar } from "@/components/dashboard/CiviereAlertBar";
 import { Countdown } from "@/components/dashboard/Countdown";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { PageHeader } from "@/components/dashboard/PageHeader";
+import { ShiftChangeModal } from "@/components/dashboard/ShiftChangeModal";
 import { Sparkline } from "@/components/dashboard/Sparkline";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
+import { StaffIndicator } from "@/components/dashboard/StaffIndicator";
+import { SurgeModal } from "@/components/dashboard/SurgeModal";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { useFileSante } from "@/hooks/useFileSante";
 import { isActive } from "@/lib/filesante/store";
@@ -15,6 +19,8 @@ import type { Patient } from "@/lib/filesante/types";
 
 export default function DashboardHome() {
   const s = useFileSante();
+  const [surgeOpen, setSurgeOpen] = useState(false);
+  const [shiftOpen, setShiftOpen] = useState(false);
 
   const stats = useMemo(() => {
     const active = s.patients.filter(isActive);
@@ -90,28 +96,52 @@ export default function DashboardHome() {
     <>
       <PageHeader
         eyebrow="Pilotage · temps réel"
-        title="Bonjour, Marie."
+        title={`Bonjour, ${s.nurseShift.firstName}.`}
         description="État de la file FileSanté — patients P4 / P5 routés vers la première ligne."
         actions={
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="fs-btn fs-btn-pearl"
-          >
-            <Icon name="archive" size={14} />
-            Rapport de quart
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={() => setShiftOpen(true)}
+              className="fs-btn fs-btn-pearl"
+              title="Changer de quart"
+            >
+              <Icon name="userPlus" size={14} />
+              Changer quart
+            </button>
+            <button
+              type="button"
+              onClick={() => setSurgeOpen(true)}
+              className={`fs-btn ${s.surgeMinutes > 0 ? "fs-btn-danger" : "fs-btn-pearl"}`}
+              title="Mode surcharge"
+            >
+              <Icon name="warning" size={14} />
+              {s.surgeMinutes > 0 ? `Surcharge +${s.surgeMinutes}` : "Surcharge"}
+            </button>
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="fs-btn fs-btn-pearl"
+            >
+              <Icon name="archive" size={14} />
+              Rapport de quart
+            </button>
+          </>
         }
       />
 
       <div className="flex flex-col gap-10 px-10 py-10">
+        <CiviereAlertBar />
+
         <section className="fs-dash-card flex flex-wrap items-center justify-between gap-5 p-6">
           <div className="flex items-center gap-5">
             <div className="grid h-12 w-12 place-items-center rounded-xl bg-[rgba(30,144,214,0.1)] text-[var(--fs-primary)]">
               <Icon name="viewGrid" size={22} />
             </div>
             <div>
-              <div className="fs-eyebrow">Session en cours · HMR</div>
+              <div className="fs-eyebrow">
+                Session en cours · HMR · {s.nurseShift.firstName} {s.nurseShift.lastName}
+              </div>
               <h2 className="fs-display-md mt-1 text-[24px]!">
                 {stats.active} patient{stats.active === 1 ? "" : "s"} dans la
                 file
@@ -119,10 +149,18 @@ export default function DashboardHome() {
               <p className="mt-1 text-[14px] text-[var(--ap-ink-muted-80)]">
                 {stats.awaiting} à confirmer · {stats.confirmed} confirmés ·{" "}
                 {stats.arrived24} arrivés
+                {s.surgeMinutes > 0 && (
+                  <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-[#fff8e6] px-2 py-0.5 text-[12px] font-semibold text-[#a06400]">
+                    <Icon name="warning" size={11} />
+                    Surcharge +{s.surgeMinutes} min active
+                  </span>
+                )}
               </p>
             </div>
           </div>
         </section>
+
+        <StaffIndicator />
 
         <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           <StatTile
@@ -251,6 +289,17 @@ export default function DashboardHome() {
           )}
         </Panel>
       </div>
+
+      <SurgeModal
+        open={surgeOpen}
+        current={s.surgeMinutes}
+        onClose={() => setSurgeOpen(false)}
+      />
+      <ShiftChangeModal
+        open={shiftOpen}
+        current={s.nurseShift}
+        onClose={() => setShiftOpen(false)}
+      />
     </>
   );
 }

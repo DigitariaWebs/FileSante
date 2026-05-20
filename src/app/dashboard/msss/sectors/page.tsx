@@ -7,6 +7,20 @@ import { Icon } from "@/components/ui/Icon";
 import { CLINICS, SECTORS, type Sector } from "@/data/clinics";
 import { useFileSante } from "@/hooks/useFileSante";
 
+const STALE_THRESHOLD_MIN = 240; // 4h
+
+function heatColor(load: number): { fg: string; bg: string; label: string } {
+  if (load < 0.25)
+    return { fg: "#1a6d2f", bg: "rgba(52,199,89,0.1)", label: "calme" };
+  if (load < 0.5)
+    return { fg: "#0f6fb4", bg: "rgba(30,144,214,0.1)", label: "modéré" };
+  if (load < 0.75)
+    return { fg: "#a06400", bg: "rgba(255,159,10,0.16)", label: "occupé" };
+  if (load < 0.9)
+    return { fg: "#c8102e", bg: "rgba(200,16,46,0.08)", label: "saturé" };
+  return { fg: "#c8102e", bg: "rgba(200,16,46,0.2)", label: "critique" };
+}
+
 type SectorRow = {
   name: string;
   load: number; // 0..1 average
@@ -101,10 +115,13 @@ export default function MsssSectors() {
               <div className="fs-eyebrow">Carte sectorielle</div>
               <h2 className="fs-tagline mt-1">Charge par secteur</h2>
             </div>
-            <div className="flex items-center gap-3 text-[11.5px]">
-              <Legend color="#34c759" label="< 60%" />
-              <Legend color="#ff9f0a" label="60–85%" />
-              <Legend color="#c8102e" label="> 85%" />
+            <div className="flex flex-wrap items-center gap-3 text-[11px]">
+              <Legend color="#22c55e" label="< 25 % calme" />
+              <Legend color="#1e90d6" label="25–50 % modéré" />
+              <Legend color="#f59e0b" label="50–75 % occupé" />
+              <Legend color="#c8102e" label="75–90 % saturé" />
+              <Legend color="#9a1129" label="> 90 % critique" />
+              <Legend color="#a8a8aa" label="inactif > 4 h" />
             </div>
           </div>
           <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -118,6 +135,9 @@ export default function MsssSectors() {
             ))}
           </div>
         </section>
+
+        {/* Stale clinics section */}
+        <StaleSection />
 
         {/* Sector detail */}
         <section className="fs-dash-card-flush">
@@ -203,13 +223,7 @@ function SectorCell({
   onClick: () => void;
 }) {
   const pct = Math.round(row.load * 100);
-  const color = row.load > 0.85 ? "#c8102e" : row.load > 0.6 ? "#ff9f0a" : "#34c759";
-  const bg =
-    row.load > 0.85
-      ? "rgba(200,16,46,0.08)"
-      : row.load > 0.6
-        ? "rgba(255,159,10,0.1)"
-        : "rgba(52,199,89,0.08)";
+  const heat = heatColor(row.load);
   return (
     <button
       type="button"
@@ -219,7 +233,7 @@ function SectorCell({
           ? "border-[var(--ap-ink)]"
           : "border-[var(--ap-hairline)] hover:border-[var(--ap-ink-muted-48)]"
       }`}
-      style={{ background: bg }}
+      style={{ background: heat.bg }}
     >
       <div className="flex items-start justify-between">
         <div className="text-[13.5px] font-semibold tracking-[-0.016em] text-[var(--ap-ink)]">
@@ -227,7 +241,7 @@ function SectorCell({
         </div>
         <div
           className="font-mono text-[14px] font-semibold tabular-nums"
-          style={{ color }}
+          style={{ color: heat.fg }}
         >
           {pct}%
         </div>
@@ -235,12 +249,12 @@ function SectorCell({
       <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/60">
         <div
           className="h-full rounded-full"
-          style={{ width: `${pct}%`, background: color }}
+          style={{ width: `${pct}%`, background: heat.fg }}
         />
       </div>
       <div className="mt-2 flex items-center justify-between text-[11px] text-[var(--ap-ink-muted-80)]">
         <span>
-          {row.clinics} clinique{row.clinics === 1 ? "" : "s"}
+          {row.clinics} clinique{row.clinics === 1 ? "" : "s"} · {heat.label}
         </span>
         {row.inactive > 0 ? (
           <span className="font-semibold text-[#c8102e]">
@@ -251,6 +265,59 @@ function SectorCell({
         )}
       </div>
     </button>
+  );
+}
+
+function StaleSection() {
+  const stale = CLINICS.filter(
+    (c) => c.lastActivitySimMin >= STALE_THRESHOLD_MIN,
+  );
+  if (stale.length === 0) return null;
+  return (
+    <section className="fs-dash-card-flush border border-[#ddd] bg-[#fafafa]">
+      <div className="flex items-center justify-between border-b border-[var(--ap-hairline)] px-6 py-4">
+        <div>
+          <div className="fs-eyebrow">Cliniques inactives</div>
+          <h2 className="fs-tagline mt-1">
+            {stale.length} clinique{stale.length === 1 ? "" : "s"} sans
+            heartbeat &gt; 4 h
+          </h2>
+          <p className="mt-1 text-[12.5px] text-[var(--ap-ink-muted-80)]">
+            Aucun signal API depuis le seuil — vérifier connectivité ou
+            disponibilité.
+          </p>
+        </div>
+        <span className="fs-chip" style={{ background: "#ddd" }}>
+          <Icon name="phoneOff" size={11} />
+          stale
+        </span>
+      </div>
+      <ul className="divide-y divide-[var(--ap-hairline)]">
+        {stale.map((c) => {
+          const h = Math.floor(c.lastActivitySimMin / 60);
+          const m = c.lastActivitySimMin % 60;
+          return (
+            <li
+              key={c.id}
+              className="flex items-center gap-4 px-6 py-3.5"
+            >
+              <span className="fs-chip">{c.type}</span>
+              <div className="min-w-0 flex-1">
+                <div className="text-[14px] font-semibold text-[var(--ap-ink)]">
+                  {c.name}
+                </div>
+                <div className="text-[11.5px] text-[var(--ap-ink-muted-48)]">
+                  {c.sector} · {c.phone}
+                </div>
+              </div>
+              <span className="font-mono text-[12.5px] tabular-nums text-[#a06400]">
+                inactif depuis {h}h{m.toString().padStart(2, "0")}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
 

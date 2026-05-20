@@ -17,6 +17,8 @@ export type Origin = "DESK" | "HOME_811";
 
 export type HospitalCode = "HMR" | "HND" | "HSC" | "HGM";
 
+export type AgeRange = "0-2" | "3-12" | "13-17" | "18-64" | "65+";
+
 export type Patient = {
   id: string;
   code: string; // 4-digit return code
@@ -74,8 +76,46 @@ export type ClinicCapacity = {
   currentLoad: number; // 0..1 fraction
 };
 
+/* ─── Civière (in-facility stretcher) tracking ─── */
+
+export type CiviereStatus =
+  | "AWAITING_RESULTS"   // labo/radio/consult pending
+  | "RESULTS_IN"          // results back, pending physician decision
+  | "DECISION"            // physician deciding orientation
+  | "DISCHARGED";         // bed released
+
+export type CiviereReason = "LABO" | "RADIO" | "CONSULTANT" | "OTHER";
+
+export type Civiere = {
+  id: string;
+  patientName: string;
+  stretcherNum: number;
+  reason: CiviereReason;
+  status: CiviereStatus;
+  hospital: HospitalCode;
+  createdAt: number;
+  updatedAt: number;
+  alertDismissedAt: number | null;
+};
+
+/* ─── Triage operations state ─── */
+
+export type NurseShift = {
+  firstName: string;
+  lastName: string;
+  changedAt: number;
+};
+
+export type StaffIndicators = {
+  nurses: number;
+  doctors: number;
+  civieresAvail: number;
+  civieresTotal: number;
+  shiftLabel: string;
+};
+
 export type Store = {
-  simClock: number; // simulated ms since epoch start of session
+  simClock: number; // simulated ms since session start
   realAnchor: number; // Date.now() at last tick
   speed: number; // multiplier 1 | 60 | 600
   patients: Patient[];
@@ -83,4 +123,9 @@ export type Store = {
   lwbs: number; // counter
   referrals: Referral[];
   clinic: ClinicCapacity;
+  civieres: Civiere[];
+  surgeMinutes: number; // 0 | 15 | 30 | 45 — active surge delay
+  surgeStartedAt: number | null;
+  nurseShift: NurseShift;
+  staff: StaffIndicators;
 };

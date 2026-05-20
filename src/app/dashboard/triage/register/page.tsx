@@ -154,18 +154,22 @@ export default function RegisterPage() {
               />
             </Field>
             <Field label="Méthode de contact" htmlFor="contact">
-              <Select
-                value={contact}
-                onValueChange={(v) => setContact(v as ContactMethod)}
-              >
-                <SelectTrigger id="contact" className="h-11 w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="SMS">SMS</SelectItem>
-                  <SelectItem value="CALL">Appel</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="grid grid-cols-2 gap-2">
+                <ContactButton
+                  active={contact === "SMS"}
+                  onClick={() => setContact("SMS")}
+                  icon="chat"
+                  title="SMS"
+                  sub="Code + QR envoyés"
+                />
+                <ContactButton
+                  active={contact === "CALL"}
+                  onClick={() => setContact("CALL")}
+                  icon="phoneOff"
+                  title="Appel"
+                  sub="Code dicté par téléphone"
+                />
+              </div>
             </Field>
           </div>
 
@@ -364,6 +368,50 @@ function OriginButton({
       </span>
       <span className="mt-0.5 text-[12.5px] text-[var(--ap-ink-muted-48)]">
         {sub}
+      </span>
+    </button>
+  );
+}
+
+function ContactButton({
+  active,
+  onClick,
+  icon,
+  title,
+  sub,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: Parameters<typeof Icon>[0]["name"];
+  title: string;
+  sub: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left transition-colors ${
+        active
+          ? "border-[var(--fs-primary)] bg-[rgba(30,144,214,0.06)]"
+          : "border-[var(--ap-hairline)] bg-[var(--ap-canvas)] hover:border-[var(--ap-ink-muted-48)]"
+      }`}
+    >
+      <span
+        className={`grid h-8 w-8 place-items-center rounded-full ${
+          active
+            ? "bg-[var(--fs-primary)] text-white"
+            : "bg-[var(--ap-canvas-parchment)] text-[var(--ap-ink-muted-80)]"
+        }`}
+      >
+        <Icon name={icon} size={14} />
+      </span>
+      <span className="min-w-0">
+        <span className="block text-[13.5px] font-semibold text-[var(--ap-ink)]">
+          {title}
+        </span>
+        <span className="block text-[11.5px] text-[var(--ap-ink-muted-48)]">
+          {sub}
+        </span>
       </span>
     </button>
   );

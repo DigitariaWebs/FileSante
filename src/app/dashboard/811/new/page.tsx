@@ -16,9 +16,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CLINICS, SECTORS, SYMPTOMS } from "@/data/clinics";
+import { AGE_RANGES, CLINICS, SECTORS, SYMPTOMS } from "@/data/clinics";
 import { addPatient, addReferral } from "@/lib/filesante/store";
 import type {
+  AgeRange,
   ContactMethod,
   HospitalCode,
   Patient,
@@ -38,6 +39,7 @@ export default function HotlineNew() {
   const [phone, setPhone] = useState("");
   const [sector, setSector] = useState<string>(SECTORS[0]);
   const [priority, setPriority] = useState<Priority>("P4");
+  const [ageRange, setAgeRange] = useState<AgeRange>("18-64");
   const [contact, setContact] = useState<ContactMethod>("SMS");
   const [hospital, setHospital] = useState<HospitalCode>("HMR");
   const [symptoms, setSymptoms] = useState<string[]>([]);
@@ -72,6 +74,7 @@ export default function HotlineNew() {
     setPhone("");
     setSector(SECTORS[0]);
     setPriority("P4");
+    setAgeRange("18-64");
     setContact("SMS");
     setHospital("HMR");
     setSymptoms([]);
@@ -99,10 +102,11 @@ export default function HotlineNew() {
     const e = validate();
     setErrors(e);
     if (Object.keys(e).length > 0) return;
-    const motif =
+    const base =
       symptoms.length > 0
         ? `${symptoms.join(", ")}${notes.trim() ? ` — ${notes.trim()}` : ""}`
         : notes.trim();
+    const motif = `[${ageRange} ans] ${base}`;
     const p = addPatient({
       firstName: firstName.trim(),
       lastName: lastName.trim(),
@@ -244,6 +248,31 @@ export default function HotlineNew() {
                     </SelectContent>
                   </Select>
                 </Field>
+              </div>
+
+              <div className="mt-5">
+                <Label className="text-[12.5px] font-medium text-[var(--ap-ink-muted-80)]">
+                  Tranche d&apos;âge
+                </Label>
+                <div className="mt-2 grid grid-cols-5 gap-2">
+                  {AGE_RANGES.map((r) => {
+                    const active = ageRange === r;
+                    return (
+                      <button
+                        key={r}
+                        type="button"
+                        onClick={() => setAgeRange(r)}
+                        className={`rounded-xl border px-2 py-2 text-center text-[13px] font-semibold transition-colors ${
+                          active
+                            ? "border-[var(--fs-primary)] bg-[rgba(30,144,214,0.06)] text-[var(--fs-primary)]"
+                            : "border-[var(--ap-hairline)] bg-[var(--ap-canvas)] text-[var(--ap-ink-muted-80)] hover:border-[var(--ap-ink-muted-48)]"
+                        }`}
+                      >
+                        {r}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="mt-5">
@@ -413,7 +442,7 @@ export default function HotlineNew() {
                               {r.name}
                             </div>
                             <div className="text-[11.5px] text-[var(--ap-ink-muted-48)]">
-                              {r.sector} · ETA {r.eta}
+                              {r.sector} · ETA {r.eta} · {r.distanceKm.toFixed(1)} km
                             </div>
                           </div>
                           <div
@@ -428,6 +457,33 @@ export default function HotlineNew() {
                             className="h-full rounded-full"
                             style={{ width: `${pct}%`, background: color }}
                           />
+                        </div>
+                        <div className="mt-3 grid grid-cols-3 gap-2 text-[11px] text-[var(--ap-ink-muted-80)]">
+                          <div className="flex flex-col">
+                            <span className="text-[10px] uppercase tracking-[0.06em] text-[var(--ap-ink-muted-48)]">
+                              prochain créneau
+                            </span>
+                            <span className="font-mono tabular-nums">
+                              ~{r.nextSlotMin} min
+                            </span>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-[10px] uppercase tracking-[0.06em] text-[var(--ap-ink-muted-48)]">
+                              tél
+                            </span>
+                            <span className="font-mono tabular-nums">
+                              {r.phone}
+                            </span>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-[10px] uppercase tracking-[0.06em] text-[var(--ap-ink-muted-48)]">
+                              heures
+                            </span>
+                            <span className="truncate">{r.hours}</span>
+                          </div>
+                        </div>
+                        <div className="mt-2 text-[11px] text-[var(--ap-ink-muted-48)]">
+                          {r.address}
                         </div>
                         {i === 0 && (
                           <div className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-semibold text-[var(--fs-primary)]">

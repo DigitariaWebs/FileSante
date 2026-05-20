@@ -5,9 +5,17 @@ import { useMemo } from "react";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Sparkline } from "@/components/dashboard/Sparkline";
 import { Icon, type IconName } from "@/components/ui/Icon";
+import { MultiLineChart } from "@/components/ui/MultiLineChart";
 import { useFileSante } from "@/hooks/useFileSante";
 import { isActive } from "@/lib/filesante/store";
 import type { HospitalCode } from "@/lib/filesante/types";
+
+const HOSPITAL_COLORS: Record<HospitalCode, string> = {
+  HMR: "#1e90d6",
+  HND: "#22c55e",
+  HSC: "#f59e0b",
+  HGM: "#c8102e",
+};
 
 const HOSPITALS: { code: HospitalCode; name: string; ciusss: string }[] = [
   { code: "HMR", name: "Maisonneuve-Rosemont", ciusss: "Est-de-l'Île" },
@@ -97,6 +105,50 @@ export default function MsssHome() {
     return arr;
   }, [s.patients, s.simClock]);
 
+  const multiSeries = useMemo(() => {
+    const buckets = 12;
+    const win = 12 * 60 * MIN;
+    const now = s.simClock;
+    return HOSPITALS.map((h) => {
+      const arr = new Array(buckets).fill(0);
+      for (const p of s.patients) {
+        if (p.hospital !== h.code) continue;
+        const d = now - p.registeredAt;
+        if (d >= 0 && d <= win) {
+          const i = Math.min(buckets - 1, Math.floor(((win - d) / win) * buckets));
+          arr[i] += 1;
+        }
+      }
+      return {
+        label: h.code,
+        color: HOSPITAL_COLORS[h.code],
+        data: arr,
+      };
+    });
+  }, [s.patients, s.simClock]);
+
+  const multiLabels = useMemo(() => {
+    const realNow = new Date();
+    return Array.from({ length: 12 }, (_, i) => {
+      const h = (realNow.getHours() - (11 - i) + 24) % 24;
+      return `${h.toString().padStart(2, "0")}h`;
+    });
+  }, []);
+
+  const occupancyByHospital = useMemo(() => {
+    return HOSPITALS.map((h) => {
+      const activeCiv = s.civieres.filter(
+        (c) => c.hospital === h.code && c.status !== "DISCHARGED",
+      ).length;
+      // mock occupancy: civières used / 20 + 30% base load
+      const pct = Math.min(100, 30 + activeCiv * 5);
+      const status = pct > 85 ? "alert" : pct > 65 ? "warn" : "ok";
+      const color =
+        status === "alert" ? "#c8102e" : status === "warn" ? "#a06400" : "#1a6d2f";
+      return { ...h, civieres: activeCiv, pct, color, status };
+    });
+  }, [s.civieres]);
+
   return (
     <>
       <PageHeader
@@ -146,6 +198,75 @@ export default function MsssHome() {
             icon="phoneOff"
             tone={provincial.inactive > 0 ? "warn" : "neutral"}
           />
+        </section>
+
+        {/* Provincial multi-hospital line chart */}
+        <section className="fs-dash-card p-6">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <div className="fs-eyebrow">Activité provinciale · 12 dernières heures</div>
+              <h2 className="fs-tagline mt-1">Inscriptions par hôpital</h2>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 text-[11.5px]">
+              {multiSeries.map((m) => (
+                <span
+                  key={m.label}
+                  className="inline-flex items-center gap-1.5 text-[var(--ap-ink-muted-80)]"
+                >
+                  <span
+                    className="h-2 w-2 rounded-full"
+                    style={{ background: m.color }}
+                  />
+                  {m.label}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="mt-5 overflow-x-auto">
+            <MultiLineChart
+              series={multiSeries}
+              labels={multiLabels}
+              width={760}
+              height={230}
+            />
+          </div>
+        </section>
+
+        {/* Occupancy cards */}
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {occupancyByHospital.map((h) => (
+            <div key={h.code} className="fs-dash-card overflow-hidden p-0">
+              <div className="h-1" style={{ background: h.color }} />
+              <div className="px-5 py-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-mono text-[12px] font-semibold text-[var(--fs-primary)]">
+                      {h.code}
+                    </div>
+                    <div className="text-[13px] font-semibold text-[var(--ap-ink)]">
+                      {h.name}
+                    </div>
+                  </div>
+                  <span
+                    className="font-mono text-[18px] font-semibold tabular-nums"
+                    style={{ color: h.color }}
+                  >
+                    {h.pct}%
+                  </span>
+                </div>
+                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[var(--ap-canvas-parchment)]">
+                  <div
+                    className="h-full rounded-full"
+                    style={{ width: `${h.pct}%`, background: h.color }}
+                  />
+                </div>
+                <div className="mt-2 flex items-center justify-between text-[11px] text-[var(--ap-ink-muted-48)]">
+                  <span>{h.civieres} civière{h.civieres === 1 ? "" : "s"} actives</span>
+                  <span>{h.ciusss}</span>
+                </div>
+              </div>
+            </div>
+          ))}
         </section>
 
         {/* Hospital breakdown */}

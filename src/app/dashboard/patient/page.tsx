@@ -7,10 +7,16 @@ import { Suspense, useMemo, useState } from "react";
 import { Countdown } from "@/components/dashboard/Countdown";
 import { QrCard } from "@/components/dashboard/QrCard";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Icon } from "@/components/ui/Icon";
+import { Input } from "@/components/ui/input";
 import { CLINICS, type Clinic } from "@/data/clinics";
 import { useFileSante } from "@/hooks/useFileSante";
-import { cancelPatient, confirmPatient } from "@/lib/filesante/store";
+import {
+  cancelPatient,
+  confirmPatient,
+  markArrived,
+} from "@/lib/filesante/store";
 import type {
   HospitalCode,
   Patient,
@@ -30,6 +36,14 @@ const STEPS: { key: PatientStatus[]; label: string; tag: string }[] = [
   { key: ["CONFIRMED"], label: "Confirmé", tag: "Fenêtre 60 min" },
   { key: ["ARRIVED", "COMPLETED"], label: "Arrivé", tag: "Triage retour" },
 ];
+
+type Phase =
+  | "lookup"
+  | "activation"
+  | "waiting"
+  | "soon"
+  | "depart"
+  | "closed";
 
 const HOSPITAL_INFO: Record<
   HospitalCode,
@@ -56,6 +70,28 @@ const HOSPITAL_INFO: Record<
     phone: "+1 514 934-1934",
   },
 };
+
+const PHASE_GRADIENT: Record<Phase, string> = {
+  lookup: "linear-gradient(135deg, #e8f3fb 0%, #f5f5f7 100%)",
+  activation: "linear-gradient(135deg, #e8f3fb 0%, #ffffff 70%)",
+  waiting: "linear-gradient(135deg, #1e90d6 0%, #0f6fb4 100%)",
+  soon: "linear-gradient(135deg, #f59e0b 0%, #b45309 100%)",
+  depart: "linear-gradient(135deg, #22c55e 0%, #166534 100%)",
+  closed: "linear-gradient(135deg, #f5f5f7 0%, #e0e0e0 100%)",
+};
+
+function statusToPhase(p?: Patient): Phase {
+  if (!p) return "lookup";
+  if (!p.consent) return "activation";
+  if (p.status === "REGISTERED") return "waiting";
+  if (
+    p.status === "AWAITING_CONFIRMATION" ||
+    p.status === "AWAITING_CONFIRMATION_FINAL"
+  )
+    return "soon";
+  if (p.status === "CONFIRMED") return "depart";
+  return "closed";
+}
 
 export default function PatientPage() {
   return (
@@ -84,14 +120,10 @@ function PatientInner() {
       .sort((a, b) => b.at - a.at);
   }, [s.sms, patient]);
 
-  // If 811 routed this patient to a first-line clinic, surface the most
-  // recent accepted referral so the patient sees the actual destination.
   const acceptedReferral: Referral | undefined = useMemo(() => {
     if (!patient) return undefined;
     return s.referrals
-      .filter(
-        (r) => r.patientId === patient.id && r.status === "ACCEPTED",
-      )
+      .filter((r) => r.patientId === patient.id && r.status === "ACCEPTED")
       .sort((a, b) => (b.decidedAt ?? 0) - (a.decidedAt ?? 0))[0];
   }, [s.referrals, patient]);
 
@@ -105,43 +137,94 @@ function PatientInner() {
     setActiveCode(codeInput.trim());
   }
 
+  const phase = statusToPhase(patient);
+
   return (
-    <div className="mx-auto max-w-[920px] px-6 py-10">
-      <form
-        onSubmit={submitLookup}
-        className="fs-dash-card mb-8 flex flex-col gap-3 p-5 sm:flex-row sm:items-end"
+    <div
+      className="min-h-screen px-6 py-10 transition-colors"
+      style={{ background: PHASE_GRADIENT[phase] }}
+    >
+      <div
+        className={`mx-auto max-w-[920px] ${
+          phase === "waiting" || phase === "soon" || phase === "depart"
+            ? "text-white"
+            : ""
+        }`}
       >
-        <div className="flex-1">
-          <label htmlFor="code" className="fs-eyebrow mb-1.5 inline-block">
-            Votre code retour à 4 chiffres
-          </label>
-          <input
-            id="code"
-            value={codeInput}
-            onChange={(e) => setCodeInput(e.target.value)}
-            inputMode="numeric"
-            maxLength={4}
-            placeholder="4218"
-            className="fs-input font-mono text-center text-[22px] tracking-[0.32em] tabular-nums"
-          />
-        </div>
-        <button type="submit" className="fs-btn fs-btn-primary">
-          Consulter ma file
-        </button>
-      </form>
-
-      {!patient ? (
-        <NotFound code={activeCode} />
-      ) : (
-        <PatientView
-          patient={patient}
-          sms={sms}
-          destinationClinic={destinationClinic}
+        <LookupForm
+          codeInput={codeInput}
+          setCodeInput={setCodeInput}
+          submit={submitLookup}
+          phase={phase}
         />
-      )}
 
-      <HelpBar />
+        {!patient ? (
+          <NotFound code={activeCode} />
+        ) : (
+          <PatientView
+            patient={patient}
+            phase={phase}
+            sms={sms}
+            destinationClinic={destinationClinic}
+          />
+        )}
+
+        <HelpBar phase={phase} />
+        <DemoBar patient={patient} />
+      </div>
     </div>
+  );
+}
+
+function LookupForm({
+  codeInput,
+  setCodeInput,
+  submit,
+  phase,
+}: {
+  codeInput: string;
+  setCodeInput: (v: string) => void;
+  submit: (e: React.FormEvent) => void;
+  phase: Phase;
+}) {
+  const dark = phase === "waiting" || phase === "soon" || phase === "depart";
+  return (
+    <form
+      onSubmit={submit}
+      className={`mb-8 flex flex-col gap-3 rounded-2xl border p-5 backdrop-blur-md sm:flex-row sm:items-end ${
+        dark
+          ? "border-white/30 bg-white/15"
+          : "border-[var(--ap-hairline)] bg-[var(--ap-canvas)]"
+      }`}
+    >
+      <div className="flex-1">
+        <label
+          htmlFor="code"
+          className={`fs-eyebrow mb-1.5 inline-block ${dark ? "text-white/80!" : ""}`}
+        >
+          Code retour à 4 chiffres
+        </label>
+        <input
+          id="code"
+          value={codeInput}
+          onChange={(e) => setCodeInput(e.target.value)}
+          inputMode="numeric"
+          maxLength={4}
+          placeholder="4218"
+          className={`fs-input font-mono text-center text-[22px] tracking-[0.32em] tabular-nums ${
+            dark
+              ? "border-white/40 bg-white/10 text-white placeholder:text-white/60"
+              : ""
+          }`}
+        />
+      </div>
+      <button
+        type="submit"
+        className={dark ? "fs-btn fs-btn-pearl" : "fs-btn fs-btn-primary"}
+      >
+        Consulter ma file
+      </button>
+    </form>
   );
 }
 
@@ -169,20 +252,21 @@ function NotFound({ code }: { code: string }) {
 
 function PatientView({
   patient,
+  phase,
   sms,
   destinationClinic,
 }: {
   patient: Patient;
+  phase: Phase;
   sms: { id: string; at: number; body: string }[];
   destinationClinic?: Clinic;
 }) {
+  if (phase === "activation") {
+    return <ActivationView patient={patient} />;
+  }
+
   const qrPayload = `filesante:${patient.id}:${patient.code}`;
-  const closed =
-    patient.status === "ARRIVED" ||
-    patient.status === "COMPLETED" ||
-    patient.status === "NO_SHOW" ||
-    patient.status === "NO_RESPONSE" ||
-    patient.status === "CANCELLED_BY_PATIENT";
+  const closed = phase === "closed";
 
   const deadline =
     patient.status === "REGISTERED"
@@ -194,6 +278,7 @@ function PatientView({
           : patient.status === "CONFIRMED"
             ? patient.arrivalDeadlineAt
             : null;
+
   const deadlineLabel =
     patient.status === "REGISTERED"
       ? "Demande de confirmation dans"
@@ -205,39 +290,126 @@ function PatientView({
           : "—";
 
   const hospital = HOSPITAL_INFO[patient.hospital];
+  const dark = phase === "waiting" || phase === "soon" || phase === "depart";
 
   return (
     <div className="flex flex-col gap-6">
       {/* Status hero */}
-      <section className="fs-dash-card relative overflow-hidden p-8">
+      <section
+        className={`relative overflow-hidden rounded-2xl border p-8 backdrop-blur-md ${
+          dark
+            ? "border-white/20 bg-white/10 text-white"
+            : "fs-dash-card"
+        }`}
+      >
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="fs-eyebrow mb-2">Bonjour</div>
-            <h1 className="fs-display-md">
+            <div
+              className={`fs-eyebrow mb-2 ${dark ? "text-white/80!" : ""}`}
+            >
+              {phase === "waiting" && "En attente — restez disponible"}
+              {phase === "soon" && "Votre tour approche"}
+              {phase === "depart" && "Partez maintenant"}
+              {phase === "closed" && "Dossier fermé"}
+            </div>
+            <h1
+              className={`fs-display-md ${dark ? "text-white!" : ""}`}
+            >
               {patient.firstName} {patient.lastName}
             </h1>
-            <p className="mt-2 max-w-[480px] text-[14px] text-[var(--ap-ink-muted-80)]">
+            <p
+              className={`mt-2 max-w-[480px] text-[14px] ${
+                dark ? "text-white/85" : "text-[var(--ap-ink-muted-80)]"
+              }`}
+            >
               {patient.motif}
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <StatusBadge status={patient.status} />
               <span className="fs-chip">{patient.priority}</span>
               <span className="fs-chip">{patient.hospital}</span>
+              {patient.contact === "CALL" && (
+                <span className="fs-chip">
+                  <Icon name="phoneOff" size={11} />
+                  Appel
+                </span>
+              )}
             </div>
           </div>
 
-          {!closed && (
-            <div className="rounded-lg border border-[var(--ap-hairline-strong)] bg-[var(--ap-canvas-parchment)] px-5 py-4 text-right">
-              <div className="fs-eyebrow">{deadlineLabel}</div>
-              <div className="mt-1.5 font-mono text-[28px] font-semibold leading-none tabular-nums text-[var(--ap-ink)]">
+          {!closed && deadline !== null && (
+            <div
+              className={`rounded-lg border px-5 py-4 text-right ${
+                dark
+                  ? "border-white/30 bg-white/10"
+                  : "border-[var(--ap-hairline-strong)] bg-[var(--ap-canvas-parchment)]"
+              }`}
+            >
+              <div className={`fs-eyebrow ${dark ? "text-white/80!" : ""}`}>
+                {deadlineLabel}
+              </div>
+              <div
+                className={`mt-1.5 font-mono text-[28px] font-semibold leading-none tabular-nums ${
+                  dark ? "text-white" : "text-[var(--ap-ink)]"
+                }`}
+              >
                 <Countdown target={deadline} />
               </div>
             </div>
           )}
         </div>
 
-        <StepRail status={patient.status} />
+        <StepRail status={patient.status} dark={dark} />
       </section>
+
+      {/* DEPART action — big arrival button */}
+      {phase === "depart" && (
+        <section className="rounded-2xl border border-white/30 bg-white/15 p-6 text-center text-white backdrop-blur-md">
+          <div className="fs-eyebrow text-white/85!">Action requise</div>
+          <h2 className="fs-display-md mt-2 text-white!">
+            Présentez-vous au triage retour
+          </h2>
+          <p className="mt-2 text-[14px] text-white/85">
+            Code retour à présenter à l&apos;infirmière.
+          </p>
+          <div className="mt-5 font-mono text-[48px] font-semibold leading-none tracking-[0.08em] tabular-nums text-white">
+            {patient.code}
+          </div>
+          <button
+            type="button"
+            onClick={() => markArrived(patient.id)}
+            className="mt-6 inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-[16px] font-semibold text-[#166534]"
+          >
+            <Icon name="checkCircle" size={18} />
+            Je suis arrivé(e)
+          </button>
+          <p className="mt-3 text-[12px] text-white/80">
+            Fenêtre de 30 min — sinon la place sera libérée.
+          </p>
+        </section>
+      )}
+
+      {/* SOON — preparation reminder */}
+      {phase === "soon" && (
+        <section className="rounded-2xl border border-white/30 bg-white/15 p-6 text-white backdrop-blur-md">
+          <div className="fs-eyebrow text-white/85!">Préparez-vous</div>
+          <h2 className="fs-tagline mt-1 text-white!">
+            Documents à prévoir
+          </h2>
+          <ul className="mt-3 grid gap-2 text-[14px] sm:grid-cols-3">
+            <DocCheck label="Carte RAMQ" />
+            <DocCheck label="Pièce d'identité" />
+            <DocCheck label="Médicaments actuels" />
+          </ul>
+          <div className="mt-4 flex items-center gap-2 rounded-lg bg-white/15 p-3 text-[13px]">
+            <Icon name="warning" size={14} />
+            <span>
+              Aggravation des symptômes ? Composez 811 ou présentez-vous
+              immédiatement à l&apos;urgence.
+            </span>
+          </div>
+        </section>
+      )}
 
       {/* Code + QR + Actions */}
       <section className="grid gap-6 md:grid-cols-[auto_1fr]">
@@ -246,9 +418,11 @@ function PatientView({
           <div className="font-mono text-[44px] font-semibold leading-none tracking-[0.08em] tabular-nums text-[var(--ap-ink)]">
             {patient.code}
           </div>
-          <QrCard value={qrPayload} size={156} />
+          {patient.contact === "SMS" && <QrCard value={qrPayload} size={156} />}
           <p className="text-center text-[12px] text-[var(--ap-ink-muted-80)]">
-            Présentez ce code ou le QR au triage retour.
+            {patient.contact === "SMS"
+              ? "Présentez ce code ou le QR au triage retour."
+              : "Dictez ce code à l'infirmière au triage retour."}
           </p>
         </div>
 
@@ -291,7 +465,7 @@ function PatientView({
           {patient.status === "CONFIRMED" && (
             <ActionCard
               title="Confirmé — venez maintenant"
-              body="Présentez-vous au triage retour avec votre code ou QR avant la fin de la fenêtre."
+              body="Présentez-vous au triage retour avec votre code avant la fin de la fenêtre."
               tone="success"
             />
           )}
@@ -334,7 +508,8 @@ function PatientView({
                   Routage 811 — secteur {destinationClinic.sector}
                 </div>
                 <div className="mt-1 text-[12px] text-[var(--ap-ink-muted-48)]">
-                  Heures : {destinationClinic.hours} · ETA {destinationClinic.eta}
+                  Heures : {destinationClinic.hours} · ETA{" "}
+                  {destinationClinic.eta}
                 </div>
               </div>
             )}
@@ -403,38 +578,130 @@ function PatientView({
   );
 }
 
-function HelpBar() {
+function ActivationView({ patient }: { patient: Patient }) {
+  const [phone, setPhone] = useState(patient.phone);
+  const [agree, setAgree] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!/[0-9]{10,}/.test(phone.replace(/\D/g, ""))) {
+      setError("Numéro à 10 chiffres requis");
+      return;
+    }
+    if (!agree) {
+      setError("Vous devez accepter pour rejoindre la file");
+      return;
+    }
+    setError(null);
+    // In a real backend this would activate the patient. For the demo just
+    // surface a confirmation via SMS log — patient status flows naturally.
+    confirmPatient(patient.id);
+  }
+
+  return (
+    <div className="fs-dash-card flex flex-col items-center gap-5 p-8 text-center">
+      <div className="grid h-14 w-14 place-items-center rounded-full bg-[rgba(30,144,214,0.1)] text-[var(--fs-primary)]">
+        <Icon name="qr" size={26} />
+      </div>
+      <div>
+        <h1 className="fs-display-md">Activez votre code</h1>
+        <p className="mt-2 max-w-[420px] text-[14px] text-[var(--ap-ink-muted-80)]">
+          Confirmez votre numéro pour rejoindre la file FileSanté et recevoir
+          les notifications.
+        </p>
+      </div>
+      <form
+        onSubmit={submit}
+        className="flex w-full max-w-[420px] flex-col gap-3 text-left"
+      >
+        <label
+          htmlFor="act-phone"
+          className="fs-eyebrow inline-block"
+        >
+          Téléphone (10 chiffres minimum)
+        </label>
+        <Input
+          id="act-phone"
+          type="tel"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          className="h-12 font-mono text-[16px] tabular-nums"
+        />
+        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[var(--ap-hairline)] bg-[var(--ap-canvas-parchment)] p-3.5 text-[13.5px]">
+          <Checkbox
+            checked={agree}
+            onCheckedChange={(v) => setAgree(v === true)}
+            className="mt-0.5"
+          />
+          <span className="text-[var(--ap-ink-muted-80)]">
+            <b className="text-[var(--ap-ink)] font-semibold">Loi 25.</b>{" "}
+            J&apos;autorise FileSanté à m&apos;envoyer des SMS pour mon
+            orientation et confirmation d&apos;arrivée.
+          </span>
+        </label>
+        {error && (
+          <div className="rounded-lg border border-[#c8102e]/40 bg-[rgba(200,16,46,0.06)] px-3 py-2 text-[12.5px] text-[#c8102e]">
+            {error}
+          </div>
+        )}
+        <button type="submit" className="fs-btn fs-btn-primary mt-2">
+          Confirmer et rejoindre la file
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function DocCheck({ label }: { label: string }) {
+  return (
+    <li className="flex items-center gap-2 rounded-lg bg-white/15 px-3 py-2">
+      <Icon name="checkCircle" size={14} />
+      <span>{label}</span>
+    </li>
+  );
+}
+
+function HelpBar({ phase }: { phase: Phase }) {
+  const dark = phase === "waiting" || phase === "soon" || phase === "depart";
+  const cardCls = dark
+    ? "border-white/30 bg-white/10 text-white backdrop-blur-md"
+    : "fs-dash-card";
   return (
     <section className="mt-8 grid gap-3 sm:grid-cols-2">
       <a
         href="tel:811"
-        className="fs-dash-card flex items-center gap-3 p-4 transition-colors hover:bg-[var(--ap-canvas-parchment)]"
+        className={`flex items-center gap-3 rounded-2xl border p-4 transition-colors ${cardCls}`}
       >
-        <span className="grid h-10 w-10 place-items-center rounded-full bg-[rgba(30,144,214,0.1)] text-[var(--fs-primary)]">
+        <span
+          className={`grid h-10 w-10 place-items-center rounded-full ${
+            dark ? "bg-white/20" : "bg-[rgba(30,144,214,0.1)] text-[var(--fs-primary)]"
+          }`}
+        >
           <Icon name="chat" size={18} />
         </span>
         <div>
-          <div className="text-[14px] font-semibold text-[var(--ap-ink)]">
-            Besoin d&apos;aide ? Composez 811
-          </div>
-          <div className="text-[12px] text-[var(--ap-ink-muted-48)]">
-            Info-Santé · 24 h sur 24, 7 jours sur 7
+          <div className="text-[14px] font-semibold">Besoin d&apos;aide ? 811</div>
+          <div className={`text-[12px] ${dark ? "text-white/75" : "text-[var(--ap-ink-muted-48)]"}`}>
+            Info-Santé · 24 h sur 24
           </div>
         </div>
       </a>
       <a
         href="tel:911"
-        className="fs-dash-card flex items-center gap-3 p-4 transition-colors hover:bg-[var(--ap-canvas-parchment)]"
+        className={`flex items-center gap-3 rounded-2xl border p-4 transition-colors ${cardCls}`}
       >
-        <span className="grid h-10 w-10 place-items-center rounded-full bg-[rgba(200,16,46,0.1)] text-[#c8102e]">
+        <span
+          className={`grid h-10 w-10 place-items-center rounded-full ${
+            dark ? "bg-white/20" : "bg-[rgba(200,16,46,0.1)] text-[#c8102e]"
+          }`}
+        >
           <Icon name="warning" size={18} />
         </span>
         <div>
-          <div className="text-[14px] font-semibold text-[var(--ap-ink)]">
-            Urgence vitale ? Composez 911
-          </div>
-          <div className="text-[12px] text-[var(--ap-ink-muted-48)]">
-            Douleur thoracique, AVC, perte de conscience…
+          <div className="text-[14px] font-semibold">Urgence vitale ? 911</div>
+          <div className={`text-[12px] ${dark ? "text-white/75" : "text-[var(--ap-ink-muted-48)]"}`}>
+            AVC, douleur thoracique, perte de conscience
           </div>
         </div>
       </a>
@@ -442,45 +709,99 @@ function HelpBar() {
   );
 }
 
-function StepRail({ status }: { status: PatientStatus }) {
+function DemoBar({ patient }: { patient?: Patient }) {
+  if (!patient) return null;
+  return (
+    <section className="mt-8 flex flex-wrap items-center gap-2 rounded-2xl border border-dashed border-[var(--ap-hairline-strong)] bg-[var(--ap-canvas)] px-4 py-3 text-[12.5px] text-[var(--ap-ink-muted-80)]">
+      <span className="fs-eyebrow">Démo</span>
+      <span>Basculer l&apos;état du patient :</span>
+      <button
+        type="button"
+        onClick={() => confirmPatient(patient.id)}
+        className="fs-btn fs-btn-pearl fs-btn-sm"
+      >
+        Confirmer (OUI)
+      </button>
+      <button
+        type="button"
+        onClick={() => cancelPatient(patient.id)}
+        className="fs-btn fs-btn-pearl fs-btn-sm"
+      >
+        Annuler (NON)
+      </button>
+      <button
+        type="button"
+        onClick={() => markArrived(patient.id)}
+        className="fs-btn fs-btn-pearl fs-btn-sm"
+      >
+        Marquer arrivé
+      </button>
+    </section>
+  );
+}
+
+function StepRail({
+  status,
+  dark,
+}: {
+  status: PatientStatus;
+  dark: boolean;
+}) {
   const currentIdx = STEPS.findIndex((s) => s.key.includes(status));
   return (
     <ol className="mt-8 grid gap-3 sm:grid-cols-4">
       {STEPS.map((step, i) => {
         const done = currentIdx > i;
         const active = currentIdx === i;
+        const base = dark
+          ? active
+            ? "border-white bg-white/20 text-white"
+            : done
+              ? "border-white/40 bg-white/10 text-white/90"
+              : "border-white/20 bg-white/5 text-white/60"
+          : active
+            ? "border-[var(--ap-ink)] bg-[var(--ap-canvas)]"
+            : done
+              ? "border-[var(--ap-hairline-strong)] bg-[var(--ap-canvas-parchment)]"
+              : "border-[var(--ap-hairline)] bg-[var(--ap-canvas)]";
         return (
           <li
             key={step.label}
-            className={`rounded-lg border p-3 ${
-              active
-                ? "border-[var(--ap-ink)] bg-[var(--ap-canvas)]"
-                : done
-                  ? "border-[var(--ap-hairline-strong)] bg-[var(--ap-canvas-parchment)]"
-                  : "border-[var(--ap-hairline)] bg-[var(--ap-canvas)]"
-            }`}
+            className={`rounded-lg border p-3 ${base}`}
           >
             <div className="flex items-center gap-2">
               <span
                 className={`grid h-5 w-5 place-items-center rounded-full text-[10px] font-semibold ${
                   done || active
-                    ? "bg-[var(--ap-ink)] text-white"
-                    : "bg-[var(--ap-surface-strong)] text-[var(--ap-ink-muted-48)]"
+                    ? dark
+                      ? "bg-white text-[var(--ap-ink)]"
+                      : "bg-[var(--ap-ink)] text-white"
+                    : dark
+                      ? "bg-white/20 text-white/70"
+                      : "bg-[var(--ap-surface-strong)] text-[var(--ap-ink-muted-48)]"
                 }`}
               >
                 {done ? "✓" : i + 1}
               </span>
               <span
                 className={`text-[13px] font-semibold ${
-                  active || done
-                    ? "text-[var(--ap-ink)]"
-                    : "text-[var(--ap-ink-muted-48)]"
+                  dark
+                    ? active || done
+                      ? "text-white"
+                      : "text-white/60"
+                    : active || done
+                      ? "text-[var(--ap-ink)]"
+                      : "text-[var(--ap-ink-muted-48)]"
                 }`}
               >
                 {step.label}
               </span>
             </div>
-            <p className="mt-1 ml-7 text-[11.5px] text-[var(--ap-ink-muted-80)]">
+            <p
+              className={`mt-1 ml-7 text-[11.5px] ${
+                dark ? "text-white/75" : "text-[var(--ap-ink-muted-80)]"
+              }`}
+            >
               {step.tag}
             </p>
           </li>

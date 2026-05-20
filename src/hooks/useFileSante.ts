@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 import { store } from "@/lib/filesante/store";
 import type { Store } from "@/lib/filesante/types";
@@ -10,14 +10,19 @@ function getSnapshot(): Store {
 }
 
 function getServerSnapshot(): Store {
-  return store.get();
+  return store.getServer();
 }
 
 export function useFileSante(): Store {
-  // Defer localStorage hydration to after first commit so server-rendered
-  // HTML matches the initial client render (fixes hydration mismatch).
+  const [mounted, setMounted] = useState(false);
   useEffect(() => {
     store.hydrate();
+    setMounted(true);
   }, []);
-  return useSyncExternalStore(store.subscribe, getSnapshot, getServerSnapshot);
+  const live = useSyncExternalStore(
+    store.subscribe,
+    getSnapshot,
+    getServerSnapshot,
+  );
+  return mounted ? live : store.getServer();
 }
