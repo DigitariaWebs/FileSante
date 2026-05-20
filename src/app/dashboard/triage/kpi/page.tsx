@@ -212,7 +212,7 @@ function Card({
       <div className="flex items-start justify-between">
         <div className="min-w-0">
           <div className="fs-eyebrow">{label}</div>
-          <div className="mt-3 font-[var(--ap-font-display)] text-[34px] leading-[1.07] font-semibold tracking-[-0.374px] tabular-nums text-[var(--ap-ink)]">
+          <div className="fs-display-md mt-3 leading-[1.07] tabular-nums">
             {value}
           </div>
         </div>
@@ -252,7 +252,7 @@ function FunnelStep({
           {pct}%
         </span>
       </div>
-      <div className="mt-2 font-[var(--ap-font-display)] text-[28px] font-semibold tabular-nums tracking-[-0.374px] text-[var(--ap-ink)]">
+      <div className="fs-tagline mt-2 text-[28px]! tabular-nums">
         {count}
       </div>
       <div className="fs-funnel-track mt-2">

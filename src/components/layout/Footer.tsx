@@ -3,18 +3,18 @@ import Link from "next/link";
 
 export function Footer() {
   return (
-    <footer className="mt-16 bg-[#0a2030] py-16 pb-8 text-[#cfdbe7]">
+    <footer className="bg-[var(--ap-canvas-parchment)] py-16 text-[var(--ap-ink-muted-80)]">
       <div className="fs-shell">
         <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div>
             <Image
               src="/Logo.png"
               alt="FileSanté"
-              width={180}
-              height={45}
-              className="h-10 w-auto brightness-0 invert"
+              width={140}
+              height={32}
+              className="h-7 w-auto"
             />
-            <p className="mt-3.5 max-w-[280px] text-sm text-[#92a8bd]">
+            <p className="mt-4 max-w-[280px] text-[14px] leading-[1.5] text-[var(--ap-ink-muted-80)]">
               Plateforme de routage des patients P4/P5 vers les ressources de
               première ligne — projet pilote 2026.
             </p>
@@ -26,7 +26,6 @@ export function Footer() {
               { label: "Comment ça marche", href: "#flow" },
               { label: "Fonctionnalités", href: "#features" },
               { label: "Portails", href: "#portails" },
-              { label: "Tableau de bord", href: "/dashboard" },
             ]}
           />
           <FooterCol
@@ -41,7 +40,10 @@ export function Footer() {
           <FooterCol
             title="Contact"
             links={[
-              { label: "contact@filesante.qc", href: "mailto:contact@filesante.qc" },
+              {
+                label: "contact@filesante.qc",
+                href: "mailto:contact@filesante.qc",
+              },
               { label: "Soutien technique", href: "#" },
               { label: "Documentation", href: "#" },
               { label: "Confidentialité", href: "#" },
@@ -49,16 +51,16 @@ export function Footer() {
           />
         </div>
 
-        <div className="mt-12 flex flex-wrap justify-between gap-3 border-t border-white/10 pt-6 text-[12.5px] text-[#92a8bd]">
+        <div className="mt-16 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--ap-hairline)] pt-6 text-[12px] text-[var(--ap-ink-muted-48)]">
           <span>© 2026 FileSanté · Projet pilote Montréal</span>
-          <span>
-            <a href="#" className="ml-4 text-[#92a8bd] hover:text-white">
+          <span className="flex gap-4">
+            <a href="#" className="hover:text-[var(--ap-ink)]">
               Mentions légales
             </a>
-            <a href="#" className="ml-4 text-[#92a8bd] hover:text-white">
+            <a href="#" className="hover:text-[var(--ap-ink)]">
               Vie privée
             </a>
-            <a href="#" className="ml-4 text-[#92a8bd] hover:text-white">
+            <a href="#" className="hover:text-[var(--ap-ink)]">
               Accessibilité
             </a>
           </span>
@@ -77,18 +79,21 @@ function FooterCol({
 }) {
   return (
     <div>
-      <h5 className="mb-3.5 text-xs font-semibold tracking-[0.16em] text-[#7ec4ec] uppercase">
+      <h5 className="mb-2 text-[14px] font-semibold tracking-[-0.016em] text-[var(--ap-ink)]">
         {title}
       </h5>
-      {links.map((l) => (
-        <Link
-          key={l.label}
-          href={l.href}
-          className="block py-1.5 text-sm text-[#cfdbe7] hover:text-white"
-        >
-          {l.label}
-        </Link>
-      ))}
+      <ul>
+        {links.map((l) => (
+          <li key={l.label}>
+            <Link
+              href={l.href}
+              className="block text-[17px] leading-[2.41] text-[var(--ap-ink-muted-80)] hover:text-[var(--ap-ink)]"
+            >
+              {l.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

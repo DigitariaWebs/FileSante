@@ -7,11 +7,11 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-jakarta);
-  --font-display: var(--font-bricolage);
-  --font-mono: var(--font-mono);
+  --font-sans: var(--ap-font-text);
+  --font-display: var(--ap-font-display);
+  --font-mono: var(--ap-font-mono);
 
-  /* FileSanté palette */
+  /* FileSanté brand */
   --color-fs-primary: var(--fs-primary);
   --color-fs-primary-2: var(--fs-primary-2);
   --color-fs-primary-ink: var(--fs-primary-ink);
@@ -22,7 +22,7 @@
   --color-fs-ink-3: var(--fs-ink-3);
   --color-fs-line: var(--fs-line);
 
-  /* shadcn tokens */
+  /* shadcn / radix theme — left intact for shadcn components */
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -95,26 +95,47 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 
-  /* FileSanté brand tokens */
+  /* ─── FileSanté brand (single Action Blue, used as Apple's primary) ─── */
   --fs-primary: #1e90d6;
   --fs-primary-2: #0f6fb4;
   --fs-primary-ink: #0a3a5e;
   --fs-bg-soft: #e8f3fb;
   --fs-bg-soft-2: #f3f8fc;
-  --fs-ink: #0c2535;
+  --fs-ink: #1d1d1f;
   --fs-ink-2: #36546b;
   --fs-ink-3: #7a92a4;
-  --fs-line: #dbe7f0;
+  --fs-line: #e0e0e0;
 
-  --fs-radius-s: 12px;
-  --fs-radius-m: 18px;
-  --fs-radius-l: 28px;
-  --fs-radius-xl: 40px;
+  /* ─── Apple design system tokens ─── */
+  --ap-canvas: #ffffff;
+  --ap-canvas-parchment: #f5f5f7;
+  --ap-surface-pearl: #fafafc;
+  --ap-surface-strong: #f0f0f3;
+  --ap-tile-1: #272729;
+  --ap-tile-2: #2a2a2c;
+  --ap-tile-3: #252527;
+  --ap-surface-black: #000000;
+  --ap-ink: #1d1d1f;
+  --ap-ink-muted-80: #333333;
+  --ap-ink-muted-48: #7a7a7a;
+  --ap-body-on-dark: #ffffff;
+  --ap-body-muted-on-dark: #cccccc;
+  --ap-divider-soft: rgba(0, 0, 0, 0.04);
+  --ap-hairline: #e0e0e0;
+  --ap-hairline-strong: #d2d2d7;
+  --ap-product-shadow: 0 3px 30px rgba(0, 0, 0, 0.22);
+  --ap-focus-blue: #0071e3;
+  --ap-link-on-dark: #2997ff;
 
-  --fs-shadow-soft:
-    0 30px 60px -30px rgba(15, 111, 180, 0.35),
-    0 8px 20px -10px rgba(15, 111, 180, 0.15);
-  --fs-shadow-card: 0 10px 30px -15px rgba(12, 37, 53, 0.18);
+  --ap-font-display:
+    -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, "Segoe UI",
+    "Helvetica Neue", Arial, sans-serif;
+  --ap-font-text:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI",
+    "Helvetica Neue", Arial, sans-serif;
+  --ap-font-mono:
+    ui-monospace, "SF Mono", SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
 }
 
 .dark {
@@ -151,902 +172,270 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* ─────────────── Base ─────────────── */
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
     box-sizing: border-box;
   }
+  html,
   body {
-    @apply bg-background text-foreground;
-    font-family: var(--font-jakarta), "Plus Jakarta Sans", system-ui, sans-serif;
-    color: var(--fs-ink);
-    background: #fff;
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    font-family: var(--ap-font-text);
+    color: var(--ap-ink);
+    background: var(--ap-canvas);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     overflow-x: hidden;
+    font-size: 17px;
+    line-height: 1.47;
+    letter-spacing: -0.022em;
   }
   h1,
   h2,
   h3,
   h4 {
-    font-family:
-      var(--font-bricolage), "Bricolage Grotesque", "Plus Jakarta Sans",
-      sans-serif;
+    font-family: var(--ap-font-display);
+    color: var(--ap-ink);
     font-weight: 600;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.022em;
     margin: 0;
     text-wrap: balance;
   }
   p {
     margin: 0;
-    color: var(--fs-ink-2);
-    line-height: 1.55;
+    color: var(--ap-ink);
+    line-height: 1.47;
     text-wrap: pretty;
+  }
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+  button {
+    font-family: inherit;
   }
 }
 
+/* ─────────────── Apple component grammar ─────────────── */
+
 @layer components {
+  /* Shell — content max-width inside a section */
   .fs-shell {
     max-width: 1440px;
     margin: 0 auto;
-    padding: 0 40px;
+    padding: 0 32px;
   }
 
-  /* Pill button variants */
-  .fs-pill {
-    height: 42px;
-    padding: 0 18px;
-    border-radius: 999px;
-    border: 0;
-    background: var(--fs-primary);
-    color: #fff;
+  /* ─── Typography utilities (Apple ladder) ─── */
+  .fs-display-hero {
+    font-family: var(--ap-font-display);
+    font-size: 56px;
     font-weight: 600;
+    line-height: 1.07;
+    letter-spacing: -0.0175em;
+    color: var(--ap-ink);
+  }
+  .fs-display-lg {
+    font-family: var(--ap-font-display);
+    font-size: 40px;
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: 0;
+    color: var(--ap-ink);
+  }
+  .fs-display-md {
+    font-family: var(--ap-font-display);
+    font-size: 34px;
+    font-weight: 600;
+    line-height: 1.18;
+    letter-spacing: -0.011em;
+    color: var(--ap-ink);
+  }
+  .fs-tagline {
+    font-family: var(--ap-font-text);
+    font-size: 21px;
+    font-weight: 600;
+    line-height: 1.19;
+    letter-spacing: 0.011em;
+    color: var(--ap-ink);
+  }
+  .fs-lead {
+    font-family: var(--ap-font-text);
+    font-size: 21px;
+    font-weight: 400;
+    line-height: 1.38;
+    letter-spacing: -0.011em;
+    color: var(--ap-ink);
+  }
+  .fs-body {
+    font-family: var(--ap-font-text);
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.47;
+    letter-spacing: -0.022em;
+    color: var(--ap-ink);
+  }
+  .fs-body-sm {
+    font-family: var(--ap-font-text);
     font-size: 14px;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    box-shadow: 0 10px 24px -10px rgba(30, 144, 214, 0.55);
-    transition:
-      transform 0.15s,
-      box-shadow 0.15s,
-      background 0.15s;
-    cursor: pointer;
+    font-weight: 400;
+    line-height: 1.43;
+    letter-spacing: -0.016em;
+    color: var(--ap-ink);
   }
-  .fs-pill:hover {
-    background: var(--fs-primary-2);
-    transform: translateY(-1px);
+  .fs-eyebrow {
+    font-family: var(--ap-font-text);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ap-ink-muted-48);
   }
-  .fs-pill-ghost {
-    background: #fff;
+  .fs-sec-eyebrow {
+    font-family: var(--ap-font-text);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
     color: var(--fs-primary);
-    border: 1.5px solid var(--fs-primary);
-    box-shadow: none;
   }
-  .fs-pill-ghost:hover {
-    background: var(--fs-bg-soft);
-  }
-
-  /* Hero accent underline */
   .fs-accent {
     color: var(--fs-primary);
-    position: relative;
-    white-space: nowrap;
   }
-  .fs-accent::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -2px;
-    height: 10px;
-    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 10'><path d='M0 6 Q 50 0 100 5 T 200 4' stroke='%231e90d6' stroke-width='2' fill='none' stroke-linecap='round'/></svg>")
-      center/100% no-repeat;
-    opacity: 0.7;
+  .fs-mono {
+    font-family: var(--ap-font-mono);
   }
 
-  /* Brand mark */
+  /* ─── Brand mark (small square logo glyph) ─── */
   .fs-brand-mark {
-    width: 34px;
-    height: 34px;
-    border-radius: 11px;
-    background: linear-gradient(
-      140deg,
-      var(--fs-primary),
-      var(--fs-primary-2)
-    );
-    display: grid;
-    place-items: center;
-    color: #fff;
-    box-shadow: 0 8px 18px -8px rgba(15, 111, 180, 0.5);
-  }
-
-  /* Hero panel */
-  .fs-hero-panel {
-    position: relative;
-    border-radius: calc(var(--fs-radius-xl) + 20px);
-    background: radial-gradient(
-      120% 90% at 100% 0%,
-      #2aa1e7 0%,
-      var(--fs-primary) 40%,
-      var(--fs-primary-2) 100%
-    );
-    overflow: hidden;
-    box-shadow: var(--fs-shadow-soft);
-    height: 520px;
-  }
-  .fs-hero-panel::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(
-        40% 60% at 15% 15%,
-        rgba(255, 255, 255, 0.18),
-        transparent 60%
-      ),
-      radial-gradient(
-        50% 50% at 80% 90%,
-        rgba(0, 30, 60, 0.18),
-        transparent 60%
-      );
-  }
-  .fs-hero-svg {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-  }
-
-  /* Float badges on hero */
-  .fs-float-badge {
-    position: absolute;
-    background: #fff;
-    color: var(--fs-ink);
-    border-radius: 14px;
-    padding: 10px 14px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 600;
-    font-size: 13px;
-    box-shadow: 0 14px 30px -10px rgba(0, 0, 0, 0.18);
-  }
-  .fs-float-badge .ic {
-    width: 30px;
-    height: 30px;
-    border-radius: 9px;
-    background: var(--fs-bg-soft);
-    color: var(--fs-primary);
-    display: grid;
-    place-items: center;
-  }
-  .fs-float-badge .sub {
-    font-size: 11px;
-    color: var(--fs-ink-3);
-    font-weight: 500;
-    letter-spacing: 0.02em;
-  }
-
-  /* Stat cards */
-  .fs-stat-card {
-    background: #fff;
-    border-radius: var(--fs-radius-l);
-    padding: 24px 22px;
-    box-shadow: var(--fs-shadow-card);
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    min-height: 200px;
-    border: 1px solid rgba(219, 231, 240, 0.6);
-  }
-  .fs-stat-card.primary {
-    background: linear-gradient(
-      155deg,
-      var(--fs-primary),
-      var(--fs-primary-2)
-    );
-    color: #fff;
-    border-color: transparent;
-    box-shadow: 0 20px 40px -16px rgba(15, 111, 180, 0.45);
-  }
-  .fs-stat-card .ic {
-    width: 42px;
-    height: 42px;
-    border-radius: 13px;
-    background: var(--fs-bg-soft);
-    color: var(--fs-primary);
-    display: grid;
-    place-items: center;
-  }
-  .fs-stat-card.primary .ic {
-    background: rgba(255, 255, 255, 0.16);
-    color: #fff;
-  }
-  .fs-stat-card .body p {
-    font-size: 13.5px;
-    color: var(--fs-ink-2);
-  }
-  .fs-stat-card.primary .body p {
-    color: rgba(255, 255, 255, 0.85);
-  }
-  .fs-stat-card .mini-btn {
-    height: 34px;
-    padding: 0 14px;
-    border-radius: 999px;
-    border: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
     background: var(--fs-primary);
-    color: #fff;
-    font-weight: 600;
-    font-size: 13px;
-    cursor: pointer;
-  }
-  .fs-stat-card.primary .mini-btn {
-    background: #fff;
-    color: var(--fs-primary);
-  }
-
-  /* Section header */
-  .fs-sec-eyebrow {
-    color: var(--fs-primary);
-    font-weight: 600;
-    letter-spacing: 0.18em;
-    font-size: 12px;
-    text-transform: uppercase;
-  }
-
-  /* Flow / How it works */
-  .fs-flow {
-    background: var(--fs-bg-soft-2);
-    border-radius: calc(var(--fs-radius-xl) + 8px);
-    padding: 60px 40px;
-  }
-  .fs-flow-rail {
-    position: relative;
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 18px;
-  }
-  .fs-flow-rail::before {
-    content: "";
-    position: absolute;
-    top: 46px;
-    left: 8%;
-    right: 8%;
-    height: 2px;
-    background: repeating-linear-gradient(
-      90deg,
-      var(--fs-primary) 0 8px,
-      transparent 8px 18px
-    );
-    opacity: 0.35;
-  }
-  .fs-step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    position: relative;
-    z-index: 1;
-  }
-  .fs-step .num {
-    width: 60px;
-    height: 60px;
-    border-radius: 20px;
-    background: #fff;
-    color: var(--fs-primary);
-    display: grid;
-    place-items: center;
-    font-family: var(--font-bricolage), "Bricolage Grotesque", sans-serif;
-    font-weight: 600;
-    font-size: 22px;
-    border: 2px solid var(--fs-primary);
-    box-shadow: 0 12px 24px -10px rgba(30, 144, 214, 0.4);
-  }
-  .fs-step .num.filled {
-    background: var(--fs-primary);
-    color: #fff;
-  }
-  .fs-step-pill {
-    margin-top: 10px;
-    display: inline-block;
-    padding: 3px 9px;
-    border-radius: 999px;
-    background: #fff;
-    color: var(--fs-primary);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    border: 1px solid rgba(30, 144, 214, 0.25);
-  }
-
-  /* Features */
-  .fs-feature {
-    background: #fff;
-    border: 1px solid var(--fs-line);
-    border-radius: var(--fs-radius-l);
-    padding: 26px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    min-height: 240px;
-    transition:
-      transform 0.2s,
-      box-shadow 0.2s,
-      border-color 0.2s;
-  }
-  .fs-feature:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--fs-shadow-card);
-    border-color: rgba(30, 144, 214, 0.35);
-  }
-  .fs-feature .ic {
-    width: 54px;
-    height: 54px;
-    border-radius: 18px;
-    background: var(--fs-bg-soft);
-    color: var(--fs-primary);
+    color: #ffffff;
     display: grid;
     place-items: center;
   }
-  .fs-tag {
-    font-size: 11px;
-    padding: 3px 8px;
-    border-radius: 999px;
-    background: var(--fs-bg-soft);
-    color: var(--fs-primary-ink);
-    font-weight: 500;
-  }
 
-  /* Portals */
-  .fs-portals {
-    background: var(--fs-bg-soft);
-    border-radius: calc(var(--fs-radius-xl) + 8px);
-    padding: 72px 56px;
-  }
-  .fs-portal {
-    background: #fff;
-    border-radius: var(--fs-radius-l);
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    min-height: 240px;
-    position: relative;
-    overflow: hidden;
-    border: 1px solid rgba(219, 231, 240, 0.6);
-    transition:
-      transform 0.2s,
-      box-shadow 0.2s;
-  }
-  .fs-portal:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--fs-shadow-card);
-  }
-  .fs-portal::after {
-    content: "";
-    position: absolute;
-    right: -30px;
-    top: -30px;
-    width: 110px;
-    height: 110px;
-    border-radius: 50%;
-    background: radial-gradient(
-      circle,
-      rgba(30, 144, 214, 0.18),
-      transparent 70%
-    );
-  }
-  .fs-portal .ic {
-    width: 48px;
-    height: 48px;
-    border-radius: 14px;
-    background: linear-gradient(
-      140deg,
-      var(--fs-primary),
-      var(--fs-primary-2)
-    );
-    color: #fff;
-    display: grid;
-    place-items: center;
-    box-shadow: 0 10px 22px -10px rgba(30, 144, 214, 0.5);
-  }
-  .fs-portal .badge {
-    font-size: 11px;
-    padding: 4px 9px;
-    border-radius: 999px;
-    background: var(--fs-bg-soft);
-    color: var(--fs-primary-ink);
-    font-weight: 600;
-    letter-spacing: 0.04em;
-  }
-
-  /* Partners */
-  .fs-partner {
-    background: #fff;
-    border: 1px solid var(--fs-line);
-    border-radius: var(--fs-radius-l);
-    padding: 28px 24px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-  .fs-partner-mark {
-    width: 58px;
-    height: 58px;
-    border-radius: 16px;
-    background: var(--fs-bg-soft);
-    display: grid;
-    place-items: center;
-    color: var(--fs-primary-2);
-    font-family: var(--font-bricolage), "Bricolage Grotesque", sans-serif;
-    font-weight: 700;
-    font-size: 20px;
-    letter-spacing: -0.02em;
-    border: 1px solid rgba(30, 144, 214, 0.18);
-  }
-
-  /* CTA strip */
-  .fs-cta-strip {
-    background: linear-gradient(
-      155deg,
-      var(--fs-primary),
-      var(--fs-primary-2)
-    );
-    border-radius: calc(var(--fs-radius-xl) + 16px);
-    padding: 64px 56px;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 40px;
-    position: relative;
-    overflow: hidden;
-    box-shadow: var(--fs-shadow-soft);
-  }
-  .fs-cta-strip::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(
-        50% 100% at 100% 50%,
-        rgba(255, 255, 255, 0.16),
-        transparent 60%
-      ),
-      radial-gradient(
-        30% 100% at 0% 100%,
-        rgba(0, 30, 60, 0.2),
-        transparent 60%
-      );
-  }
-  .fs-cta-strip > * {
-    position: relative;
-    z-index: 1;
-  }
-  .fs-cta-strip h2 {
-    color: #fff;
-  }
-  .fs-cta-strip p {
-    color: rgba(255, 255, 255, 0.85);
-  }
-  .fs-cta-strip .fs-pill {
-    background: #fff;
-    color: var(--fs-primary);
-    box-shadow: none;
-  }
-  .fs-cta-strip .fs-pill:hover {
-    background: #f3f8fc;
-  }
-
-  /* Pulse dot */
+  /* ─── Pulse dot ─── */
   .fs-pulse-dot {
     width: 6px;
     height: 6px;
-    border-radius: 50%;
+    border-radius: 9999px;
     background: var(--fs-primary);
     animation: fs-pulse 2.4s infinite;
   }
-}
 
-@keyframes fs-pulse {
-  0%,
-  100% {
-    opacity: 0.4;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-/* ─────────── Landing motion + atmosphere ─────────── */
-
-@keyframes fs-fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes fs-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes fs-float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-8px);
-  }
-}
-
-@keyframes fs-drift {
-  0%,
-  100% {
-    transform: translate(0, 0);
-  }
-  33% {
-    transform: translate(20px, -16px);
-  }
-  66% {
-    transform: translate(-12px, 14px);
-  }
-}
-
-@keyframes fs-marquee {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-@keyframes fs-spin-slow {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes fs-shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-@layer components {
-  /* Scroll-triggered reveal — class toggled by IntersectionObserver */
-  .fs-reveal {
-    opacity: 0;
-    transform: translateY(28px);
-    transition:
-      opacity 0.9s cubic-bezier(0.2, 0.7, 0.2, 1),
-      transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
-    will-change: opacity, transform;
-  }
-  .fs-reveal.is-in {
-    opacity: 1;
-    transform: none;
-  }
-  .fs-reveal-delay-1 {
-    transition-delay: 0.08s;
-  }
-  .fs-reveal-delay-2 {
-    transition-delay: 0.16s;
-  }
-  .fs-reveal-delay-3 {
-    transition-delay: 0.24s;
-  }
-  .fs-reveal-delay-4 {
-    transition-delay: 0.32s;
-  }
-  .fs-reveal-delay-5 {
-    transition-delay: 0.4s;
-  }
-
-  /* Atmospheric backgrounds */
-  .fs-bg-grid {
-    background-image:
-      linear-gradient(to right, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
-    background-size: 56px 56px;
-  }
-  .fs-bg-grid-dark {
-    background-image:
-      linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-    background-size: 56px 56px;
-  }
-  .fs-bg-dots {
-    background-image: radial-gradient(
-      circle,
-      rgba(0, 0, 0, 0.08) 1px,
-      transparent 1px
-    );
-    background-size: 24px 24px;
-  }
-  .fs-bg-dots-light {
-    background-image: radial-gradient(
-      circle,
-      rgba(255, 255, 255, 0.08) 1px,
-      transparent 1px
-    );
-    background-size: 24px 24px;
-  }
-
-  /* Soft animated color blobs (atmospheric depth, no decorative gradient on subjects) */
-  .fs-blob {
-    position: absolute;
-    border-radius: 9999px;
-    filter: blur(80px);
-    opacity: 0.6;
-    pointer-events: none;
-  }
-
-  /* Animated lift on hover for product-shadow elements */
-  .fs-lift {
-    transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
-  }
-  .fs-lift:hover {
-    transform: translateY(-4px);
-  }
-
-  /* Marquee */
-  .fs-marquee-track {
-    display: flex;
-    width: max-content;
-    animation: fs-marquee 36s linear infinite;
-  }
-  .fs-marquee-track-slow {
-    animation-duration: 60s;
-  }
-
-  /* Tilt on scroll for hero render */
-  .fs-tilt {
-    transform-origin: center 60%;
-    transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
-  }
-
-  /* Apple product shadow utility */
-  .fs-product-shadow {
-    filter: drop-shadow(rgba(0, 0, 0, 0.18) 4px 12px 36px);
-  }
-
-  /* Shimmer underline for accent words */
-  .fs-shimmer-text {
-    background: linear-gradient(
-      90deg,
-      var(--fs-primary) 0%,
-      #6cc1ee 50%,
-      var(--fs-primary) 100%
-    );
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    animation: fs-shimmer 6s linear infinite;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .fs-reveal,
-  .fs-reveal.is-in {
-    opacity: 1;
-    transform: none;
-    transition: none;
-  }
-  .fs-marquee-track,
-  .fs-marquee-track-slow,
-  .fs-shimmer-text {
-    animation: none;
-  }
-  .fs-float,
-  .fs-drift {
-    animation: none !important;
-  }
-}
-
-/* ─────────── Apple-style Dashboard system (FileSanté palette) ─────────── */
-
-:root {
-  --ap-canvas: #ffffff;
-  --ap-canvas-parchment: #f5f5f7;
-  --ap-surface-pearl: #fafafc;
-  --ap-tile-1: #272729;
-  --ap-tile-2: #2a2a2c;
-  --ap-tile-3: #252527;
-  --ap-ink: #1d1d1f;
-  --ap-ink-muted-80: #424245;
-  --ap-ink-muted-48: #6e6e73;
-  --ap-divider-soft: rgba(0, 0, 0, 0.04);
-  --ap-hairline: #d2d2d7;
-  --ap-product-shadow: rgba(0, 0, 0, 0.22) 3px 5px 30px 0;
-
-  /* Semantic status (use sparingly — color + icon, never color alone) */
-  --ap-status-info-bg: rgba(30, 144, 214, 0.1);
-  --ap-status-info-ink: var(--fs-primary);
-  --ap-status-success-bg: rgba(52, 199, 89, 0.12);
-  --ap-status-success-ink: #1a6d2f;
-  --ap-status-warn-bg: rgba(255, 159, 10, 0.12);
-  --ap-status-warn-ink: #a06400;
-  --ap-status-danger-bg: rgba(255, 69, 58, 0.1);
-  --ap-status-danger-ink: #a02016;
-  --ap-status-danger-hard: #c8102e;
-
-  --ap-font-display:
-    system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI",
-    "Helvetica Neue", Arial, sans-serif;
-  --ap-font-text:
-    system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
-    "Helvetica Neue", Arial, sans-serif;
-}
-
-@layer components {
-  /* Page surfaces */
-  .fs-dash-page {
-    background: var(--ap-canvas-parchment);
-    font-family: var(--ap-font-text);
-    color: var(--ap-ink);
-  }
-  .fs-dash-page h1,
-  .fs-dash-page h2,
-  .fs-dash-page h3,
-  .fs-dash-page h4 {
-    font-family: var(--ap-font-display);
-    color: var(--ap-ink);
-    margin: 0;
-    text-wrap: balance;
-  }
-  .fs-dash-page p {
-    color: var(--ap-ink-muted-48);
-  }
-  .fs-dash-page .text-ap-ink {
-    color: var(--ap-ink);
-  }
-  .fs-dash-page .text-ap-muted {
-    color: var(--ap-ink-muted-48);
-  }
-  .fs-dash-page .text-ap-muted-80 {
-    color: var(--ap-ink-muted-80);
-  }
-
-  /* Utility cards: hairline border, rounded-lg 18px, no shadow */
-  .fs-dash-card {
-    background: var(--ap-canvas);
-    border: 1px solid var(--ap-hairline);
-    border-radius: 18px;
-  }
-  .fs-dash-card-flush {
-    background: var(--ap-canvas);
-    border: 1px solid var(--ap-hairline);
-    border-radius: 18px;
-    overflow: hidden;
-  }
-  .fs-dash-divider {
-    border-top: 1px solid var(--ap-hairline);
-  }
-
-  /* Full-bleed dark tile (used sparingly on dashboard home hero strip) */
-  .fs-tile-dark {
-    background: var(--ap-tile-1);
-    color: #ffffff;
-    border-radius: 18px;
-    overflow: hidden;
-  }
-  .fs-tile-dark h1,
-  .fs-tile-dark h2,
-  .fs-tile-dark h3 {
-    color: #ffffff;
-  }
-  .fs-tile-dark p {
-    color: #cccccc;
-  }
-
-  /* Table: hairline rows, generous padding, no zebra */
-  .fs-dash-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-family: var(--ap-font-text);
-    font-size: 14px;
-    color: var(--ap-ink);
-  }
-  .fs-dash-table thead th {
-    background: var(--ap-canvas);
-    border-bottom: 1px solid var(--ap-hairline);
-    color: var(--ap-ink-muted-48);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: -0.08px;
-    text-transform: uppercase;
-    padding: 14px 20px;
-    text-align: left;
-  }
-  .fs-dash-table tbody td {
-    border-bottom: 1px solid var(--ap-divider-soft);
-    padding: 16px 20px;
-    vertical-align: middle;
-  }
-  .fs-dash-table tbody tr:last-child td {
-    border-bottom: 0;
-  }
-  .fs-dash-table tbody tr:hover td {
-    background: var(--ap-canvas-parchment);
-  }
-
-  /* Segmented tabs — Apple-style pill group */
-  .fs-tabs {
-    display: inline-flex;
-    gap: 2px;
-    padding: 4px;
-    background: var(--ap-canvas-parchment);
-    border: 1px solid var(--ap-hairline);
-    border-radius: 9999px;
-  }
-  .fs-dash-card .fs-tabs,
-  .fs-dash-card-flush .fs-tabs {
-    background: rgba(0, 0, 0, 0.04);
-    border: 0;
-  }
-  .fs-tabs button {
-    border: 0;
-    background: transparent;
-    color: var(--ap-ink-muted-48);
-    font-family: var(--ap-font-text);
-    font-size: 13px;
-    font-weight: 400;
-    letter-spacing: -0.08px;
-    padding: 7px 14px;
-    border-radius: 9999px;
-    cursor: pointer;
-    transition: color 0.2s, background 0.2s;
-  }
-  .fs-tabs button[data-active="true"] {
-    background: var(--ap-canvas);
-    color: var(--ap-ink);
-    font-weight: 600;
-  }
-  .fs-tabs button:hover:not([data-active="true"]) {
-    color: var(--ap-ink);
-  }
-
-  /* Chips */
-  .fs-chip {
+  /* ─── Apple pill primary CTA ─── */
+  .fs-pill {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    height: 22px;
-    padding: 0 9px;
+    justify-content: center;
+    gap: 8px;
+    height: 44px;
+    padding: 0 22px;
     border-radius: 9999px;
-    background: var(--ap-canvas-parchment);
-    color: var(--ap-ink-muted-80);
+    border: 1px solid transparent;
+    background: var(--fs-primary);
+    color: #ffffff;
     font-family: var(--ap-font-text);
-    font-size: 11.5px;
-    font-weight: 500;
-    letter-spacing: -0.1px;
+    font-size: 17px;
+    font-weight: 400;
+    letter-spacing: -0.022em;
+    cursor: pointer;
+    transition:
+      transform 0.15s ease,
+      background 0.15s ease,
+      border-color 0.15s ease,
+      color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
   }
-  .fs-chip-primary {
-    background: rgba(30, 144, 214, 0.1);
+  .fs-pill:active {
+    transform: scale(0.95);
+  }
+  .fs-pill:focus-visible {
+    outline: 2px solid var(--ap-focus-blue);
+    outline-offset: 2px;
+  }
+  .fs-pill:hover {
+    background: var(--fs-primary-2);
+  }
+  .fs-pill-ghost {
+    background: transparent;
     color: var(--fs-primary);
+    border-color: var(--fs-primary);
+  }
+  .fs-pill-ghost:hover {
+    background: rgba(30, 144, 214, 0.06);
+  }
+  .fs-pill-sm {
+    height: 36px;
+    padding: 0 16px;
+    font-size: 14px;
+  }
+  .fs-pill-lg {
+    height: 50px;
+    padding: 0 28px;
+    font-size: 18px;
+    font-weight: 300;
   }
 
-  /* Apple pill buttons — pill primary, pill secondary (ghost), dark utility */
+  /* ─── Dark utility rect (rounded-sm 8px) ─── */
+  .fs-btn-utility {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 15px;
+    border-radius: 8px;
+    border: 0;
+    background: var(--ap-ink);
+    color: #ffffff;
+    font-family: var(--ap-font-text);
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: -0.016em;
+    cursor: pointer;
+    transition:
+      transform 0.15s ease,
+      background 0.15s ease;
+  }
+  .fs-btn-utility:active {
+    transform: scale(0.95);
+  }
+  .fs-btn-utility:hover {
+    background: #000000;
+  }
+
+  /* ─── Pearl secondary capsule ─── */
+  .fs-btn-pearl {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 14px;
+    border-radius: 11px;
+    background: var(--ap-surface-pearl);
+    color: var(--ap-ink-muted-80);
+    border: 3px solid var(--ap-divider-soft);
+    font-family: var(--ap-font-text);
+    font-size: 14px;
+    font-weight: 400;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+  }
+  .fs-btn-pearl:hover {
+    border-color: rgba(0, 0, 0, 0.08);
+  }
+
+  /* ─── Generic .fs-btn (alias to pill grammar — dashboards) ─── */
   .fs-btn {
     display: inline-flex;
     align-items: center;
@@ -1059,16 +448,19 @@
     font-family: var(--ap-font-text);
     font-size: 14px;
     font-weight: 400;
-    letter-spacing: -0.224px;
+    letter-spacing: -0.016em;
     cursor: pointer;
-    transition: transform 0.15s, background 0.15s, border-color 0.15s, color 0.15s;
-    -webkit-tap-highlight-color: transparent;
+    transition:
+      transform 0.15s ease,
+      background 0.15s ease,
+      border-color 0.15s ease,
+      color 0.15s ease;
   }
   .fs-btn:active {
     transform: scale(0.95);
   }
   .fs-btn:focus-visible {
-    outline: 2px solid #0071e3;
+    outline: 2px solid var(--ap-focus-blue);
     outline-offset: 2px;
   }
   .fs-btn-primary {
@@ -1086,30 +478,6 @@
   .fs-btn-ghost:hover {
     background: rgba(30, 144, 214, 0.06);
   }
-  .fs-btn-utility {
-    background: var(--ap-ink);
-    color: #ffffff;
-    border-radius: 8px;
-    height: 32px;
-    padding: 0 15px;
-    font-size: 14px;
-  }
-  .fs-btn-utility:hover {
-    background: #000000;
-  }
-  .fs-btn-pearl {
-    background: var(--ap-surface-pearl);
-    color: var(--ap-ink-muted-80);
-    border: 3px solid var(--ap-divider-soft);
-    border-radius: 11px;
-    height: 34px;
-    padding: 0 16px;
-    font-size: 14px;
-    font-weight: 400;
-  }
-  .fs-btn-pearl:hover {
-    border-color: rgba(0, 0, 0, 0.1);
-  }
   .fs-btn-danger {
     background: transparent;
     color: #c8102e;
@@ -1124,43 +492,56 @@
     padding: 0 14px;
     font-size: 13px;
   }
-  .fs-btn-icon {
-    width: 36px;
-    height: 36px;
-    padding: 0;
-    border-radius: 9999px;
-    background: rgba(210, 210, 215, 0.4);
-    color: var(--ap-ink);
-    border: 0;
+
+  /* ─── Inline text link on light ─── */
+  .fs-link {
+    color: var(--fs-primary);
   }
-  .fs-btn-icon:hover {
-    background: rgba(210, 210, 215, 0.6);
+  .fs-link:hover {
+    text-decoration: underline;
+  }
+  /* ─── Inline text link on dark ─── */
+  .fs-link-on-dark {
+    color: var(--ap-link-on-dark);
+  }
+  .fs-link-on-dark:hover {
+    text-decoration: underline;
   }
 
-  /* Input — pill search, hairline rect for forms */
-  .fs-input {
-    height: 44px;
-    border-radius: 9999px;
-    border: 1px solid var(--ap-hairline);
+  /* ─── Utility cards (rounded-lg 18px, hairline border, no shadow) ─── */
+  .fs-card {
     background: var(--ap-canvas);
-    padding: 0 20px;
-    font-family: var(--ap-font-text);
-    font-size: 15px;
-    color: var(--ap-ink);
-    outline: none;
-    transition: border-color 0.15s, box-shadow 0.15s;
-    width: 100%;
+    border: 1px solid var(--ap-hairline);
+    border-radius: 18px;
+    padding: 24px;
   }
-  .fs-input:focus {
-    border-color: var(--fs-primary);
-    box-shadow: 0 0 0 3px rgba(30, 144, 214, 0.15);
-  }
-  .fs-input-rect {
-    border-radius: 12px;
-    padding: 0 16px;
+  .fs-card-flush {
+    background: var(--ap-canvas);
+    border: 1px solid var(--ap-hairline);
+    border-radius: 18px;
+    overflow: hidden;
   }
 
-  /* Stat tile (utility card variant) */
+  /* ─── Dashboard aliases (keep current class names working) ─── */
+  .fs-dash-page {
+    background: var(--ap-canvas);
+    font-family: var(--ap-font-text);
+    color: var(--ap-ink);
+  }
+  .fs-dash-card {
+    background: var(--ap-canvas);
+    border: 1px solid var(--ap-hairline);
+    border-radius: 18px;
+  }
+  .fs-dash-card-flush {
+    background: var(--ap-canvas);
+    border: 1px solid var(--ap-hairline);
+    border-radius: 18px;
+    overflow: hidden;
+  }
+  .fs-dash-divider {
+    border-top: 1px solid var(--ap-hairline);
+  }
   .fs-stat-tile {
     background: var(--ap-canvas);
     border: 1px solid var(--ap-hairline);
@@ -1168,7 +549,154 @@
     padding: 24px;
   }
 
-  /* Frosted sub-nav strip */
+  /* ─── Dark tiles ─── */
+  .fs-tile-dark {
+    background: var(--ap-tile-1);
+    color: #ffffff;
+    border-radius: 0;
+    overflow: hidden;
+  }
+  .fs-tile-dark h1,
+  .fs-tile-dark h2,
+  .fs-tile-dark h3,
+  .fs-tile-dark h4 {
+    color: #ffffff;
+  }
+  .fs-tile-dark p {
+    color: var(--ap-body-muted-on-dark);
+  }
+  .fs-tile-dark .fs-link {
+    color: var(--ap-link-on-dark);
+  }
+  .fs-tile-2 {
+    background: var(--ap-tile-2);
+  }
+  .fs-tile-3 {
+    background: var(--ap-tile-3);
+  }
+
+  /* ─── Tables ─── */
+  .fs-dash-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-family: var(--ap-font-text);
+    font-size: 14px;
+    color: var(--ap-ink);
+  }
+  .fs-dash-table thead th {
+    background: var(--ap-canvas);
+    border-bottom: 1px solid var(--ap-hairline);
+    color: var(--ap-ink-muted-48);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 14px 20px;
+    text-align: left;
+  }
+  .fs-dash-table tbody td {
+    border-bottom: 1px solid var(--ap-divider-soft);
+    padding: 16px 20px;
+    vertical-align: middle;
+  }
+  .fs-dash-table tbody tr:last-child td {
+    border-bottom: 0;
+  }
+  .fs-dash-table tbody tr:hover td {
+    background: var(--ap-canvas-parchment);
+  }
+
+  /* ─── Segmented tabs (Apple pill group) ─── */
+  .fs-tabs {
+    display: inline-flex;
+    gap: 2px;
+    padding: 4px;
+    background: var(--ap-canvas-parchment);
+    border: 1px solid var(--ap-hairline);
+    border-radius: 9999px;
+  }
+  .fs-tabs button {
+    border: 0;
+    background: transparent;
+    color: var(--ap-ink-muted-48);
+    font-family: var(--ap-font-text);
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: -0.016em;
+    padding: 7px 14px;
+    border-radius: 9999px;
+    cursor: pointer;
+    transition: color 0.15s, background 0.15s;
+  }
+  .fs-tabs button[data-active="true"] {
+    background: var(--ap-canvas);
+    color: var(--ap-ink);
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  }
+  .fs-tabs button:hover:not([data-active="true"]) {
+    color: var(--ap-ink);
+  }
+
+  /* ─── Chips / badges ─── */
+  .fs-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 22px;
+    padding: 0 9px;
+    border-radius: 9999px;
+    background: var(--ap-canvas-parchment);
+    color: var(--ap-ink-muted-80);
+    font-family: var(--ap-font-text);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+  .fs-chip-primary {
+    background: rgba(30, 144, 214, 0.1);
+    color: var(--fs-primary);
+  }
+  .fs-tag {
+    display: inline-flex;
+    align-items: center;
+    height: 22px;
+    padding: 0 9px;
+    border-radius: 9999px;
+    background: var(--ap-canvas-parchment);
+    color: var(--ap-ink);
+    font-family: var(--ap-font-text);
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  /* ─── Inputs (Apple pill search) ─── */
+  .fs-input {
+    height: 44px;
+    border-radius: 9999px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    background: var(--ap-canvas);
+    padding: 0 20px;
+    font-family: var(--ap-font-text);
+    font-size: 17px;
+    color: var(--ap-ink);
+    outline: none;
+    transition:
+      border-color 0.15s,
+      box-shadow 0.15s;
+    width: 100%;
+  }
+  .fs-input:focus {
+    border-color: var(--ap-ink);
+    box-shadow: 0 0 0 1px var(--ap-ink);
+  }
+  .fs-input-rect {
+    border-radius: 8px;
+    padding: 0 16px;
+  }
+
+  /* ─── Sub-nav frosted strip (sticky) ─── */
   .fs-sub-nav {
     background: rgba(245, 245, 247, 0.72);
     backdrop-filter: saturate(180%) blur(20px);
@@ -1176,195 +704,302 @@
     border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   }
 
-  /* Eyebrow label (uppercase tracker) */
-  .fs-eyebrow {
+  /* ─── Hero product render with the single Apple drop-shadow ─── */
+  .fs-product-shadow {
+    filter: drop-shadow(rgba(0, 0, 0, 0.22) 3px 5px 30px);
+  }
+
+  /* ─── Legacy landing helpers — re-aliased to Apple grammar ─── */
+  /* Hero panel — Apple-style centered light tile (drops the gradient blue) */
+  .fs-hero-panel {
+    position: relative;
+    border-radius: 18px;
+    background: var(--ap-canvas);
+    border: 1px solid var(--ap-hairline);
+    overflow: hidden;
+  }
+  .fs-hero-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .fs-float-badge {
+    position: absolute;
+    background: var(--ap-canvas);
+    color: var(--ap-ink);
+    border: 1px solid var(--ap-hairline);
+    border-radius: 9999px;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
     font-family: var(--ap-font-text);
-    font-size: 11px;
     font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    font-size: 13px;
+  }
+  .fs-float-badge .ic {
+    width: 28px;
+    height: 28px;
+    border-radius: 9999px;
+    background: var(--ap-canvas-parchment);
+    color: var(--fs-primary);
+    display: grid;
+    place-items: center;
+  }
+  .fs-float-badge .sub {
+    font-size: 11px;
+    font-weight: 400;
     color: var(--ap-ink-muted-48);
   }
 
-  /* Display type — Apple-tight tracking */
-  .fs-display-hero {
-    font-family: var(--ap-font-display);
-    font-size: 56px;
-    font-weight: 600;
-    line-height: 1.07;
-    letter-spacing: -0.28px;
+  /* Stat card — Apple utility card */
+  .fs-stat-card {
+    background: var(--ap-canvas);
+    border: 1px solid var(--ap-hairline);
+    border-radius: 18px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 200px;
+  }
+  .fs-stat-card.primary {
+    background: var(--ap-tile-1);
+    color: #ffffff;
+    border-color: transparent;
+  }
+  .fs-stat-card.primary h3 {
+    color: #ffffff;
+  }
+  .fs-stat-card.primary .body p {
+    color: var(--ap-body-muted-on-dark);
+  }
+  .fs-stat-card .ic {
+    width: 36px;
+    height: 36px;
+    border-radius: 9999px;
+    background: var(--ap-canvas-parchment);
+    color: var(--fs-primary);
+    display: grid;
+    place-items: center;
+  }
+  .fs-stat-card.primary .ic {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+  }
+  .fs-stat-card .body p {
+    font-size: 14px;
+    line-height: 1.5;
     color: var(--ap-ink);
   }
-  .fs-display-lg {
-    font-family: var(--ap-font-display);
-    font-size: 40px;
-    font-weight: 600;
-    line-height: 1.1;
-    letter-spacing: -0.4px;
-    color: var(--ap-ink);
-  }
-  .fs-display-md {
-    font-family: var(--ap-font-display);
-    font-size: 28px;
-    font-weight: 600;
-    line-height: 1.14;
-    letter-spacing: -0.374px;
-    color: var(--ap-ink);
-  }
-  .fs-tagline {
-    font-family: var(--ap-font-text);
-    font-size: 21px;
-    font-weight: 600;
-    line-height: 1.19;
-    letter-spacing: 0.011em;
-    color: var(--ap-ink);
-  }
-  .fs-lead {
-    font-family: var(--ap-font-text);
-    font-size: 17px;
-    font-weight: 400;
-    line-height: 1.47;
-    letter-spacing: -0.022em;
-    color: var(--ap-ink-muted-80);
-  }
-  .fs-body {
+  .fs-stat-card .mini-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 9999px;
+    border: 1px solid var(--fs-primary);
+    background: transparent;
+    color: var(--fs-primary);
     font-family: var(--ap-font-text);
     font-size: 14px;
     font-weight: 400;
-    line-height: 1.43;
-    letter-spacing: -0.016em;
-    color: var(--ap-ink-muted-80);
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+  .fs-stat-card .mini-btn:active {
+    transform: scale(0.95);
+  }
+  .fs-stat-card .mini-btn:hover {
+    background: rgba(30, 144, 214, 0.06);
+  }
+  .fs-stat-card.primary .mini-btn {
+    background: #ffffff;
+    color: var(--ap-ink);
+    border-color: transparent;
   }
 
-  /* Dashboard surface utilities — Apple grammar */
-  .fs-tile-dark-2 {
-    background: var(--ap-tile-2);
-    color: #ffffff;
+  /* Flow — light tile w/ step grid */
+  .fs-flow {
+    background: var(--ap-canvas-parchment);
     border-radius: 18px;
-    overflow: hidden;
+    padding: 64px 32px;
   }
-  .fs-tile-dark-3 {
-    background: var(--ap-tile-3);
-    color: #ffffff;
-    border-radius: 18px;
-    overflow: hidden;
-  }
-
-  /* Full-bleed dark hero strip — alternation pulse on home */
-  .fs-hero-strip {
-    background: var(--ap-tile-1);
-    color: #ffffff;
-    padding: 28px 40px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+  .fs-flow-rail {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
     gap: 24px;
-    border-radius: 18px;
-    overflow: hidden;
-    position: relative;
   }
-  .fs-hero-strip h2,
-  .fs-hero-strip h3 {
-    color: #ffffff;
-    font-family: var(--ap-font-display);
+  .fs-step {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
   }
-  .fs-hero-strip p {
-    color: #cccccc;
-  }
-
-  /* Square rounded icon chip — utility-card pattern */
-  .fs-icon-chip {
+  .fs-step .num {
     display: grid;
     place-items: center;
-    width: 32px;
-    height: 32px;
+    width: 44px;
+    height: 44px;
+    border-radius: 9999px;
+    background: var(--ap-canvas);
+    color: var(--fs-primary);
+    font-family: var(--ap-font-display);
+    font-weight: 600;
+    font-size: 18px;
+    border: 1px solid var(--ap-hairline);
+  }
+  .fs-step .num.filled {
+    background: var(--fs-primary);
+    color: #ffffff;
+    border-color: transparent;
+  }
+  .fs-step-pill {
+    margin-top: 12px;
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    background: var(--ap-canvas);
+    color: var(--ap-ink-muted-80);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    border: 1px solid var(--ap-hairline);
+  }
+
+  /* Feature utility card */
+  .fs-feature {
+    background: var(--ap-canvas);
+    border: 1px solid var(--ap-hairline);
+    border-radius: 18px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 220px;
+  }
+  .fs-feature .ic {
+    width: 48px;
+    height: 48px;
     border-radius: 8px;
     background: var(--ap-canvas-parchment);
-    color: var(--ap-ink-muted-48);
-  }
-  .fs-icon-chip-info {
-    background: var(--ap-status-info-bg);
-    color: var(--ap-status-info-ink);
-  }
-  .fs-icon-chip-success {
-    background: var(--ap-status-success-bg);
-    color: var(--ap-status-success-ink);
-  }
-  .fs-icon-chip-warn {
-    background: var(--ap-status-warn-bg);
-    color: var(--ap-status-warn-ink);
-  }
-  .fs-icon-chip-danger {
-    background: var(--ap-status-danger-bg);
-    color: var(--ap-status-danger-ink);
+    color: var(--fs-primary);
+    display: grid;
+    place-items: center;
   }
 
-  /* Status chip pill (Apple grammar — light bg + ink color + 1.5px dot) */
-  .fs-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    height: 22px;
-    padding: 0 10px;
+  /* Portals container — parchment background tile */
+  .fs-portals {
+    background: var(--ap-canvas-parchment);
+    border-radius: 18px;
+    padding: 64px 40px;
+  }
+  .fs-portal {
+    background: var(--ap-canvas);
+    border: 1px solid var(--ap-hairline);
+    border-radius: 18px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 220px;
+    transition: transform 0.2s ease;
+  }
+  .fs-portal:hover {
+    transform: translateY(-2px);
+  }
+  .fs-portal .ic {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    background: var(--ap-canvas-parchment);
+    color: var(--fs-primary);
+    display: grid;
+    place-items: center;
+  }
+  .fs-portal .badge {
+    font-size: 11px;
+    padding: 4px 9px;
     border-radius: 9999px;
-    font-family: var(--ap-font-text);
-    font-size: 11.5px;
-    font-weight: 500;
-    letter-spacing: -0.1px;
     background: var(--ap-canvas-parchment);
     color: var(--ap-ink-muted-80);
-  }
-  .fs-status::before {
-    content: "";
-    width: 6px;
-    height: 6px;
-    border-radius: 9999px;
-    background: currentColor;
-    opacity: 0.65;
-  }
-  .fs-status-info {
-    background: var(--ap-status-info-bg);
-    color: var(--ap-status-info-ink);
-  }
-  .fs-status-success {
-    background: var(--ap-status-success-bg);
-    color: var(--ap-status-success-ink);
-  }
-  .fs-status-warn {
-    background: var(--ap-status-warn-bg);
-    color: var(--ap-status-warn-ink);
-  }
-  .fs-status-danger {
-    background: var(--ap-status-danger-bg);
-    color: var(--ap-status-danger-ink);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
   }
 
-  /* Funnel bar — single ink + parchment well */
-  .fs-funnel-track {
-    height: 4px;
-    border-radius: 9999px;
+  /* Partners cards */
+  .fs-partner {
+    background: var(--ap-canvas);
+    border: 1px solid var(--ap-hairline);
+    border-radius: 18px;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .fs-partner-mark {
+    width: 56px;
+    height: 56px;
+    border-radius: 8px;
     background: var(--ap-canvas-parchment);
-    overflow: hidden;
+    display: grid;
+    place-items: center;
+    color: var(--fs-primary);
+    font-family: var(--ap-font-display);
+    font-weight: 600;
+    font-size: 18px;
+    letter-spacing: 0;
   }
-  .fs-funnel-fill {
-    height: 100%;
-    border-radius: 9999px;
-    background: var(--ap-ink);
-    transition: width 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  /* CTA full-bleed tile */
+  .fs-cta-strip {
+    background: var(--ap-tile-1);
+    color: #ffffff;
+    border-radius: 18px;
+    padding: 80px 56px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
   }
-  .fs-funnel-fill-info {
-    background: var(--fs-primary);
+  .fs-cta-strip h2 {
+    color: #ffffff;
+  }
+  .fs-cta-strip p {
+    color: var(--ap-body-muted-on-dark);
   }
 }
 
-@media (max-width: 780px) {
-  .fs-flow-rail {
-    grid-template-columns: 1fr 1fr !important;
+/* ─────────────── Keyframes ─────────────── */
+
+@keyframes fs-pulse {
+  0%,
+  100% {
+    opacity: 0.4;
   }
-  .fs-flow-rail::before {
-    display: none;
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ─────────────── Responsive ─────────────── */
+
+@media (max-width: 780px) {
+  .fs-flow {
+    padding: 48px 24px;
+  }
+  .fs-flow-rail {
+    grid-template-columns: 1fr 1fr;
+  }
+  .fs-portals {
+    padding: 48px 24px;
   }
   .fs-cta-strip {
+    padding: 48px 24px;
     flex-direction: column;
     align-items: flex-start;
   }

@@ -14,11 +14,12 @@ export function CallToAction({ onOpenLogin }: Props) {
               Prêt à essayer le tableau de bord ?
             </h2>
             <p className="mt-3.5 max-w-[480px]">
-              Aucun mot de passe. Entrez votre prénom, nom et code
-              d&apos;hôpital — vous êtes dans la file en 4 secondes.
+              Aucun mot de passe. Choisissez votre rôle — triage, 811,
+              direction, MSSS, clinique ou patient — vous êtes dans votre
+              portail en 4 secondes.
             </p>
           </div>
-          <div className="flex flex-col items-end gap-3.5">
+          <div className="flex flex-col items-end gap-3">
             <button className="fs-pill" onClick={onOpenLogin} type="button">
               Se connecter
               <svg

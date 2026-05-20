@@ -77,11 +77,11 @@ function QueuePageInner() {
         description="Patients P4 / P5 routés via FileSanté."
         actions={
           <>
-            <Link href="/dashboard/scan" className="fs-btn fs-btn-ghost">
+            <Link href="/dashboard/triage/scan" className="fs-btn fs-btn-ghost">
               <Icon name="qr" size={14} />
               Retour patient
             </Link>
-            <Link href="/dashboard/register" className="fs-btn fs-btn-primary">
+            <Link href="/dashboard/triage/register" className="fs-btn fs-btn-primary">
               <Icon name="userPlus" size={14} />
               Inscrire
             </Link>
@@ -114,7 +114,7 @@ function QueuePageInner() {
               description="Inscrivez un patient ou changez d'onglet."
               action={
                 <Link
-                  href="/dashboard/register"
+                  href="/dashboard/triage/register"
                   className="fs-btn fs-btn-primary"
                 >
                   <Icon name="userPlus" size={14} />

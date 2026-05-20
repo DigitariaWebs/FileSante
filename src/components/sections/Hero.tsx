@@ -48,7 +48,7 @@ export function Hero({ onOpenLogin }: Props) {
             <div className="mt-10 flex items-center gap-8">
               <HeroStat num="4" label="Hôpitaux pilotes" />
               <div className="h-9 w-px bg-[var(--fs-line)]" />
-              <HeroStat num="6" label="Portails de rôle" />
+              <HeroStat num="7" label="Portails de rôle" />
               <div className="h-9 w-px bg-[var(--fs-line)]" />
               <HeroStat num="P4 / P5" label="Patients ciblés" />
             </div>
@@ -131,7 +131,7 @@ function DashboardPanel() {
             <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
           </div>
           <div className="font-mono text-[11px] text-[var(--fs-ink-3)]">
-            filesante.qc/dashboard/queue
+            filesante.qc/dashboard/triage/queue
           </div>
           <div className="w-12" />
         </div>

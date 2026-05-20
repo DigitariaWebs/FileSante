@@ -1,9 +1,11 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 type Stat = {
   title: string;
   body: string;
   cta: string;
+  href: string;
   icon: ReactNode;
   primary?: boolean;
 };
@@ -13,6 +15,7 @@ const stats: Stat[] = [
     title: "File d'attente virtuelle",
     body: "Suivi en direct des patients P4/P5 avec position, attente estimée et notifications SMS.",
     cta: "Voir la file",
+    href: "/dashboard/triage/queue",
     primary: true,
     icon: (
       <svg
@@ -32,6 +35,7 @@ const stats: Stat[] = [
     title: "Civières & lits",
     body: "Carte des 20 civières en temps réel — occupation, durée et alertes.",
     cta: "Suivi",
+    href: "/dashboard/direction",
     icon: (
       <svg
         width="18"
@@ -53,6 +57,7 @@ const stats: Stat[] = [
     title: "Retour patient",
     body: "Scan QR ou code 4 chiffres — le patient revient sans repasser au triage.",
     cta: "Scanner",
+    href: "/dashboard/triage/scan",
     icon: (
       <svg
         width="18"
@@ -73,6 +78,7 @@ const stats: Stat[] = [
     title: "Carte sectorielle",
     body: "GMF, CLSC, IPS et UMF disponibles à proximité du patient.",
     cta: "Carte",
+    href: "/dashboard/msss/sectors",
     icon: (
       <svg
         width="18"
@@ -116,9 +122,9 @@ function StatCard({ stat }: { stat: Stat }) {
         <p>{stat.body}</p>
       </div>
       <div className="mt-auto">
-        <button className="mini-btn" type="button">
+        <Link href={stat.href} className="mini-btn">
           {stat.cta}
-        </button>
+        </Link>
       </div>
     </div>
   );

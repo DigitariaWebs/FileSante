@@ -1,20 +1,5 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, Plus_Jakarta_Sans } from "next/font/google";
-
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-jakarta",
-  display: "swap",
-});
-
-const bricolage = Bricolage_Grotesque({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-bricolage",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "FileSanté — Le bon patient, au bon endroit, en temps réel",
@@ -28,7 +13,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={`${jakarta.variable} ${bricolage.variable}`}>
+    <html lang="fr">
       <body className="antialiased">{children}</body>
     </html>
   );

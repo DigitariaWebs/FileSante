@@ -47,9 +47,6 @@ export function Navbar({ onOpenLogin }: Props) {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <Link href="/dashboard" className="fs-pill fs-pill-ghost">
-            Voir le tableau de bord
-          </Link>
           <button className="fs-pill" onClick={onOpenLogin} type="button">
             Connexion
           </button>
