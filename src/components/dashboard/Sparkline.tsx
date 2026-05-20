@@ -10,8 +10,8 @@ export function Sparkline({
   data,
   width = 160,
   height = 44,
-  stroke = "#1e90d6",
-  fill = "rgba(30,144,214,0.12)",
+  stroke = "var(--fs-primary)",
+  fill = "rgba(30,144,214,0.1)",
 }: Props) {
   if (data.length === 0) {
     return (
@@ -21,7 +21,7 @@ export function Sparkline({
           y1={height - 1}
           x2={width}
           y2={height - 1}
-          stroke="#e1e8ee"
+          stroke="var(--ap-hairline)"
           strokeWidth={1}
         />
       </svg>

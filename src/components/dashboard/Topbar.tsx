@@ -1,6 +1,5 @@
 "use client";
 
-import { Gauge, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import {
@@ -12,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Icon } from "@/components/ui/Icon";
 import { useFileSante } from "@/hooks/useFileSante";
 import { setSpeed, store } from "@/lib/filesante/store";
 
@@ -35,12 +35,10 @@ export function Topbar() {
   return (
     <div className="fs-sub-nav sticky top-0 z-10 flex h-[52px] items-center justify-between px-10">
       <div className="flex items-center gap-3 text-[13px] tracking-[-0.016em] text-[var(--ap-ink-muted-80)]">
-        <span className="fs-tagline text-[15px]! font-semibold">
-          FileSanté
-        </span>
+        <span className="fs-tagline text-[15px]! font-semibold">FileSanté</span>
         <span className="text-[var(--ap-hairline)]">·</span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#34c759]" />
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--fs-primary)]" />
           <span>En direct</span>
         </span>
         <span className="text-[var(--ap-hairline)]">·</span>
@@ -55,7 +53,7 @@ export function Topbar() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button type="button" className="fs-btn fs-btn-pearl fs-btn-sm">
-              <Gauge size={14} strokeWidth={1.8} />
+              <Icon name="gauge" size={14} />
               {currentSpeed.label}
             </button>
           </DropdownMenuTrigger>
@@ -85,7 +83,7 @@ export function Topbar() {
           className="fs-btn fs-btn-pearl fs-btn-sm"
           title="Réinitialiser la base de démo"
         >
-          <RefreshCw size={14} strokeWidth={1.8} />
+          <Icon name="refresh" size={14} />
           Réinitialiser
         </button>
       </div>

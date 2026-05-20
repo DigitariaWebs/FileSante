@@ -1,15 +1,5 @@
 "use client";
 
-import {
-  AlarmClock,
-  ArrowRight,
-  BellRing,
-  CheckCircle2,
-  Inbox,
-  QrCode,
-  TriangleAlert,
-  UserPlus,
-} from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
 
@@ -18,6 +8,7 @@ import { EmptyState } from "@/components/dashboard/EmptyState";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Sparkline } from "@/components/dashboard/Sparkline";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
+import { Icon, type IconName } from "@/components/ui/Icon";
 import { useFileSante } from "@/hooks/useFileSante";
 import { isActive } from "@/lib/filesante/store";
 import type { Patient } from "@/lib/filesante/types";
@@ -104,11 +95,11 @@ export default function DashboardHome() {
         actions={
           <>
             <Link href="/dashboard/scan" className="fs-btn fs-btn-ghost">
-              <QrCode size={14} strokeWidth={1.8} />
+              <Icon name="qr" size={14} />
               Scanner retour
             </Link>
             <Link href="/dashboard/register" className="fs-btn fs-btn-primary">
-              <UserPlus size={14} strokeWidth={1.8} />
+              <Icon name="userPlus" size={14} />
               Inscrire un patient
             </Link>
           </>
@@ -116,34 +107,61 @@ export default function DashboardHome() {
       />
 
       <div className="flex flex-col gap-10 px-10 py-10">
+        <section className="fs-hero-strip">
+          <div className="flex items-center gap-5">
+            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-white/10 text-white">
+              <Icon name="viewGrid" size={22} />
+            </div>
+            <div>
+              <div className="text-[11px] font-semibold tracking-[0.12em] uppercase text-white/60">
+                Session en cours · HMR
+              </div>
+              <h2 className="mt-1 text-[24px] font-semibold tracking-[-0.022em]">
+                {stats.active} patient{stats.active === 1 ? "" : "s"} dans la
+                file
+              </h2>
+              <p className="mt-1 text-[14px] text-white/70">
+                {stats.awaiting} à confirmer · {stats.confirmed} confirmés ·{" "}
+                {stats.arrived24} arrivés
+              </p>
+            </div>
+          </div>
+          <div className="hidden items-center gap-2 lg:flex">
+            <Link href="/dashboard/queue" className="fs-btn fs-btn-utility">
+              File complète
+              <Icon name="arrowRight" size={13} />
+            </Link>
+          </div>
+        </section>
+
         <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           <StatTile
             label="Dans la file"
             value={stats.active}
             sub={`${stats.registered} inscrits · ${stats.confirmed} confirmés`}
-            icon={<Inbox size={18} strokeWidth={1.6} />}
+            icon="archive"
             spark={activitySeries}
           />
           <StatTile
             label="À confirmer"
             value={stats.awaiting}
             sub="Réponse OUI / NON attendue"
-            icon={<BellRing size={18} strokeWidth={1.6} />}
-            tone={stats.awaiting > 0 ? "amber" : "neutral"}
+            icon="bell"
+            tone={stats.awaiting > 0 ? "warn" : "neutral"}
           />
           <StatTile
             label="Arrivés (session)"
             value={stats.arrived24}
             sub="Scannés au triage retour"
-            icon={<CheckCircle2 size={18} strokeWidth={1.6} />}
-            tone="green"
+            icon="checkCircle"
+            tone="success"
           />
           <StatTile
             label="LWBS"
             value={stats.lwbs}
             sub="Non-présentations cumulées"
-            icon={<TriangleAlert size={18} strokeWidth={1.6} />}
-            tone={stats.lwbs > 0 ? "red" : "neutral"}
+            icon="warning"
+            tone={stats.lwbs > 0 ? "danger" : "neutral"}
           />
         </section>
 
@@ -155,7 +173,7 @@ export default function DashboardHome() {
           >
             {toConfirm.length === 0 ? (
               <EmptyState
-                icon={<AlarmClock size={20} strokeWidth={1.6} />}
+                icon={<Icon name="alarm" size={20} />}
                 title="Personne en attente"
                 description="Les SMS T-60 partent automatiquement lorsque le créneau approche."
               />
@@ -180,7 +198,7 @@ export default function DashboardHome() {
           >
             {arriving.length === 0 ? (
               <EmptyState
-                icon={<QrCode size={20} strokeWidth={1.6} />}
+                icon={<Icon name="qr" size={20} />}
                 title="Aucun patient confirmé"
                 description="Les patients apparaîtront ici dès qu'ils répondront OUI."
               />
@@ -206,7 +224,7 @@ export default function DashboardHome() {
         >
           {lastSms.length === 0 ? (
             <EmptyState
-              icon={<BellRing size={20} strokeWidth={1.6} />}
+              icon={<Icon name="bell" size={20} />}
               title="Aucun SMS pour l'instant"
               description="Inscrivez un patient pour voir l'activité ici."
             />
@@ -214,18 +232,18 @@ export default function DashboardHome() {
             <ul className="divide-y divide-[var(--ap-divider-soft)]">
               {lastSms.map((m) => (
                 <li key={m.id} className="flex items-start gap-4 px-6 py-4">
-                  <div className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[var(--ap-canvas-parchment)] text-[var(--fs-primary)]">
-                    <BellRing size={14} strokeWidth={1.7} />
+                  <div className="fs-icon-chip fs-icon-chip-info mt-0.5">
+                    <Icon name="bell" size={14} />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-[15px] font-semibold text-[var(--ap-ink)] tracking-[-0.016em]">
+                      <span className="text-[15px] font-semibold tracking-[-0.016em] text-[var(--ap-ink)]">
                         {m.patient
                           ? `${m.patient.firstName} ${m.patient.lastName}`
                           : "Patient inconnu"}
                       </span>
                       {m.patient && (
-                        <span className="font-mono text-[12px] text-[var(--ap-ink-muted-48)] tabular-nums">
+                        <span className="font-mono text-[12px] tabular-nums text-[var(--ap-ink-muted-48)]">
                           {m.patient.phone}
                         </span>
                       )}
@@ -247,46 +265,48 @@ export default function DashboardHome() {
   );
 }
 
-type Tone = "primary" | "amber" | "green" | "red" | "neutral";
+type Tone = "info" | "warn" | "success" | "danger" | "neutral";
 
 function StatTile({
   label,
   value,
   sub,
   icon,
-  tone = "primary",
+  tone = "neutral",
   spark,
 }: {
   label: string;
   value: number | string;
   sub: string;
-  icon: React.ReactNode;
+  icon: IconName;
   tone?: Tone;
   spark?: number[];
 }) {
-  const toneCls: Record<Tone, string> = {
-    primary: "bg-[rgba(30,144,214,0.1)] text-[var(--fs-primary)]",
-    amber: "bg-[rgba(255,159,10,0.12)] text-[#a06400]",
-    green: "bg-[rgba(52,199,89,0.12)] text-[#1a6d2f]",
-    red: "bg-[rgba(255,69,58,0.12)] text-[#a02016]",
-    neutral: "bg-[var(--ap-canvas-parchment)] text-[var(--ap-ink-muted-48)]",
+  const chipCls: Record<Tone, string> = {
+    info: "fs-icon-chip fs-icon-chip-info",
+    warn: "fs-icon-chip fs-icon-chip-warn",
+    success: "fs-icon-chip fs-icon-chip-success",
+    danger: "fs-icon-chip fs-icon-chip-danger",
+    neutral: "fs-icon-chip",
   };
   return (
     <div className="fs-stat-tile">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="fs-eyebrow">{label}</div>
-          <div className="mt-3 font-[var(--ap-font-display)] text-[40px] leading-[1.1] font-semibold tracking-[-0.4px] text-[var(--ap-ink)] tabular-nums">
+          <div className="mt-3 font-[var(--ap-font-display)] text-[40px] leading-[1.07] font-semibold tracking-[-0.4px] tabular-nums text-[var(--ap-ink)]">
             {value}
           </div>
         </div>
-        <div className={`grid h-9 w-9 place-items-center rounded-full ${toneCls[tone]}`}>
-          {icon}
+        <div className={chipCls[tone]}>
+          <Icon name={icon} size={16} />
         </div>
       </div>
       <div className="mt-4 flex items-end justify-between gap-3">
         <p className="text-[13px] text-[var(--ap-ink-muted-48)]">{sub}</p>
-        {spark && spark.length > 0 && <Sparkline data={spark} width={92} height={28} />}
+        {spark && spark.length > 0 && (
+          <Sparkline data={spark} width={92} height={28} />
+        )}
       </div>
     </div>
   );
@@ -320,7 +340,7 @@ function Panel({
             className="inline-flex items-center gap-1 text-[13px] font-normal text-[var(--fs-primary)] hover:underline"
           >
             {link.label}
-            <ArrowRight size={12} strokeWidth={1.8} />
+            <Icon name="arrowRight" size={12} />
           </Link>
         )}
       </div>
@@ -346,7 +366,7 @@ function PatientRow({
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="truncate text-[15px] font-semibold text-[var(--ap-ink)] tracking-[-0.016em]">
+          <span className="truncate text-[15px] font-semibold tracking-[-0.016em] text-[var(--ap-ink)]">
             {patient.firstName} {patient.lastName}
           </span>
           <span className="fs-chip fs-chip-primary">{patient.priority}</span>

@@ -14,7 +14,11 @@ export function Countdown({
     return <span className="text-[var(--ap-ink-muted-48)]">—</span>;
   const remainingMs = target - s.simClock;
   if (remainingMs <= 0)
-    return <span className="text-[#c8102e] font-medium">échu</span>;
+    return (
+      <span className="font-medium text-[var(--ap-status-danger-hard)]">
+        échu
+      </span>
+    );
   const totalSec = Math.floor(remainingMs / 1000);
   const min = Math.floor(totalSec / 60);
   const sec = totalSec % 60;

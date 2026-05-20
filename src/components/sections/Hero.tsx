@@ -54,7 +54,7 @@ export function Hero({ onOpenLogin }: Props) {
             </div>
           </div>
 
-          <HeroPanel />
+          <DashboardPanel />
         </div>
       </div>
     </section>
@@ -74,273 +74,38 @@ function HeroStat({ num, label }: { num: string; label: string }) {
   );
 }
 
-function HeroPanel() {
+function DashboardPanel() {
   return (
-    <div className="fs-hero-panel">
-      <svg
-        className="fs-hero-svg"
-        viewBox="0 0 600 600"
-        xmlns="http://www.w3.org/2000/svg"
-        preserveAspectRatio="xMidYMid meet"
-      >
-        <defs>
-          <linearGradient id="flowGrad" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0" stopColor="#ffffff" stopOpacity="0" />
-            <stop offset=".5" stopColor="#ffffff" stopOpacity=".9" />
-            <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
-          </linearGradient>
-          <radialGradient id="ring" cx=".5" cy=".5" r=".5">
-            <stop offset=".7" stopColor="#ffffff" stopOpacity="0" />
-            <stop offset="1" stopColor="#ffffff" stopOpacity=".22" />
-          </radialGradient>
-        </defs>
-
-        <circle
-          cx="300"
-          cy="300"
-          r="220"
-          fill="none"
-          stroke="rgba(255,255,255,.14)"
-          strokeDasharray="2 6"
-        />
-        <circle
-          cx="300"
-          cy="300"
-          r="160"
-          fill="none"
-          stroke="rgba(255,255,255,.18)"
-          strokeDasharray="2 6"
-        />
-        <circle cx="300" cy="300" r="280" fill="url(#ring)" />
-
-        <g transform="translate(60, 230)">
-          <rect width="140" height="140" rx="24" fill="#ffffff" opacity=".96" />
-          <rect x="14" y="14" width="112" height="22" rx="6" fill="#e8f3fb" />
-          <rect x="14" y="14" width="60" height="22" rx="6" fill="#1e90d6" />
-          <text
-            x="44"
-            y="30"
-            fontFamily="Plus Jakarta Sans"
-            fontSize="11"
-            fontWeight="700"
-            fill="#ffffff"
-            textAnchor="middle"
-          >
-            TRIAGE
-          </text>
-          <rect x="14" y="46" width="112" height="10" rx="3" fill="#dbe7f0" />
-          <rect x="14" y="62" width="80" height="10" rx="3" fill="#dbe7f0" />
-          <g transform="translate(14,82)">
-            <rect width="112" height="20" rx="6" fill="#e8f3fb" />
-            <circle cx="12" cy="10" r="5" fill="#1e90d6" />
-            <rect x="22" y="6" width="40" height="3" rx="1.5" fill="#0a3a5e" />
-            <rect x="22" y="12" width="60" height="3" rx="1.5" fill="#7a92a4" />
-          </g>
-          <g transform="translate(14,108)">
-            <rect width="112" height="20" rx="6" fill="#e8f3fb" />
-            <circle cx="12" cy="10" r="5" fill="#1e90d6" opacity=".5" />
-            <rect x="22" y="6" width="60" height="3" rx="1.5" fill="#0a3a5e" />
-            <rect x="22" y="12" width="40" height="3" rx="1.5" fill="#7a92a4" />
-          </g>
-        </g>
-        <text
-          x="130"
-          y="220"
-          fontFamily="Plus Jakarta Sans"
-          fontSize="12"
-          fontWeight="600"
-          fill="rgba(255,255,255,.85)"
-          textAnchor="middle"
-          letterSpacing="1"
-        >
-          URGENCE · P4/P5
-        </text>
-
-        <g
-          fontFamily="Plus Jakarta Sans"
-          fontWeight="700"
-          fontSize="13"
-          fill="#0a3a5e"
-        >
-          <g transform="translate(420, 90)">
-            <rect width="120" height="58" rx="16" fill="#ffffff" />
-            <text x="60" y="26" textAnchor="middle">
-              GMF
-            </text>
-            <text
-              x="60"
-              y="44"
-              textAnchor="middle"
-              fontSize="10"
-              fontWeight="500"
-              fill="#7a92a4"
-            >
-              Groupe de méd. fam.
-            </text>
-          </g>
-          <g transform="translate(440, 200)">
-            <rect width="120" height="58" rx="16" fill="#ffffff" />
-            <text x="60" y="26" textAnchor="middle">
-              CLSC
-            </text>
-            <text
-              x="60"
-              y="44"
-              textAnchor="middle"
-              fontSize="10"
-              fontWeight="500"
-              fill="#7a92a4"
-            >
-              Centre local · santé
-            </text>
-          </g>
-          <g transform="translate(440, 320)">
-            <rect width="120" height="58" rx="16" fill="#ffffff" />
-            <text x="60" y="26" textAnchor="middle">
-              IPS
-            </text>
-            <text
-              x="60"
-              y="44"
-              textAnchor="middle"
-              fontSize="10"
-              fontWeight="500"
-              fill="#7a92a4"
-            >
-              Infirmière praticienne
-            </text>
-          </g>
-          <g transform="translate(420, 430)">
-            <rect width="120" height="58" rx="16" fill="#ffffff" />
-            <text x="60" y="26" textAnchor="middle">
-              UMF
-            </text>
-            <text
-              x="60"
-              y="44"
-              textAnchor="middle"
-              fontSize="10"
-              fontWeight="500"
-              fill="#7a92a4"
-            >
-              Unité de méd. fam.
-            </text>
-          </g>
-        </g>
-
-        <g
-          fill="none"
-          stroke="rgba(255,255,255,.55)"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeDasharray="4 6"
-        >
-          <path d="M200 280 C 280 280 360 120 420 120" />
-          <path d="M200 295 C 290 295 380 230 440 230" />
-          <path d="M200 310 C 290 310 380 350 440 350" />
-          <path d="M200 330 C 280 330 360 460 420 460" />
-        </g>
-
-        <g fill="#ffffff">
-          <circle r="5">
-            <animateMotion
-              dur="3.4s"
-              repeatCount="indefinite"
-              path="M200 280 C 280 280 360 120 420 120"
-            />
-          </circle>
-          <circle r="4" opacity=".8">
-            <animateMotion
-              dur="3.8s"
-              begin=".4s"
-              repeatCount="indefinite"
-              path="M200 295 C 290 295 380 230 440 230"
-            />
-          </circle>
-          <circle r="5">
-            <animateMotion
-              dur="3.2s"
-              begin=".9s"
-              repeatCount="indefinite"
-              path="M200 310 C 290 310 380 350 440 350"
-            />
-          </circle>
-          <circle r="4" opacity=".8">
-            <animateMotion
-              dur="3.6s"
-              begin="1.3s"
-              repeatCount="indefinite"
-              path="M200 330 C 280 330 360 460 420 460"
-            />
-          </circle>
-        </g>
-
-        <g transform="translate(300,300)">
-          <circle r="44" fill="#ffffff" opacity=".95" />
-          <circle
-            r="44"
-            fill="none"
-            stroke="rgba(255,255,255,.5)"
-            strokeWidth="1"
-          />
-          <text
-            y="2"
-            fontFamily="Bricolage Grotesque"
-            fontWeight="700"
-            fontSize="14"
-            fill="#0a3a5e"
-            textAnchor="middle"
-          >
-            FileSanté
-          </text>
-          <text
-            y="18"
-            fontFamily="Plus Jakarta Sans"
-            fontWeight="600"
-            fontSize="9"
-            fill="#1e90d6"
-            textAnchor="middle"
-            letterSpacing="1"
-          >
-            ROUTAGE
-          </text>
-        </g>
-      </svg>
-
-      <div className="fs-float-badge top-6 right-6">
-        <span className="ic">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-            <path d="M12 7v5l3 2" />
+    <div className="relative">
+      {/* Floating notification cards */}
+      <FloatingNotif
+        className="-top-4 -left-4 md:-top-6 md:-left-10"
+        tone="neutral"
+        icon={
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
           </svg>
-        </span>
-        <div>
-          Attente <span style={{ color: "var(--fs-primary)" }}>42 min</span>
-          <div className="sub">HMR · zone Bleue</div>
-        </div>
-      </div>
-
-      <div className="fs-float-badge bottom-7 left-5">
-        <span className="ic">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
+        }
+        title="SMS envoyé"
+        body="Antoine G. · code 4218"
+      />
+      <FloatingNotif
+        className="-top-2 -right-4 md:-top-3 md:-right-8"
+        tone="success"
+        icon={
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 13l4 4L19 7" />
+          </svg>
+        }
+        title="Confirmé · 60 min"
+        body="Jean-F. L. · HGM"
+      />
+      <FloatingNotif
+        className="-bottom-4 left-2 md:-bottom-6 md:left-6"
+        tone="primary"
+        icon={
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="3" width="7" height="7" rx="1" />
             <rect x="14" y="3" width="7" height="7" rx="1" />
             <rect x="3" y="14" width="7" height="7" rx="1" />
@@ -349,35 +114,160 @@ function HeroPanel() {
             <rect x="14" y="18" width="3" height="3" rx=".5" />
             <rect x="18" y="18" width="3" height="3" rx=".5" />
           </svg>
-        </span>
-        <div>
-          Code QR envoyé
-          <div className="sub">SMS · +1 514 ••• 4218</div>
-        </div>
-      </div>
+        }
+        title="Retour scanné"
+        body="Lucas B. · code 3024"
+      />
 
       <div
-        className="fs-float-badge -right-3 top-1/2"
-        style={{ transform: "translateY(-50%)" }}
+        className="overflow-hidden rounded-3xl border border-[var(--fs-line)] bg-white"
+        style={{ boxShadow: "0 30px 60px -30px rgba(15, 111, 180, 0.35), 0 8px 20px -10px rgba(15, 111, 180, 0.15)" }}
       >
-        <span className="ic" style={{ background: "#e6f7ee", color: "#108a52" }}>
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M5 13l4 4L19 7" />
-          </svg>
-        </span>
-        <div>
-          Patient routé · CLSC Hochelaga
-          <div className="sub">Il y a 2 s</div>
+        {/* Window chrome */}
+        <div className="flex items-center justify-between border-b border-[var(--fs-line)] bg-[var(--bg-soft-2,#f3f8fc)] px-4 py-3">
+          <div className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
+          </div>
+          <div className="font-mono text-[11px] text-[var(--fs-ink-3)]">
+            filesante.qc/dashboard/queue
+          </div>
+          <div className="w-12" />
         </div>
+
+        <div className="grid grid-cols-[170px_1fr] gap-0">
+          {/* Mini sidebar */}
+          <div className="border-r border-[var(--fs-line)] bg-white p-3">
+            <div className="mb-2 text-[9px] font-semibold tracking-[0.1em] text-[var(--fs-ink-3)] uppercase">
+              Pilotage
+            </div>
+            {[
+              { label: "Vue d'ensemble", active: false },
+              { label: "File d'attente", active: true },
+              { label: "Indicateurs", active: false },
+            ].map((it) => (
+              <div
+                key={it.label}
+                className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-[10.5px] ${
+                  it.active
+                    ? "bg-[var(--fs-bg-soft)] font-semibold text-[var(--fs-primary)]"
+                    : "text-[var(--fs-ink-2)]"
+                }`}
+              >
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${
+                    it.active ? "bg-[var(--fs-primary)]" : "bg-[var(--fs-ink-3)] opacity-40"
+                  }`}
+                />
+                {it.label}
+              </div>
+            ))}
+            <div className="mt-3 mb-2 text-[9px] font-semibold tracking-[0.1em] text-[var(--fs-ink-3)] uppercase">
+              Opérations
+            </div>
+            {["Inscription", "Retour patient", "Journal SMS"].map((label) => (
+              <div
+                key={label}
+                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-[10.5px] text-[var(--fs-ink-2)]"
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--fs-ink-3)] opacity-40" />
+                {label}
+              </div>
+            ))}
+          </div>
+
+          {/* Mini queue */}
+          <div className="bg-[var(--fs-bg-soft-2)] p-4">
+            <div className="flex items-end justify-between">
+              <div>
+                <h3 className="text-[14px] font-semibold tracking-[-0.016em] text-[var(--fs-ink)]">
+                  File d&apos;attente
+                </h3>
+                <p className="mt-0.5 text-[10.5px] text-[var(--fs-ink-3)]">
+                  Patients P4 / P5 actifs · temps réel
+                </p>
+              </div>
+              <span className="rounded-full bg-[var(--fs-bg-soft)] px-2 py-0.5 text-[9.5px] font-semibold text-[var(--fs-primary)]">
+                6 actifs
+              </span>
+            </div>
+
+            <div className="mt-3 overflow-hidden rounded-lg border border-[var(--fs-line)] bg-white">
+              {[
+                { name: "Antoine Gagnon", code: "4218", status: "Inscrit", dot: "#1e90d6" },
+                { name: "Olivier Bélanger", code: "1875", status: "À confirmer", dot: "#ff9f0a" },
+                { name: "Jean-F. Lavoie", code: "5503", status: "Confirmé", dot: "#34c759" },
+                { name: "Élise Pelletier", code: "2147", status: "Confirmé", dot: "#34c759" },
+                { name: "Mohammed Hassan", code: "6890", status: "Arrivé", dot: "#007aff" },
+              ].map((row, i) => (
+                <div
+                  key={row.code}
+                  className={`flex items-center gap-2.5 px-3 py-2 text-[10.5px] ${
+                    i > 0 ? "border-t border-[var(--fs-line)]" : ""
+                  }`}
+                >
+                  <div className="grid h-5 w-5 place-items-center rounded-full bg-[var(--fs-bg-soft-2)] text-[8px] font-semibold text-[var(--fs-ink-2)]">
+                    {row.name
+                      .split(" ")
+                      .map((p) => p[0])
+                      .join("")
+                      .slice(0, 2)}
+                  </div>
+                  <span className="flex-1 truncate font-medium text-[var(--fs-ink)]">
+                    {row.name}
+                  </span>
+                  <span className="font-mono tabular-nums text-[var(--fs-primary)]">
+                    {row.code}
+                  </span>
+                  <span className="flex items-center gap-1 text-[9.5px] text-[var(--fs-ink-3)]">
+                    <span
+                      className="h-1.5 w-1.5 rounded-full"
+                      style={{ background: row.dot }}
+                    />
+                    {row.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FloatingNotif({
+  className,
+  icon,
+  title,
+  body,
+  tone = "neutral",
+}: {
+  className?: string;
+  icon: React.ReactNode;
+  title: string;
+  body: string;
+  tone?: "neutral" | "success" | "primary";
+}) {
+  const toneCls = {
+    neutral: "bg-[var(--fs-bg-soft)] text-[var(--fs-primary)]",
+    success: "bg-[#e6f7ee] text-[#108a52]",
+    primary: "bg-[var(--fs-bg-soft)] text-[var(--fs-primary)]",
+  }[tone];
+  return (
+    <div
+      className={`absolute z-10 flex items-center gap-2.5 rounded-2xl border border-[var(--fs-line)] bg-white/95 p-2.5 pr-3.5 backdrop-blur ${className ?? ""}`}
+      style={{ boxShadow: "0 14px 30px -10px rgba(0, 0, 0, 0.18)" }}
+    >
+      <div className={`grid h-7 w-7 place-items-center rounded-lg ${toneCls}`}>
+        {icon}
+      </div>
+      <div>
+        <div className="text-[12px] font-semibold tracking-[-0.01em] text-[var(--fs-ink)]">
+          {title}
+        </div>
+        <div className="text-[10.5px] text-[var(--fs-ink-3)]">{body}</div>
       </div>
     </div>
   );

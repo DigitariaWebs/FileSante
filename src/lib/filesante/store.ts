@@ -27,7 +27,13 @@ function seeded(): Store {
 
 type Listener = (s: Store) => void;
 const listeners = new Set<Listener>();
-let state: Store = initial;
+
+function seededInitial(): Store {
+  const seed = buildSeed();
+  return { ...initial, ...seed };
+}
+
+let state: Store = seededInitial();
 let hydrated = false;
 
 function emit() {
@@ -65,6 +71,7 @@ function hydrate() {
   }
   // Anchor real clock now so tick deltas start fresh.
   state.realAnchor = Date.now();
+  emit();
 }
 
 export const store = {

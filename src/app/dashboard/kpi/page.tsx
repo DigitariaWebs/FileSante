@@ -1,22 +1,15 @@
 "use client";
 
-import {
-  CheckCircle2,
-  Clock,
-  Inbox,
-  PhoneOff,
-  TimerReset,
-  TrendingUp,
-  TriangleAlert,
-  UserMinus,
-} from "lucide-react";
 import type { ReactNode } from "react";
 import { useMemo } from "react";
 
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Sparkline } from "@/components/dashboard/Sparkline";
+import { Icon, type IconName } from "@/components/ui/Icon";
 import { useFileSante } from "@/hooks/useFileSante";
 import { isActive } from "@/lib/filesante/store";
+
+type Tone = "info" | "success" | "warn" | "danger" | "neutral";
 
 export default function KpiPage() {
   const s = useFileSante();
@@ -62,33 +55,34 @@ export default function KpiPage() {
     };
   }, [s.patients, s.lwbs]);
 
-  const series = useMemo(() => buildSeries(s.patients, s.simClock), [
-    s.patients,
-    s.simClock,
-  ]);
+  const series = useMemo(
+    () => buildSeries(s.patients, s.simClock),
+    [s.patients, s.simClock],
+  );
 
   return (
     <>
       <PageHeader
+        eyebrow="Pilotage"
         title="Indicateurs"
         description="Performance temps réel du pilote FileSanté."
       />
 
-      <div className="flex flex-col gap-6 px-8 py-6">
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="flex flex-col gap-6 px-10 py-10">
+        <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           <Card
             label="Inscrits cumulés"
             value={stats.total}
             sub={`${stats.active} actifs`}
-            icon={<Inbox size={16} />}
-            tone="primary"
+            icon="archive"
+            tone="info"
             spark={series.inscriptions}
           />
           <Card
             label="Arrivés"
             value={stats.arrived}
             sub="ARRIVED ou COMPLETED"
-            icon={<CheckCircle2 size={16} />}
+            icon="checkCircle"
             tone="success"
             spark={series.arrivals}
           />
@@ -96,63 +90,62 @@ export default function KpiPage() {
             label="Taux de réponse"
             value={`${stats.responseRate}%`}
             sub="Réponses OUI ou NON reçues"
-            icon={<TrendingUp size={16} />}
+            icon="graphUp"
             tone="neutral"
           />
           <Card
             label="Attente moyenne"
-            value={`${stats.avgWaitMin} min`}
+            value={`${stats.avgWaitMin} min`}
             sub="Inscription → arrivée"
-            icon={<Clock size={16} />}
+            icon="clock"
             tone="neutral"
           />
         </section>
 
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           <Card
             label="LWBS"
             value={stats.lwbs}
             sub="Left Without Being Seen"
-            icon={<TriangleAlert size={16} />}
+            icon="warning"
             tone={stats.lwbs > 0 ? "danger" : "neutral"}
           />
           <Card
             label="No-show"
             value={stats.noShow}
             sub="Confirmé · non présenté"
-            icon={<UserMinus size={16} />}
-            tone="warning"
+            icon="userMinus"
+            tone="warn"
           />
           <Card
             label="Annulé · patient"
             value={stats.cancelled}
             sub="Réponse NON au SMS T-60"
-            icon={<TimerReset size={16} />}
+            icon="timerOff"
             tone="neutral"
           />
           <Card
             label="Sans réponse"
             value={stats.noResp}
             sub="Aucun OUI/NON dans la fenêtre"
-            icon={<PhoneOff size={16} />}
+            icon="phoneOff"
             tone="neutral"
           />
         </section>
 
         <section className="fs-dash-card-flush">
-          <div className="border-b border-[#eef2f6] px-5 py-4">
-            <h2 className="font-display text-[15px] font-semibold tracking-[-0.01em] text-[#0c2535]">
-              Funnel · session courante
-            </h2>
-            <p className="mt-0.5 text-[12px] text-[#7a8898]">
+          <div className="border-b border-[var(--ap-divider-soft)] px-6 py-5">
+            <h2 className="fs-tagline text-[17px]!">Funnel · session courante</h2>
+            <p className="fs-body mt-1 text-[var(--ap-ink-muted-48)]">
               Du triage initial à l&apos;arrivée à l&apos;urgence.
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-4 px-5 py-5 md:grid-cols-5">
+          <div className="grid grid-cols-2 gap-6 px-6 py-6 md:grid-cols-5">
             <FunnelStep
               label="Inscrits"
               count={stats.total}
               of={stats.total || 1}
+              tone="info"
             />
             <FunnelStep
               label="Confirmés"
@@ -165,23 +158,25 @@ export default function KpiPage() {
                 ).length
               }
               of={stats.total || 1}
+              tone="info"
             />
             <FunnelStep
               label="Arrivés"
               count={stats.arrived}
               of={stats.total || 1}
+              tone="info"
             />
             <FunnelStep
               label="No-show"
               count={stats.noShow}
               of={stats.total || 1}
-              tone="danger"
+              tone="neutral"
             />
             <FunnelStep
               label="Annulés"
               count={stats.cancelled + stats.noResp}
               of={stats.total || 1}
-              tone="warning"
+              tone="neutral"
             />
           </div>
         </section>
@@ -201,34 +196,32 @@ function Card({
   label: string;
   value: ReactNode;
   sub: string;
-  icon: ReactNode;
-  tone: "primary" | "success" | "warning" | "danger" | "neutral";
+  icon: IconName;
+  tone: Tone;
   spark?: number[];
 }) {
-  const toneCls = {
-    primary: "text-[#1e90d6] bg-[#e8f3fb]",
-    success: "text-[#0a6b39] bg-[#dcf2e6]",
-    warning: "text-[#a06400] bg-[#fff4d6]",
-    danger: "text-[#b91c1c] bg-[#fee2e2]",
-    neutral: "text-[#536270] bg-[#eef2f6]",
-  }[tone];
+  const chipCls: Record<Tone, string> = {
+    info: "fs-icon-chip fs-icon-chip-info",
+    success: "fs-icon-chip fs-icon-chip-success",
+    warn: "fs-icon-chip fs-icon-chip-warn",
+    danger: "fs-icon-chip fs-icon-chip-danger",
+    neutral: "fs-icon-chip",
+  };
   return (
     <div className="fs-stat-tile">
       <div className="flex items-start justify-between">
-        <div>
-          <div className="text-[11px] font-semibold tracking-[0.08em] text-[#7a8898] uppercase">
-            {label}
-          </div>
-          <div className="mt-2 font-display text-[28px] leading-none font-semibold tracking-[-0.02em] text-[#0c2535] tabular-nums">
+        <div className="min-w-0">
+          <div className="fs-eyebrow">{label}</div>
+          <div className="mt-3 font-[var(--ap-font-display)] text-[34px] leading-[1.07] font-semibold tracking-[-0.374px] tabular-nums text-[var(--ap-ink)]">
             {value}
           </div>
         </div>
-        <div className={`grid h-7 w-7 place-items-center rounded-md ${toneCls}`}>
-          {icon}
+        <div className={chipCls[tone]}>
+          <Icon name={icon} size={16} />
         </div>
       </div>
-      <div className="mt-3 flex items-end justify-between gap-3">
-        <p className="text-[12px] text-[#7a8898]">{sub}</p>
+      <div className="mt-4 flex items-end justify-between gap-3">
+        <p className="text-[13px] text-[var(--ap-ink-muted-48)]">{sub}</p>
         {spark && spark.length > 0 && (
           <Sparkline data={spark} width={92} height={28} />
         )}
@@ -241,31 +234,31 @@ function FunnelStep({
   label,
   count,
   of,
-  tone,
+  tone = "neutral",
 }: {
   label: string;
   count: number;
   of: number;
-  tone?: "danger" | "warning";
+  tone?: "info" | "neutral";
 }) {
   const pct = of > 0 ? Math.round((count / of) * 100) : 0;
-  const barColor =
-    tone === "danger" ? "#c83333" : tone === "warning" ? "#d99814" : "#1e90d6";
   return (
     <div>
       <div className="flex items-baseline justify-between">
-        <span className="text-[12px] font-semibold text-[#536270]">{label}</span>
-        <span className="font-mono text-[11.5px] text-[#7a8898] tabular-nums">
+        <span className="text-[12.5px] font-semibold text-[var(--ap-ink-muted-80)] tracking-[-0.016em]">
+          {label}
+        </span>
+        <span className="font-mono text-[11.5px] tabular-nums text-[var(--ap-ink-muted-48)]">
           {pct}%
         </span>
       </div>
-      <div className="mt-2 font-display text-[22px] font-semibold tabular-nums text-[#0c2535]">
+      <div className="mt-2 font-[var(--ap-font-display)] text-[28px] font-semibold tabular-nums tracking-[-0.374px] text-[var(--ap-ink)]">
         {count}
       </div>
-      <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-[#eef2f6]">
+      <div className="fs-funnel-track mt-2">
         <div
-          className="h-full rounded-full transition-all"
-          style={{ width: `${pct}%`, background: barColor }}
+          className={`fs-funnel-fill ${tone === "info" ? "fs-funnel-fill-info" : ""}`}
+          style={{ width: `${pct}%` }}
         />
       </div>
     </div>
@@ -284,13 +277,19 @@ function buildSeries(
   for (const p of patients) {
     const d = now - p.registeredAt;
     if (d >= 0 && d <= window) {
-      const i = Math.min(buckets - 1, Math.floor(((window - d) / window) * buckets));
+      const i = Math.min(
+        buckets - 1,
+        Math.floor(((window - d) / window) * buckets),
+      );
       ins[i] += 1;
     }
     if (p.arrivedAt !== null) {
       const da = now - p.arrivedAt;
       if (da >= 0 && da <= window) {
-        const i = Math.min(buckets - 1, Math.floor(((window - da) / window) * buckets));
+        const i = Math.min(
+          buckets - 1,
+          Math.floor(((window - da) / window) * buckets),
+        );
         arr[i] += 1;
       }
     }

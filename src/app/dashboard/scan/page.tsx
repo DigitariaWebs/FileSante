@@ -1,12 +1,11 @@
 "use client";
 
-import { CheckCircle2, QrCode, ScanLine, XCircle } from "lucide-react";
 import { useState } from "react";
 
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
-import { Input } from "@/components/ui/input";
+import { Icon } from "@/components/ui/Icon";
 import { useFileSante } from "@/hooks/useFileSante";
 import { isActive, markArrived } from "@/lib/filesante/store";
 
@@ -50,7 +49,11 @@ export default function ScanPage() {
       });
       setHistory((h) =>
         [
-          { name: `${r.patient.firstName} ${r.patient.lastName}`, code: r.patient.code, at },
+          {
+            name: `${r.patient.firstName} ${r.patient.lastName}`,
+            code: r.patient.code,
+            at,
+          },
           ...h,
         ].slice(0, 5),
       );
@@ -76,8 +79,8 @@ export default function ScanPage() {
       <div className="grid gap-6 px-10 py-10 lg:grid-cols-[1fr_380px]">
         <div className="fs-dash-card flex flex-col gap-6 p-10">
           <div className="mx-auto flex w-full max-w-[460px] flex-col gap-5">
-            <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[rgba(30,144,214,0.1)] text-[var(--fs-primary)]">
-              <ScanLine size={26} strokeWidth={1.6} />
+            <div className="mx-auto fs-icon-chip fs-icon-chip-info h-14 w-14 rounded-2xl">
+              <Icon name="scan" size={26} />
             </div>
             <div className="text-center">
               <h2 className="fs-display-md text-[24px]!">
@@ -90,13 +93,13 @@ export default function ScanPage() {
             </div>
 
             <form onSubmit={submit} className="flex flex-col gap-3">
-              <Input
+              <input
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 autoFocus
                 inputMode="numeric"
                 placeholder="4321"
-                className="h-16 rounded-2xl text-center font-mono text-[28px] tracking-[0.32em] tabular-nums"
+                className="fs-input fs-input-rect h-16 text-center font-mono text-[28px] tracking-[0.32em] tabular-nums"
                 aria-label="Code retour"
               />
               <button
@@ -112,26 +115,33 @@ export default function ScanPage() {
               <div
                 className={`flex items-start gap-3 rounded-xl border p-4 text-[13.5px] ${
                   result.ok
-                    ? "border-[rgba(52,199,89,0.4)] bg-[rgba(52,199,89,0.08)] text-[#1a6d2f]"
-                    : "border-[rgba(255,69,58,0.4)] bg-[rgba(255,69,58,0.08)] text-[#a02016]"
+                    ? "border-transparent bg-[var(--ap-status-success-bg)] text-[var(--ap-status-success-ink)]"
+                    : "border-transparent bg-[var(--ap-status-danger-bg)] text-[var(--ap-status-danger-ink)]"
                 }`}
               >
                 {result.ok ? (
                   <>
-                    <CheckCircle2 size={18} strokeWidth={1.8} className="mt-0.5 shrink-0" />
+                    <Icon
+                      name="checkCircle"
+                      size={18}
+                      className="mt-0.5 shrink-0"
+                    />
                     <div>
                       <div className="font-semibold">
                         {result.name} marqué arrivé
                       </div>
                       <div className="mt-0.5 text-[12.5px] opacity-80">
-                        Code <span className="font-mono tabular-nums">{result.code}</span> ·{" "}
-                        {result.hospital}
+                        Code{" "}
+                        <span className="font-mono tabular-nums">
+                          {result.code}
+                        </span>{" "}
+                        · {result.hospital}
                       </div>
                     </div>
                   </>
                 ) : (
                   <>
-                    <XCircle size={18} strokeWidth={1.8} className="mt-0.5 shrink-0" />
+                    <Icon name="xCircle" size={18} className="mt-0.5 shrink-0" />
                     <div>
                       <div className="font-semibold">Refusé</div>
                       <div className="mt-0.5 text-[12.5px] opacity-80">
@@ -177,7 +187,7 @@ export default function ScanPage() {
 
         <div className="flex flex-col gap-5">
           <div className="fs-dash-card-flush">
-            <div className="flex items-end justify-between border-b border-[var(--ap-divider-soft)] px-5 py-4">
+            <div className="flex items-end justify-between border-b border-[var(--ap-divider-soft)] px-6 py-5">
               <h3 className="fs-tagline text-[15px]!">Scans récents</h3>
               <span className="text-[11.5px] text-[var(--ap-ink-muted-48)]">
                 Session active
@@ -185,7 +195,7 @@ export default function ScanPage() {
             </div>
             {history.length === 0 ? (
               <EmptyState
-                icon={<QrCode size={18} strokeWidth={1.6} />}
+                icon={<Icon name="qr" size={20} />}
                 title="Aucun scan pour l'instant"
                 description="Les scans réussis apparaîtront ici."
               />
@@ -194,14 +204,18 @@ export default function ScanPage() {
                 {history.map((h, i) => (
                   <li
                     key={`${h.code}-${h.at}-${i}`}
-                    className="flex items-center gap-3 px-5 py-3.5"
+                    className="flex items-center gap-3 px-6 py-4"
                   >
-                    <CheckCircle2 size={16} strokeWidth={1.8} className="text-[#34c759]" />
+                    <Icon
+                      name="checkCircle"
+                      size={16}
+                      className="text-[var(--ap-status-success-ink)]"
+                    />
                     <div className="flex-1">
-                      <div className="text-[14px] font-semibold text-[var(--ap-ink)] tracking-[-0.016em]">
+                      <div className="text-[14px] font-semibold tracking-[-0.016em] text-[var(--ap-ink)]">
                         {h.name}
                       </div>
-                      <div className="font-mono text-[11.5px] text-[var(--ap-ink-muted-48)] tabular-nums">
+                      <div className="font-mono text-[11.5px] tabular-nums text-[var(--ap-ink-muted-48)]">
                         {h.code}
                       </div>
                     </div>
@@ -215,7 +229,7 @@ export default function ScanPage() {
           </div>
 
           <div className="fs-dash-card-flush">
-            <div className="border-b border-[var(--ap-divider-soft)] px-5 py-4">
+            <div className="border-b border-[var(--ap-divider-soft)] px-6 py-5">
               <h3 className="fs-tagline text-[15px]!">Arrivés (cumul)</h3>
               <p className="fs-body mt-1 text-[12px] text-[var(--ap-ink-muted-48)]">
                 Statut ARRIVED ou COMPLETED.
@@ -228,13 +242,13 @@ export default function ScanPage() {
                 {recentArrivals.map((p) => (
                   <li
                     key={p.id}
-                    className="flex items-center gap-3 px-5 py-3.5"
+                    className="flex items-center gap-3 px-6 py-4"
                   >
                     <div className="flex-1">
-                      <div className="text-[14px] font-semibold text-[var(--ap-ink)] tracking-[-0.016em]">
+                      <div className="text-[14px] font-semibold tracking-[-0.016em] text-[var(--ap-ink)]">
                         {p.firstName} {p.lastName}
                       </div>
-                      <div className="font-mono text-[11.5px] text-[var(--ap-ink-muted-48)] tabular-nums">
+                      <div className="font-mono text-[11.5px] tabular-nums text-[var(--ap-ink-muted-48)]">
                         {p.code}
                       </div>
                     </div>

@@ -658,6 +658,210 @@
   }
 }
 
+/* ─────────── Landing motion + atmosphere ─────────── */
+
+@keyframes fs-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fs-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fs-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes fs-drift {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  33% {
+    transform: translate(20px, -16px);
+  }
+  66% {
+    transform: translate(-12px, 14px);
+  }
+}
+
+@keyframes fs-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes fs-spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fs-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@layer components {
+  /* Scroll-triggered reveal — class toggled by IntersectionObserver */
+  .fs-reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition:
+      opacity 0.9s cubic-bezier(0.2, 0.7, 0.2, 1),
+      transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+    will-change: opacity, transform;
+  }
+  .fs-reveal.is-in {
+    opacity: 1;
+    transform: none;
+  }
+  .fs-reveal-delay-1 {
+    transition-delay: 0.08s;
+  }
+  .fs-reveal-delay-2 {
+    transition-delay: 0.16s;
+  }
+  .fs-reveal-delay-3 {
+    transition-delay: 0.24s;
+  }
+  .fs-reveal-delay-4 {
+    transition-delay: 0.32s;
+  }
+  .fs-reveal-delay-5 {
+    transition-delay: 0.4s;
+  }
+
+  /* Atmospheric backgrounds */
+  .fs-bg-grid {
+    background-image:
+      linear-gradient(to right, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
+  .fs-bg-grid-dark {
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
+  .fs-bg-dots {
+    background-image: radial-gradient(
+      circle,
+      rgba(0, 0, 0, 0.08) 1px,
+      transparent 1px
+    );
+    background-size: 24px 24px;
+  }
+  .fs-bg-dots-light {
+    background-image: radial-gradient(
+      circle,
+      rgba(255, 255, 255, 0.08) 1px,
+      transparent 1px
+    );
+    background-size: 24px 24px;
+  }
+
+  /* Soft animated color blobs (atmospheric depth, no decorative gradient on subjects) */
+  .fs-blob {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(80px);
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  /* Animated lift on hover for product-shadow elements */
+  .fs-lift {
+    transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .fs-lift:hover {
+    transform: translateY(-4px);
+  }
+
+  /* Marquee */
+  .fs-marquee-track {
+    display: flex;
+    width: max-content;
+    animation: fs-marquee 36s linear infinite;
+  }
+  .fs-marquee-track-slow {
+    animation-duration: 60s;
+  }
+
+  /* Tilt on scroll for hero render */
+  .fs-tilt {
+    transform-origin: center 60%;
+    transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  /* Apple product shadow utility */
+  .fs-product-shadow {
+    filter: drop-shadow(rgba(0, 0, 0, 0.18) 4px 12px 36px);
+  }
+
+  /* Shimmer underline for accent words */
+  .fs-shimmer-text {
+    background: linear-gradient(
+      90deg,
+      var(--fs-primary) 0%,
+      #6cc1ee 50%,
+      var(--fs-primary) 100%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: fs-shimmer 6s linear infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fs-reveal,
+  .fs-reveal.is-in {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .fs-marquee-track,
+  .fs-marquee-track-slow,
+  .fs-shimmer-text {
+    animation: none;
+  }
+  .fs-float,
+  .fs-drift {
+    animation: none !important;
+  }
+}
+
 /* ─────────── Apple-style Dashboard system (FileSanté palette) ─────────── */
 
 :root {
@@ -666,12 +870,25 @@
   --ap-surface-pearl: #fafafc;
   --ap-tile-1: #272729;
   --ap-tile-2: #2a2a2c;
+  --ap-tile-3: #252527;
   --ap-ink: #1d1d1f;
   --ap-ink-muted-80: #424245;
   --ap-ink-muted-48: #6e6e73;
   --ap-divider-soft: rgba(0, 0, 0, 0.04);
   --ap-hairline: #d2d2d7;
   --ap-product-shadow: rgba(0, 0, 0, 0.22) 3px 5px 30px 0;
+
+  /* Semantic status (use sparingly — color + icon, never color alone) */
+  --ap-status-info-bg: rgba(30, 144, 214, 0.1);
+  --ap-status-info-ink: var(--fs-primary);
+  --ap-status-success-bg: rgba(52, 199, 89, 0.12);
+  --ap-status-success-ink: #1a6d2f;
+  --ap-status-warn-bg: rgba(255, 159, 10, 0.12);
+  --ap-status-warn-ink: #a06400;
+  --ap-status-danger-bg: rgba(255, 69, 58, 0.1);
+  --ap-status-danger-ink: #a02016;
+  --ap-status-danger-hard: #c8102e;
+
   --ap-font-display:
     system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI",
     "Helvetica Neue", Arial, sans-serif;
@@ -1017,6 +1234,126 @@
     line-height: 1.43;
     letter-spacing: -0.016em;
     color: var(--ap-ink-muted-80);
+  }
+
+  /* Dashboard surface utilities — Apple grammar */
+  .fs-tile-dark-2 {
+    background: var(--ap-tile-2);
+    color: #ffffff;
+    border-radius: 18px;
+    overflow: hidden;
+  }
+  .fs-tile-dark-3 {
+    background: var(--ap-tile-3);
+    color: #ffffff;
+    border-radius: 18px;
+    overflow: hidden;
+  }
+
+  /* Full-bleed dark hero strip — alternation pulse on home */
+  .fs-hero-strip {
+    background: var(--ap-tile-1);
+    color: #ffffff;
+    padding: 28px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    border-radius: 18px;
+    overflow: hidden;
+    position: relative;
+  }
+  .fs-hero-strip h2,
+  .fs-hero-strip h3 {
+    color: #ffffff;
+    font-family: var(--ap-font-display);
+  }
+  .fs-hero-strip p {
+    color: #cccccc;
+  }
+
+  /* Square rounded icon chip — utility-card pattern */
+  .fs-icon-chip {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--ap-canvas-parchment);
+    color: var(--ap-ink-muted-48);
+  }
+  .fs-icon-chip-info {
+    background: var(--ap-status-info-bg);
+    color: var(--ap-status-info-ink);
+  }
+  .fs-icon-chip-success {
+    background: var(--ap-status-success-bg);
+    color: var(--ap-status-success-ink);
+  }
+  .fs-icon-chip-warn {
+    background: var(--ap-status-warn-bg);
+    color: var(--ap-status-warn-ink);
+  }
+  .fs-icon-chip-danger {
+    background: var(--ap-status-danger-bg);
+    color: var(--ap-status-danger-ink);
+  }
+
+  /* Status chip pill (Apple grammar — light bg + ink color + 1.5px dot) */
+  .fs-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 22px;
+    padding: 0 10px;
+    border-radius: 9999px;
+    font-family: var(--ap-font-text);
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: -0.1px;
+    background: var(--ap-canvas-parchment);
+    color: var(--ap-ink-muted-80);
+  }
+  .fs-status::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: currentColor;
+    opacity: 0.65;
+  }
+  .fs-status-info {
+    background: var(--ap-status-info-bg);
+    color: var(--ap-status-info-ink);
+  }
+  .fs-status-success {
+    background: var(--ap-status-success-bg);
+    color: var(--ap-status-success-ink);
+  }
+  .fs-status-warn {
+    background: var(--ap-status-warn-bg);
+    color: var(--ap-status-warn-ink);
+  }
+  .fs-status-danger {
+    background: var(--ap-status-danger-bg);
+    color: var(--ap-status-danger-ink);
+  }
+
+  /* Funnel bar — single ink + parchment well */
+  .fs-funnel-track {
+    height: 4px;
+    border-radius: 9999px;
+    background: var(--ap-canvas-parchment);
+    overflow: hidden;
+  }
+  .fs-funnel-fill {
+    height: 100%;
+    border-radius: 9999px;
+    background: var(--ap-ink);
+    transition: width 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .fs-funnel-fill-info {
+    background: var(--fs-primary);
   }
 }
 

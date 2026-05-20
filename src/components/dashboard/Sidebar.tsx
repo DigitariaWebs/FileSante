@@ -1,21 +1,7 @@
 "use client";
 
-import {
-  ChevronsUpDown,
-  HelpCircle,
-  LayoutDashboard,
-  LifeBuoy,
-  ListChecks,
-  LogOut,
-  MessageSquareText,
-  QrCode,
-  Settings,
-  TrendingUp,
-  UserPlus,
-} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import type { LucideIcon } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 
 import {
@@ -26,28 +12,29 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Icon, type IconName } from "@/components/ui/Icon";
 
 type Item = {
   href: string;
   label: string;
-  icon: LucideIcon;
+  icon: IconName;
 };
 
 const SECTIONS: { title: string; items: Item[] }[] = [
   {
     title: "Pilotage",
     items: [
-      { href: "/dashboard", label: "Vue d'ensemble", icon: LayoutDashboard },
-      { href: "/dashboard/queue", label: "File d'attente", icon: ListChecks },
-      { href: "/dashboard/kpi", label: "Indicateurs", icon: TrendingUp },
+      { href: "/dashboard", label: "Vue d'ensemble", icon: "viewGrid" },
+      { href: "/dashboard/queue", label: "File d'attente", icon: "taskList" },
+      { href: "/dashboard/kpi", label: "Indicateurs", icon: "graphUp" },
     ],
   },
   {
     title: "Opérations",
     items: [
-      { href: "/dashboard/register", label: "Inscription", icon: UserPlus },
-      { href: "/dashboard/scan", label: "Retour patient", icon: QrCode },
-      { href: "/dashboard/sms", label: "Journal SMS", icon: MessageSquareText },
+      { href: "/dashboard/register", label: "Inscription", icon: "userPlus" },
+      { href: "/dashboard/scan", label: "Retour patient", icon: "qr" },
+      { href: "/dashboard/sms", label: "Journal SMS", icon: "chat" },
     ],
   },
 ];
@@ -89,7 +76,6 @@ export function Sidebar() {
             <div className="flex flex-col gap-0.5">
               {sec.items.map((it) => {
                 const active = isActive(it.href);
-                const Icon = it.icon;
                 return (
                   <Link
                     key={it.href}
@@ -101,13 +87,13 @@ export function Sidebar() {
                     }`}
                   >
                     <Icon
-                      size={17}
+                      name={it.icon}
+                      size={18}
                       className={
                         active
                           ? "text-[var(--fs-primary)]"
                           : "text-[var(--ap-ink-muted-48)] group-hover:text-[var(--ap-ink)]"
                       }
-                      strokeWidth={1.8}
                     />
                     <span className="truncate">{it.label}</span>
                   </Link>
@@ -129,14 +115,18 @@ export function Sidebar() {
                 MT
               </div>
               <div className="flex min-w-0 flex-1 flex-col">
-                <span className="truncate text-[13.5px] font-semibold text-[var(--ap-ink)] tracking-[-0.016em]">
+                <span className="truncate text-[13.5px] font-semibold tracking-[-0.016em] text-[var(--ap-ink)]">
                   Marie Tremblay
                 </span>
                 <span className="truncate text-[11.5px] text-[var(--ap-ink-muted-48)]">
                   Infirmière triage · HMR
                 </span>
               </div>
-              <ChevronsUpDown size={14} className="text-[var(--ap-ink-muted-48)]" />
+              <Icon
+                name="arrowSeparate"
+                size={14}
+                className="text-[var(--ap-ink-muted-48)]"
+              />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" side="top" className="w-60">
@@ -152,23 +142,23 @@ export function Sidebar() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
-              <Settings className="mr-1" />
+              <Icon name="settings" size={15} className="mr-1" />
               Paramètres
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <HelpCircle className="mr-1" />
+              <Icon name="help" size={15} className="mr-1" />
               Aide
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <LifeBuoy className="mr-1" />
+              <Icon name="lifebelt" size={15} className="mr-1" />
               Support
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={logout}
-              className="text-[#c8102e] focus:bg-[rgba(200,16,46,0.06)] focus:text-[#c8102e]"
+              className="text-[var(--ap-status-danger-hard)] focus:bg-[rgba(200,16,46,0.06)] focus:text-[var(--ap-status-danger-hard)]"
             >
-              <LogOut className="mr-1" />
+              <Icon name="logout" size={15} className="mr-1" />
               Déconnexion
             </DropdownMenuItem>
           </DropdownMenuContent>

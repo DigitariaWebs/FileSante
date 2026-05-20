@@ -1,6 +1,5 @@
 "use client";
 
-import { Check, Inbox, QrCode, UserPlus, X } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
@@ -9,6 +8,7 @@ import { Countdown } from "@/components/dashboard/Countdown";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
+import { Icon } from "@/components/ui/Icon";
 import { useFileSante } from "@/hooks/useFileSante";
 import {
   cancelPatient,
@@ -78,11 +78,11 @@ function QueuePageInner() {
         actions={
           <>
             <Link href="/dashboard/scan" className="fs-btn fs-btn-ghost">
-              <QrCode size={14} strokeWidth={1.8} />
+              <Icon name="qr" size={14} />
               Retour patient
             </Link>
             <Link href="/dashboard/register" className="fs-btn fs-btn-primary">
-              <UserPlus size={14} strokeWidth={1.8} />
+              <Icon name="userPlus" size={14} />
               Inscrire
             </Link>
           </>
@@ -109,7 +109,7 @@ function QueuePageInner() {
         <div className="fs-dash-card-flush">
           {list.length === 0 ? (
             <EmptyState
-              icon={<Inbox size={20} strokeWidth={1.6} />}
+              icon={<Icon name="archive" size={20} />}
               title="Aucun patient dans cette vue"
               description="Inscrivez un patient ou changez d'onglet."
               action={
@@ -117,7 +117,7 @@ function QueuePageInner() {
                   href="/dashboard/register"
                   className="fs-btn fs-btn-primary"
                 >
-                  <UserPlus size={14} strokeWidth={1.8} />
+                  <Icon name="userPlus" size={14} />
                   Nouvelle inscription
                 </Link>
               }
@@ -255,7 +255,7 @@ function RowActions({ p }: { p: Patient }) {
           onClick={() => confirmPatient(p.id)}
           className="fs-btn fs-btn-primary fs-btn-sm"
         >
-          <Check size={13} strokeWidth={2} />
+          <Icon name="check" size={13} strokeWidth={2} />
           OUI
         </button>
         <button
@@ -263,7 +263,7 @@ function RowActions({ p }: { p: Patient }) {
           onClick={() => cancelPatient(p.id)}
           className="fs-btn fs-btn-danger fs-btn-sm"
         >
-          <X size={13} strokeWidth={2} />
+          <Icon name="x" size={13} strokeWidth={2} />
           NON
         </button>
       </div>

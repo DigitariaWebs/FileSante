@@ -1,9 +1,9 @@
 "use client";
 
-import { ArrowRight } from "lucide-react";
 import { useState } from "react";
 
 import { PageHeader } from "@/components/dashboard/PageHeader";
+import { Icon } from "@/components/ui/Icon";
 import { RegistrationModal } from "@/components/dashboard/RegistrationModal";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -231,7 +231,7 @@ export default function RegisterPage() {
             <label
               className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 text-[14px] transition-colors ${
                 errors.consent
-                  ? "border-[#ff453a] bg-[rgba(255,69,58,0.04)]"
+                  ? "border-[var(--ap-status-danger-hard)] bg-[var(--ap-status-danger-bg)]"
                   : "border-[var(--ap-hairline)] bg-[var(--ap-canvas-parchment)] hover:border-[var(--ap-ink-muted-48)]"
               }`}
             >
@@ -251,14 +251,14 @@ export default function RegisterPage() {
               </span>
             </label>
             {errors.consent && (
-              <p className="mt-2 text-[12.5px] text-[#c8102e]">
+              <p className="mt-2 text-[12.5px] text-[var(--ap-status-danger-hard)]">
                 {errors.consent}
               </p>
             )}
           </div>
 
           {Object.keys(errors).length > 0 && (
-            <div className="mx-8 mb-5 rounded-xl border border-[#ffcfca] bg-[rgba(255,69,58,0.06)] px-4 py-3 text-[13px] text-[#a02016]">
+            <div className="mx-8 mb-5 rounded-xl border border-[var(--ap-status-danger-bg)] bg-[var(--ap-status-danger-bg)] px-4 py-3 text-[13px] text-[var(--ap-status-danger-ink)]">
               Veuillez corriger les champs surlignés.
             </div>
           )}
@@ -273,7 +273,7 @@ export default function RegisterPage() {
             </button>
             <button type="submit" className="fs-btn fs-btn-primary">
               Inscrire le patient
-              <ArrowRight size={14} strokeWidth={1.8} />
+              <Icon name="arrowRight" size={14} />
             </button>
           </div>
         </form>
@@ -329,7 +329,11 @@ function Field({
         {label}
       </Label>
       {children}
-      {error && <span className="text-[12px] text-[#c8102e]">{error}</span>}
+      {error && (
+        <span className="text-[12px] text-[var(--ap-status-danger-hard)]">
+          {error}
+        </span>
+      )}
     </div>
   );
 }

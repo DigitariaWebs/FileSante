@@ -61,10 +61,15 @@ export function QrCard({ value, size = 168 }: { value: string; size?: number }) 
   const cell = size / cells;
   return (
     <div
-      className="rounded-2xl border border-[var(--fs-line)] bg-white p-3 shadow-sm"
+      className="rounded-2xl border border-[var(--ap-hairline)] bg-white p-3 text-[var(--ap-ink)]"
       style={{ width: size + 24, height: size + 24 }}
     >
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <svg
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        fill="currentColor"
+      >
         <rect width={size} height={size} fill="#fff" />
         {matrix.map((row, y) =>
           row.map((on, x) =>
@@ -75,7 +80,6 @@ export function QrCard({ value, size = 168 }: { value: string; size?: number }) 
                 y={y * cell}
                 width={cell}
                 height={cell}
-                fill="#0c2535"
               />
             ) : null,
           ),
