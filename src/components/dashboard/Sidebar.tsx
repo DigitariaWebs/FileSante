@@ -56,7 +56,7 @@ export function Sidebar() {
     <aside className="sticky top-0 flex h-screen w-[248px] shrink-0 flex-col border-r border-[var(--ap-hairline)] bg-[var(--ap-canvas)]">
       <Link
         href="/"
-        className="flex h-[68px] items-center border-b border-[var(--ap-hairline)] px-6"
+        className="flex h-13 items-center border-b border-[var(--ap-hairline)] px-6"
         aria-label="FileSanté"
       >
         <Image

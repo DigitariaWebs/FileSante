@@ -23,9 +23,10 @@ const SPEEDS = [
 
 export function Topbar() {
   const s = useFileSante();
-  const [time, setTime] = useState(() => formatClock(new Date()));
+  const [time, setTime] = useState<string>("");
 
   useEffect(() => {
+    setTime(formatClock(new Date()));
     const id = window.setInterval(() => setTime(formatClock(new Date())), 1000);
     return () => window.clearInterval(id);
   }, []);
