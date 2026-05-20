@@ -7,6 +7,7 @@ import {
 } from "@/components/dashboard/Sidebar";
 import { Ticker } from "@/components/dashboard/Ticker";
 import { Topbar } from "@/components/dashboard/Topbar";
+import { AuthGate } from "@/components/layout/AuthGate";
 
 const SECTIONS: SidebarSection[] = [
   {
@@ -50,7 +51,7 @@ export default function MsssLayout({ children }: { children: ReactNode }) {
       <Ticker />
       <main className="flex flex-1 flex-col">
         <Topbar />
-        {children}
+        <AuthGate allow="MSSS">{children}</AuthGate>
       </main>
     </div>
   );

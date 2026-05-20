@@ -2,12 +2,21 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+import { auth, ROLE_HOME, useAuth } from "@/lib/filesante/auth";
 
 type Props = {
   onOpenLogin: () => void;
 };
 
 export function Navbar({ onOpenLogin }: Props) {
+  const { user } = useAuth();
+  const router = useRouter();
+  function logout() {
+    auth.logout();
+    router.replace("/?logout=1");
+  }
   return (
     <nav className="sticky top-0 z-50 border-b border-[rgba(219,231,240,0.7)] bg-white/[0.78] backdrop-blur-md backdrop-saturate-150">
       <div className="mx-auto flex h-[72px] max-w-[1440px] items-center justify-between px-10">
@@ -47,9 +56,28 @@ export function Navbar({ onOpenLogin }: Props) {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <button className="fs-pill" onClick={onOpenLogin} type="button">
-            Connexion
-          </button>
+          {user ? (
+            <>
+              <Link
+                href={ROLE_HOME[user.role]}
+                className="hidden text-[13px] font-semibold text-[var(--fs-primary)] sm:inline"
+              >
+                {user.firstName} {user.lastName}
+              </Link>
+              <button
+                className="fs-pill"
+                onClick={logout}
+                type="button"
+                title="Déconnexion"
+              >
+                Déconnexion
+              </button>
+            </>
+          ) : (
+            <button className="fs-pill" onClick={onOpenLogin} type="button">
+              Connexion
+            </button>
+          )}
         </div>
       </div>
     </nav>

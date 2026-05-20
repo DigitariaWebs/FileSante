@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Sidebar, type SidebarSection } from "@/components/dashboard/Sidebar";
 import { Ticker } from "@/components/dashboard/Ticker";
 import { Topbar } from "@/components/dashboard/Topbar";
+import { AuthGate } from "@/components/layout/AuthGate";
 
 const ADMIN_SECTIONS: SidebarSection[] = [
   {
@@ -47,7 +48,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       <Ticker />
       <main className="flex flex-1 flex-col">
         <Topbar />
-        {children}
+        <AuthGate allow="MSSS">{children}</AuthGate>
       </main>
     </div>
   );

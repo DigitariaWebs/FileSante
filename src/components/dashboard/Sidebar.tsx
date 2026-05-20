@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon, type IconName } from "@/components/ui/Icon";
+import { auth, ROLE_LABEL, useAuth } from "@/lib/filesante/auth";
 
 export type SidebarItem = {
   href: string;
@@ -90,11 +91,28 @@ type Props = {
 
 export function Sidebar({
   sections = DEFAULT_SECTIONS,
-  user = DEFAULT_USER,
+  user: fallbackUser = DEFAULT_USER,
   exactRoots = ["/dashboard", "/dashboard/triage"],
 }: Props) {
   const pathname = usePathname();
   const router = useRouter();
+  const { user: authed } = useAuth();
+
+  // Use the live auth user if present, otherwise fall back to whatever the
+  // layout passed in (legacy default).
+  const user: SidebarUser = authed
+    ? {
+        initials:
+          (authed.firstName.charAt(0) + authed.lastName.charAt(0)).toUpperCase() ||
+          "U",
+        name: `${authed.firstName} ${authed.lastName}`,
+        role: authed.hospital
+          ? `${ROLE_LABEL[authed.role]} · ${authed.hospital}`
+          : ROLE_LABEL[authed.role],
+        email: authed.email ?? "—",
+        accentClass: fallbackUser.accentClass,
+      }
+    : fallbackUser;
 
   function isActive(href: string) {
     if (exactRoots.includes(href)) return pathname === href;
@@ -102,7 +120,8 @@ export function Sidebar({
   }
 
   function logout() {
-    router.push("/");
+    auth.logout();
+    router.push("/?logout=1");
   }
 
   return (

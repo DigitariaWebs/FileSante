@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { Ticker } from "@/components/dashboard/Ticker";
 import { Topbar } from "@/components/dashboard/Topbar";
+import { AuthGate } from "@/components/layout/AuthGate";
 
 export default function DashboardLayout({
   children,
@@ -15,7 +16,7 @@ export default function DashboardLayout({
       <Ticker />
       <main className="flex flex-1 flex-col">
         <Topbar />
-        {children}
+        <AuthGate allow="TRIAGE">{children}</AuthGate>
       </main>
     </div>
   );

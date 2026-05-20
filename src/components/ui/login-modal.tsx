@@ -19,30 +19,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { auth, ROLE_HOME, type AuthRole } from "@/lib/filesante/auth";
+import type { HospitalCode } from "@/lib/filesante/types";
 
-type RoleKey =
-  | "TRIAGE"
-  | "HOTLINE_811"
-  | "DIRECTION"
-  | "MSSS"
-  | "CLINIQUE"
-  | "PATIENT";
+type RoleKey = AuthRole;
 
 const ROLES: { key: RoleKey; label: string; href: string }[] = [
-  { key: "TRIAGE", label: "🩺 Triage urgences", href: "/dashboard/triage" },
-  { key: "HOTLINE_811", label: "📞 Info-Santé 811", href: "/dashboard/811" },
-  {
-    key: "DIRECTION",
-    label: "🏥 Direction d'hôpital",
-    href: "/dashboard/direction",
-  },
-  { key: "MSSS", label: "🏛️ Gouvernement du Québec", href: "/dashboard/msss" },
-  {
-    key: "CLINIQUE",
-    label: "🏘️ Première ligne (GMF / CLSC)",
-    href: "/dashboard/clinique",
-  },
-  { key: "PATIENT", label: "👤 Patient", href: "/dashboard/patient" },
+  { key: "TRIAGE", label: "🩺 Triage urgences", href: ROLE_HOME.TRIAGE },
+  { key: "HOTLINE_811", label: "📞 Info-Santé 811", href: ROLE_HOME.HOTLINE_811 },
+  { key: "DIRECTION", label: "🏥 Direction d'hôpital", href: ROLE_HOME.DIRECTION },
+  { key: "MSSS", label: "🏛️ Gouvernement du Québec", href: ROLE_HOME.MSSS },
+  { key: "CLINIQUE", label: "🏘️ Première ligne (GMF / CLSC)", href: ROLE_HOME.CLINIQUE },
+  { key: "PATIENT", label: "👤 Patient", href: ROLE_HOME.PATIENT },
 ];
 
 const HOSPITALS = [
@@ -68,11 +56,22 @@ export function LoginModal({ open, onOpenChange }: Props) {
 
   function submit() {
     const target = ROLES.find((r) => r.key === role)!.href;
-    const params = new URLSearchParams();
-    if (showHospital) params.set("h", hospital);
-    params.set("u", `${first} ${last}`);
-    const qs = params.toString();
-    router.push(qs ? `${target}?${qs}` : target);
+    auth.login({
+      role,
+      firstName: first.trim() || "—",
+      lastName: last.trim() || "—",
+      hospital: showHospital ? (hospital as HospitalCode) : undefined,
+    });
+    // Mirror hospital binding into the legacy key consumed by triage pages
+    // (kept in sync so existing components still work).
+    if (showHospital && typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem("filesante.triage.hospital", hospital);
+      } catch {
+        /* ignore */
+      }
+    }
+    router.push(target);
   }
 
   return (
