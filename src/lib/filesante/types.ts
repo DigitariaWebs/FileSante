@@ -33,9 +33,12 @@ export type Patient = {
   consent: boolean;
   status: PatientStatus;
 
+  manualNotify: boolean; // true if nurse pushed "Rappeler" manually
+
   // sim-clock timestamps (ms)
   registeredAt: number;
   activatedAt: number | null; // null until patient taps Loi 25 + phone via QR
+  notifiedAt: number | null;  // when notify went out (manual or scheduled)
   ttlAt: number | null;       // activatedAt + 24h — personal data purge marker
   estimatedSlotAt: number;
   askConfirmAt: number | null;
@@ -116,6 +119,12 @@ export type StaffIndicators = {
   shiftLabel: string;
 };
 
+export type HospitalSettings = {
+  confirmDelayMin: number; // 1..15 — minutes patient has to confirm after notify
+};
+
+export type HospitalSettingsMap = Record<HospitalCode, HospitalSettings>;
+
 export type Store = {
   simClock: number; // simulated ms since session start
   realAnchor: number; // Date.now() at last tick
@@ -130,4 +139,18 @@ export type Store = {
   surgeStartedAt: number | null;
   nurseShift: NurseShift;
   staff: StaffIndicators;
+  hospitalSettings: HospitalSettingsMap;
+  expiryAlerts: ExpiryAlert[]; // recent NO_RESPONSE / NO_SHOW events, not dismissed
+};
+
+export type ExpiryAlertKind = "NO_RESPONSE" | "NO_SHOW";
+
+export type ExpiryAlert = {
+  id: string;
+  patientId: string;
+  patientName: string;
+  kind: ExpiryAlertKind;
+  hospital: HospitalCode;
+  at: number; // sim-clock
+  dismissedAt: number | null;
 };

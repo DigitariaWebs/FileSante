@@ -18,22 +18,22 @@
 - [x] No wait-minutes displayed to patient — only countdown to next deadline
 
 ## 3. File attente virtuelle
-- [ ] `GET /api/hospitals/:code/queue` → sort P4 before P5, FIFO within group
-- [ ] WebSocket `/ws?hospital=&type=dashboard` broadcast on add/notify/confirm/delete
-- [ ] `src/jobs/scheduler.js` node-cron: next-up detection, confirm expiry, 24h TTL purge
+- [x] `getHospitalQueue(code)` + `sortQueue` selectors — P4 before P5, FIFO by `registeredAt` within group ([store.ts](src/lib/filesante/store.ts))
+- [x] Reactive broadcast via `store.subscribe` / `useFileSante` (replaces WebSocket in this Next.js client demo); queue page filters by bound hospital (localStorage)
+- [x] `engine.tick` (Ticker, 1s) handles next-up (`askConfirmAt`), confirm expiry (15min → final 10min → `NO_RESPONSE`), arrival expiry → `NO_SHOW`, and 24h TTL PII purge via `purgeExpired` + `redactPatientPii`
 
 ## 4. Notification + rappel
-- [ ] Scheduler picks next patient per P4/P5 + FIFO
-- [ ] Web Push API → Amber Alert sound + vibration via Service Worker (PWA)
-- [ ] Twilio SMS backup, neutral message, no medical detail (`src/services/SmsService.js`)
-- [ ] Patient status → `notified`, start confirm timer
-- [ ] Manual notify: `POST /api/patients/:id/notify` + "Rappelé manuellement" badge
+- [x] `pickNextForHospital(code)` selector — P4>P5 + FIFO; engine `tick` auto-notifies on `askConfirmAt`
+- [x] `fireBrowserNotification` — `window.Notification` permission + `navigator.vibrate` Amber-pattern fallback (no PWA service worker yet)
+- [x] Neutral SMS template via `logSms` (no medical detail); real Twilio backend out of scope
+- [x] `notifyPatient(id, {manual})` → status `AWAITING_CONFIRMATION`, sets `notifiedAt`, starts 15-min `confirmDeadlineAt`
+- [x] Manual notify: "Rappeler" button on REGISTERED rows + "Rappelé manuellement" chip via `manualNotify` flag
 
 ## 5. Confirmation retour
-- [ ] Patient UI: "Je reviens" button on notify
-- [ ] Confirm → status `confirmed`
-- [ ] Expiry job → status `expired`, dashboard alert
-- [ ] Honor per-hospital `confirm_delay` (1–15 min)
+- [x] Patient page: "Oui, je viens" / "Non, j'annule" buttons during AWAITING_CONFIRMATION (`patient/page.tsx` ActionCard)
+- [x] `confirmPatient` → status `CONFIRMED` with 60-min arrival window
+- [x] Engine: AWAITING → AWAITING_FINAL → NO_RESPONSE (expired); CONFIRMED past `arrivalDeadlineAt` → NO_SHOW. Each pushes `ExpiryAlert` via `pushExpiryAlert`; `ExpiryAlertBar` shows on queue page
+- [x] Per-hospital `confirm_delay` (1-15 min) stored in `hospitalSettings`; `notifyPatient` reads `getConfirmDelayMin(hospital)` (UI control = Section 13)
 
 ## 6. Civières
 - [ ] Civières section on triage dashboard

@@ -3,7 +3,11 @@
 import {
   bumpSimClock,
   incLwbs,
+  isActive,
   logSms,
+  notifyPatient,
+  pushExpiryAlert,
+  redactPatientPii,
   store,
   updatePatient,
 } from "./store";
@@ -14,6 +18,24 @@ const MIN = 60_000;
 export function tick() {
   bumpSimClock();
   runTransitions();
+  purgeExpired();
+}
+
+// 24h TTL purge: once a patient is terminal (closed dossier) and their
+// ttlAt has elapsed, wipe PII columns. Row stays for KPI history.
+function purgeExpired() {
+  const s = store.get();
+  const now = s.simClock;
+  for (const p of s.patients) {
+    if (
+      !isActive(p) &&
+      p.ttlAt !== null &&
+      now >= p.ttlAt &&
+      p.phone !== "***"
+    ) {
+      redactPatientPii(p.id);
+    }
+  }
 }
 
 function runTransitions() {
@@ -26,7 +48,7 @@ function runTransitions() {
       p.askConfirmAt !== null &&
       now >= p.askConfirmAt
     ) {
-      enterAwaitingConfirmation(p, now);
+      notifyPatient(p.id);
       continue;
     }
 
@@ -69,17 +91,6 @@ function runTransitions() {
   }
 }
 
-function enterAwaitingConfirmation(p: Patient, now: number) {
-  updatePatient(p.id, {
-    status: "AWAITING_CONFIRMATION",
-    confirmDeadlineAt: now + 15 * MIN,
-  });
-  logSms(
-    p.id,
-    "Votre tour approche. Répondez OUI pour confirmer ou NON pour annuler. Vous avez 15 min pour répondre.",
-  );
-}
-
 function enterAwaitingConfirmationFinal(p: Patient, now: number) {
   updatePatient(p.id, {
     status: "AWAITING_CONFIRMATION_FINAL",
@@ -99,6 +110,12 @@ function enterNoResponse(p: Patient, now: number) {
     p.id,
     "Place libérée faute de réponse. Composez 811 si vous arrivez plus tard.",
   );
+  pushExpiryAlert({
+    patientId: p.id,
+    patientName: `${p.firstName} ${p.lastName}`,
+    hospital: p.hospital,
+    kind: "NO_RESPONSE",
+  });
 }
 
 function enterNoShow(p: Patient, now: number) {
@@ -109,6 +126,12 @@ function enterNoShow(p: Patient, now: number) {
   });
   incLwbs();
   logSms(p.id, "Place libérée — non-présentation.");
+  pushExpiryAlert({
+    patientId: p.id,
+    patientName: `${p.firstName} ${p.lastName}`,
+    hospital: p.hospital,
+    kind: "NO_SHOW",
+  });
 }
 
 // In-memory dedupe set for 15-min reminder (cleared on reload — fine for demo).

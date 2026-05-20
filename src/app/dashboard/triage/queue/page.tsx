@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 
 import { Countdown } from "@/components/dashboard/Countdown";
 import { EmptyState } from "@/components/dashboard/EmptyState";
+import { ExpiryAlertBar } from "@/components/dashboard/ExpiryAlertBar";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import { Icon } from "@/components/ui/Icon";
@@ -15,8 +16,25 @@ import {
   completePatient,
   confirmPatient,
   isActive,
+  notifyPatient,
+  sortQueue,
 } from "@/lib/filesante/store";
-import type { Patient, PatientStatus } from "@/lib/filesante/types";
+import type { HospitalCode, Patient, PatientStatus } from "@/lib/filesante/types";
+
+const HOSPITAL_BINDING_KEY = "filesante.triage.hospital";
+const VALID_HOSPITALS: HospitalCode[] = ["HMR", "HND", "HSC", "HGM"];
+
+function loadBoundHospital(): HospitalCode | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const v = window.localStorage.getItem(HOSPITAL_BINDING_KEY);
+    return v && (VALID_HOSPITALS as string[]).includes(v)
+      ? (v as HospitalCode)
+      : null;
+  } catch {
+    return null;
+  }
+}
 
 type TabKey = "all" | "registered" | "awaiting" | "confirmed" | "closed";
 
@@ -53,21 +71,37 @@ function QueuePageInner() {
     return t && TABS.some((x) => x.key === t) ? (t as TabKey) : "all";
   })();
   const [tab, setTab] = useState<TabKey>(initialTab);
+  const [hospitalFilter, setHospitalFilter] = useState<HospitalCode | "ALL">(
+    "ALL",
+  );
+
+  useEffect(() => {
+    const bound = loadBoundHospital();
+    if (bound) setHospitalFilter(bound);
+  }, []);
+
+  const scoped = useMemo(
+    () =>
+      hospitalFilter === "ALL"
+        ? s.patients
+        : s.patients.filter((p) => p.hospital === hospitalFilter),
+    [s.patients, hospitalFilter],
+  );
 
   const counts = useMemo(() => {
     return TABS.reduce<Record<TabKey, number>>(
       (acc, t) => {
-        acc[t.key] = filterPatients(s.patients, t).length;
+        acc[t.key] = filterPatients(scoped, t).length;
         return acc;
       },
       { all: 0, registered: 0, awaiting: 0, confirmed: 0, closed: 0 },
     );
-  }, [s.patients]);
+  }, [scoped]);
 
   const list = useMemo(() => {
     const def = TABS.find((t) => t.key === tab)!;
-    return filterPatients(s.patients, def);
-  }, [s.patients, tab]);
+    return filterPatients(scoped, def);
+  }, [scoped, tab]);
 
   return (
     <>
@@ -76,18 +110,36 @@ function QueuePageInner() {
         title="File d'attente"
         description="Patients P4 / P5 routés via FileSanté."
         actions={
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="fs-btn fs-btn-pearl"
-          >
-            <Icon name="archive" size={14} />
-            Exporter PDF
-          </button>
+          <div className="flex items-center gap-2">
+            <select
+              value={hospitalFilter}
+              onChange={(e) =>
+                setHospitalFilter(e.target.value as HospitalCode | "ALL")
+              }
+              className="fs-input h-9 px-2 text-[13px]"
+              aria-label="Filtrer par hôpital"
+            >
+              <option value="ALL">Tous les hôpitaux</option>
+              {VALID_HOSPITALS.map((h) => (
+                <option key={h} value={h}>
+                  {h}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="fs-btn fs-btn-pearl"
+            >
+              <Icon name="archive" size={14} />
+              Exporter PDF
+            </button>
+          </div>
         }
       />
 
       <div className="flex flex-col gap-6 px-10 py-8">
+        <ExpiryAlertBar hospital={hospitalFilter} />
         <div className="fs-tabs">
           {TABS.map((t) => (
             <button
@@ -158,10 +210,11 @@ function filterPatients(
     if (def.statuses) return def.statuses.includes(p.status);
     return isActive(p);
   });
-  return [...filtered].sort((a, b) => {
-    if (def.closed) return (b.closedAt ?? 0) - (a.closedAt ?? 0);
-    return a.estimatedSlotAt - b.estimatedSlotAt;
-  });
+  if (def.closed) {
+    return [...filtered].sort((a, b) => (b.closedAt ?? 0) - (a.closedAt ?? 0));
+  }
+  // Active views: P4 before P5, FIFO within priority group (Section 3 spec).
+  return sortQueue(filtered);
 }
 
 function Row({ p }: { p: Patient }) {
@@ -212,7 +265,15 @@ function Row({ p }: { p: Patient }) {
         </span>
       </td>
       <td>
-        <StatusBadge status={p.status} />
+        <div className="flex flex-col gap-1">
+          <StatusBadge status={p.status} />
+          {p.manualNotify && (
+            <span className="fs-chip" title="Notification déclenchée par l'infirmière">
+              <Icon name="bell" size={11} />
+              Rappelé manuellement
+            </span>
+          )}
+        </div>
       </td>
       <td>
         {deadlineTarget !== null ? (
@@ -269,13 +330,24 @@ function RowActions({ p }: { p: Patient }) {
   }
   if (p.status === "REGISTERED") {
     return (
-      <button
-        type="button"
-        onClick={() => cancelPatient(p.id)}
-        className="fs-btn fs-btn-pearl fs-btn-sm"
-      >
-        Annuler
-      </button>
+      <div className="inline-flex gap-1.5">
+        <button
+          type="button"
+          onClick={() => notifyPatient(p.id, { manual: true })}
+          className="fs-btn fs-btn-primary fs-btn-sm"
+          title="Notifier immédiatement"
+        >
+          <Icon name="bell" size={13} />
+          Rappeler
+        </button>
+        <button
+          type="button"
+          onClick={() => cancelPatient(p.id)}
+          className="fs-btn fs-btn-pearl fs-btn-sm"
+        >
+          Annuler
+        </button>
+      </div>
     );
   }
   if (p.status === "CONFIRMED") {

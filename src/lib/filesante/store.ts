@@ -6,6 +6,10 @@ import type {
   Civiere,
   CiviereReason,
   CiviereStatus,
+  ExpiryAlert,
+  ExpiryAlertKind,
+  HospitalCode,
+  HospitalSettingsMap,
   NurseShift,
   Patient,
   Referral,
@@ -30,6 +34,13 @@ const DEFAULT_STAFF: StaffIndicators = {
   shiftLabel: "Jour · 07h–19h",
 };
 
+const DEFAULT_HOSPITAL_SETTINGS: HospitalSettingsMap = {
+  HMR: { confirmDelayMin: 15 },
+  HND: { confirmDelayMin: 15 },
+  HSC: { confirmDelayMin: 15 },
+  HGM: { confirmDelayMin: 15 },
+};
+
 const initial: Store = {
   simClock: 0,
   realAnchor: 0,
@@ -44,6 +55,8 @@ const initial: Store = {
   surgeStartedAt: null,
   nurseShift: DEFAULT_SHIFT,
   staff: DEFAULT_STAFF,
+  hospitalSettings: DEFAULT_HOSPITAL_SETTINGS,
+  expiryAlerts: [],
 };
 
 function seeded(): Store {
@@ -173,8 +186,10 @@ export function addPatient(
     | "id"
     | "code"
     | "status"
+    | "manualNotify"
     | "registeredAt"
     | "activatedAt"
+    | "notifiedAt"
     | "ttlAt"
     | "estimatedSlotAt"
     | "askConfirmAt"
@@ -194,8 +209,10 @@ export function addPatient(
     id: newPatientId(),
     code: randomCode(),
     status: "REGISTERED",
+    manualNotify: false,
     registeredAt: now,
     activatedAt: draft.origin === "DESK" ? now : null,
+    notifiedAt: null,
     ttlAt: draft.origin === "DESK" ? now + 24 * 60 * MIN : null,
     estimatedSlotAt: now + waitMin * MIN,
     askConfirmAt: now + Math.max(0, waitMin - 60) * MIN,
@@ -212,6 +229,72 @@ export function addPatient(
     `Bienvenue chez FileSanté (${channel}). Code retour: ${patient.code}. Attente estimée: ${waitMin} min.`,
   );
   return patient;
+}
+
+// Returns next-up patient for given hospital, or null. Picks first
+// REGISTERED row by P4>P5 + FIFO. Used by manual "prochain patient" button
+// and as a probe for the scheduler.
+export function pickNextForHospital(code: HospitalCode): Patient | null {
+  const queue = getHospitalQueue(code).filter(
+    (p) => p.status === "REGISTERED",
+  );
+  return queue[0] ?? null;
+}
+
+// Manual or scheduled notify: REGISTERED -> AWAITING_CONFIRMATION immediately,
+// starts 15-min confirm timer. Idempotent: noop if already notified.
+export function notifyPatient(
+  id: string,
+  opts: { manual?: boolean } = {},
+): boolean {
+  const s = store.get();
+  const p = s.patients.find((x) => x.id === id);
+  if (!p || p.status !== "REGISTERED") return false;
+  const now = s.simClock;
+  const delayMin = getConfirmDelayMin(p.hospital);
+  updatePatient(id, {
+    status: "AWAITING_CONFIRMATION",
+    confirmDeadlineAt: now + delayMin * MIN,
+    notifiedAt: now,
+    manualNotify: opts.manual === true || p.manualNotify,
+  });
+  // Neutral, no medical detail.
+  logSms(
+    id,
+    "Votre tour approche. Répondez OUI pour confirmer ou NON pour annuler. Vous avez 15 min pour répondre.",
+  );
+  // Best-effort browser notification (no real Web Push backend in demo).
+  fireBrowserNotification({
+    title: "FileSanté — votre tour approche",
+    body: `Code retour ${p.code}. Répondez OUI pour confirmer.`,
+  });
+  return true;
+}
+
+export function fireBrowserNotification(payload: {
+  title: string;
+  body: string;
+}) {
+  if (typeof window === "undefined") return;
+  try {
+    if (typeof window.navigator?.vibrate === "function") {
+      // Amber-Alert-ish pattern: 3 bursts.
+      window.navigator.vibrate([400, 120, 400, 120, 400]);
+    }
+    const N = window.Notification;
+    if (!N) return;
+    if (N.permission === "granted") {
+      new N(payload.title, { body: payload.body });
+    } else if (N.permission !== "denied") {
+      N.requestPermission()
+        .then((perm) => {
+          if (perm === "granted") new N(payload.title, { body: payload.body });
+        })
+        .catch(() => {});
+    }
+  } catch {
+    /* unsupported — ignore */
+  }
 }
 
 export function activatePatient(id: string, phone: string): boolean {
@@ -232,10 +315,85 @@ export function activatePatient(id: string, phone: string): boolean {
   return true;
 }
 
+export function redactPatientPii(id: string) {
+  updatePatient(id, {
+    firstName: "—",
+    lastName: "—",
+    phone: "***",
+    motif: "[supprimé · TTL 24h]",
+    ttlAt: null,
+  });
+}
+
 export function pseudonymizePhone(phone: string): string {
   const digits = phone.replace(/\D/g, "");
   if (digits.length < 4) return "***";
   return `***-***-${digits.slice(-4)}`;
+}
+
+/* ─── Per-hospital settings + expiry alerts ─── */
+
+export function getConfirmDelayMin(code: HospitalCode): number {
+  const s = store.get();
+  return s.hospitalSettings[code]?.confirmDelayMin ?? 15;
+}
+
+export function setConfirmDelay(code: HospitalCode, minutes: number) {
+  const clamped = Math.max(1, Math.min(15, Math.round(minutes)));
+  store.set((s) => ({
+    ...s,
+    hospitalSettings: {
+      ...s.hospitalSettings,
+      [code]: { ...s.hospitalSettings[code], confirmDelayMin: clamped },
+    },
+  }));
+}
+
+export function pushExpiryAlert(args: {
+  patientId: string;
+  patientName: string;
+  hospital: HospitalCode;
+  kind: ExpiryAlertKind;
+}) {
+  const s = store.get();
+  const alert: ExpiryAlert = {
+    id: `xa_${Math.random().toString(36).slice(2, 9)}_${Date.now().toString(36)}`,
+    patientId: args.patientId,
+    patientName: args.patientName,
+    hospital: args.hospital,
+    kind: args.kind,
+    at: s.simClock,
+    dismissedAt: null,
+  };
+  store.set((cur) => ({
+    ...cur,
+    expiryAlerts: [...cur.expiryAlerts, alert].slice(-50),
+  }));
+}
+
+export function dismissExpiryAlert(id: string) {
+  store.set((s) => ({
+    ...s,
+    expiryAlerts: s.expiryAlerts.map((a) =>
+      a.id === id ? { ...a, dismissedAt: s.simClock } : a,
+    ),
+  }));
+}
+
+// Queue selector — equivalent of `GET /api/hospitals/:code/queue`.
+// P4 ranks before P5; within a priority group, FIFO by registeredAt.
+export function sortQueue(patients: Patient[]): Patient[] {
+  const PRIO_RANK: Record<Patient["priority"], number> = { P4: 0, P5: 1 };
+  return [...patients].sort((a, b) => {
+    const dp = PRIO_RANK[a.priority] - PRIO_RANK[b.priority];
+    if (dp !== 0) return dp;
+    return a.registeredAt - b.registeredAt;
+  });
+}
+
+export function getHospitalQueue(code: HospitalCode): Patient[] {
+  const s = store.get();
+  return sortQueue(s.patients.filter((p) => p.hospital === code && isActive(p)));
 }
 
 export function isActive(p: Patient): boolean {

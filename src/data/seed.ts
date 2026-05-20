@@ -14,7 +14,10 @@ const HOUR = 60 * MIN;
 // All seeded timestamps are computed relative to this anchor.
 const NOW = 4 * HOUR;
 
-type SeedPatient = Omit<Patient, "id" | "activatedAt" | "ttlAt"> & {
+type SeedPatient = Omit<
+  Patient,
+  "id" | "manualNotify" | "activatedAt" | "notifiedAt" | "ttlAt"
+> & {
   id: string;
 };
 type SeedSms = Omit<SmsLog, "id"> & { id: string };
@@ -496,9 +499,23 @@ export function buildSeed(): Pick<
   "simClock" | "patients" | "sms" | "lwbs" | "referrals" | "clinic" | "civieres"
 > {
   // Demo seed: all pre-activated at registration time (24h TTL from then).
+  // notifiedAt set for any patient past REGISTERED so badge logic stays
+  // coherent. manualNotify defaults false (no human notify in seed).
+  const notifiedStatuses: Patient["status"][] = [
+    "AWAITING_CONFIRMATION",
+    "AWAITING_CONFIRMATION_FINAL",
+    "CONFIRMED",
+    "ARRIVED",
+    "COMPLETED",
+    "NO_RESPONSE",
+    "NO_SHOW",
+    "CANCELLED_BY_PATIENT",
+  ];
   const patients: Patient[] = PATIENTS.map((p) => ({
     ...p,
+    manualNotify: false,
     activatedAt: p.registeredAt,
+    notifiedAt: notifiedStatuses.includes(p.status) ? p.askConfirmAt : null,
     ttlAt: p.registeredAt + DAY,
   }));
   return {
