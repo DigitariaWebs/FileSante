@@ -524,9 +524,25 @@
 
   /* ─── Dashboard aliases (keep current class names working) ─── */
   .fs-dash-page {
-    background: var(--ap-canvas);
+    /* Warm dashboard surface tokens — scoped override.
+       Brand vars (--fs-primary etc) stay untouched: blue chips/buttons/links keep their color. */
+    --ap-canvas: #fffbf2;
+    --ap-canvas-parchment: #faf5ec;
+    --ap-surface-pearl: #fff9eb;
+    --ap-surface-strong: #f3ead6;
+    --ap-hairline: #ecdec4;
+    --ap-hairline-strong: #e0cca4;
+    --ap-divider-soft: rgba(146, 98, 32, 0.06);
+
+    background: var(--ap-canvas-parchment);
     font-family: var(--ap-font-text);
     color: var(--ap-ink);
+  }
+
+  /* Inputs inside dashboards stay pure white so they pop off cream cards */
+  .fs-dash-page .fs-input {
+    background: #ffffff;
+    border-color: var(--ap-hairline);
   }
   .fs-dash-card {
     background: var(--ap-canvas);
