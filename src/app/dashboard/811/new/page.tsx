@@ -16,7 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { addPatient } from "@/lib/filesante/store";
+import { CLINICS, SECTORS, SYMPTOMS } from "@/data/clinics";
+import { addPatient, addReferral } from "@/lib/filesante/store";
 import type {
   ContactMethod,
   HospitalCode,
@@ -31,58 +32,11 @@ const HOSPITALS: { code: HospitalCode; name: string }[] = [
   { code: "HGM", name: "HGM — Général de Montréal" },
 ];
 
-const SECTORS = [
-  "Plateau-Mont-Royal",
-  "Hochelaga-Maisonneuve",
-  "Rosemont",
-  "Villeray",
-  "Verdun",
-  "Lachine",
-  "Centre-Sud",
-  "Côte-des-Neiges",
-  "Saint-Laurent",
-  "Pierrefonds",
-  "Anjou",
-  "Rivière-des-Prairies",
-];
-
-const SYMPTOMS = [
-  "Douleur lombaire",
-  "Fièvre légère",
-  "Mal de gorge",
-  "Migraine",
-  "Otite",
-  "Toux persistante",
-  "Brûlure mineure",
-  "Entorse",
-  "Éraflure",
-  "Conjonctivite",
-  "Vomissements légers",
-  "Douleur abdominale",
-];
-
-type Resource = {
-  type: "GMF" | "CLSC" | "IPS" | "UMF";
-  name: string;
-  sector: string;
-  load: number;
-  eta: string;
-};
-
-const RESOURCES: Resource[] = [
-  { type: "GMF", name: "GMF du Plateau", sector: "Plateau-Mont-Royal", load: 0.42, eta: "11 min" },
-  { type: "CLSC", name: "CLSC Hochelaga", sector: "Hochelaga-Maisonneuve", load: 0.71, eta: "18 min" },
-  { type: "IPS", name: "IPS Rosemont", sector: "Rosemont", load: 0.55, eta: "14 min" },
-  { type: "UMF", name: "UMF Maisonneuve", sector: "Hochelaga-Maisonneuve", load: 0.89, eta: "—" },
-  { type: "GMF", name: "GMF Verdun", sector: "Verdun", load: 0.31, eta: "22 min" },
-  { type: "CLSC", name: "CLSC Côte-des-Neiges", sector: "Côte-des-Neiges", load: 0.62, eta: "16 min" },
-];
-
 export default function HotlineNew() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
-  const [sector, setSector] = useState(SECTORS[0]);
+  const [sector, setSector] = useState<string>(SECTORS[0]);
   const [priority, setPriority] = useState<Priority>("P4");
   const [contact, setContact] = useState<ContactMethod>("SMS");
   const [hospital, setHospital] = useState<HospitalCode>("HMR");
@@ -94,14 +48,14 @@ export default function HotlineNew() {
   const [selectedResource, setSelectedResource] = useState<string | null>(null);
 
   const ranked = useMemo(() => {
-    return [...RESOURCES]
-      .filter((r) => r.load < 0.95)
+    return [...CLINICS]
+      .filter((c) => c.loadInitial < 0.95)
       .sort((a, b) => {
         // Prioritize sector match, then lowest load
         const sa = a.sector === sector ? 0 : 1;
         const sb = b.sector === sector ? 0 : 1;
         if (sa !== sb) return sa - sb;
-        return a.load - b.load;
+        return a.loadInitial - b.loadInitial;
       })
       .slice(0, 4);
   }, [sector]);
@@ -160,6 +114,26 @@ export default function HotlineNew() {
       hospital,
       consent: true,
     });
+
+    // Bidirectional referral — also push to the chosen clinic's inbox.
+    const target =
+      CLINICS.find((c) => c.name === selectedResource) ?? ranked[0];
+    if (target) {
+      addReferral({
+        patientId: p.id,
+        patientInitials:
+          firstName.trim().charAt(0).toUpperCase() +
+          lastName.trim().charAt(0).toUpperCase(),
+        patientName: `${firstName.trim()} ${lastName.trim()}`,
+        source: "HOTLINE_811",
+        sourceLabel: "Info-Santé 811",
+        motif,
+        priority,
+        destinationId: target.id,
+        slaMinutes: 5,
+      });
+    }
+
     setCreated(p);
     reset();
   }
@@ -413,11 +387,11 @@ export default function HotlineNew() {
                   </div>
                 ) : (
                   ranked.map((r, i) => {
-                    const pct = Math.round(r.load * 100);
+                    const pct = Math.round(r.loadInitial * 100);
                     const color =
-                      r.load > 0.85
+                      r.loadInitial > 0.85
                         ? "#c8102e"
-                        : r.load > 0.6
+                        : r.loadInitial > 0.6
                           ? "#a06400"
                           : "#1a6d2f";
                     const active = selectedResource === r.name;

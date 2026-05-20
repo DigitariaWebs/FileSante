@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Sparkline } from "@/components/dashboard/Sparkline";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import { Icon, type IconName } from "@/components/ui/Icon";
+import { CLINICS } from "@/data/clinics";
 import { useFileSante } from "@/hooks/useFileSante";
 import { isActive } from "@/lib/filesante/store";
 import type { Patient } from "@/lib/filesante/types";
@@ -78,19 +79,14 @@ export default function HotlineHome() {
         title="Orientation téléphonique"
         description="Triagez les patients non urgents et orientez vers la première ligne disponible."
         actions={
-          <>
-            <Link
-              href="/dashboard/triage/register"
-              className="fs-btn fs-btn-ghost"
-            >
-              <Icon name="taskList" size={14} />
-              Voir la file
-            </Link>
-            <Link href="/dashboard/811/new" className="fs-btn fs-btn-primary">
-              <Icon name="userPlus" size={14} />
-              Nouvelle évaluation
-            </Link>
-          </>
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="fs-btn fs-btn-pearl"
+          >
+            <Icon name="archive" size={14} />
+            Rapport de quart
+          </button>
         }
       />
 
@@ -154,36 +150,29 @@ export default function HotlineHome() {
             )}
           </div>
 
-          {/* Resource search panel */}
+          {/* Resource search panel — sourced from shared CLINICS registry */}
           <div className="fs-dash-card p-6">
             <div className="fs-eyebrow">Recherche ressource</div>
             <h2 className="fs-tagline mt-1">Première ligne disponible</h2>
             <p className="mt-1 text-[12.5px] text-[var(--ap-ink-muted-80)]">
-              Algorithme mock — secteur + capacité.
+              Algorithme · secteur + capacité actuelle.
             </p>
 
             <div className="mt-5 space-y-3">
-              <ResourceRow type="GMF" name="GMF du Plateau" load={0.42} eta="11 min" />
-              <ResourceRow
-                type="CLSC"
-                name="CLSC Hochelaga"
-                load={0.71}
-                eta="18 min"
-              />
-              <ResourceRow
-                type="IPS"
-                name="IPS Rosemont"
-                load={0.55}
-                eta="14 min"
-              />
-              <ResourceRow
-                type="UMF"
-                name="UMF Maisonneuve"
-                load={0.89}
-                eta="—"
-                full
-              />
-              <ResourceRow type="GMF" name="GMF Verdun" load={0.31} eta="22 min" />
+              {CLINICS.slice(0, 5).map((c) => {
+                const load =
+                  c.id === "gmf_plateau" ? s.clinic.currentLoad : c.loadInitial;
+                return (
+                  <ResourceRow
+                    key={c.id}
+                    type={c.type}
+                    name={c.name}
+                    load={load}
+                    eta={c.eta}
+                    full={load > 0.85}
+                  />
+                );
+              })}
             </div>
           </div>
         </section>

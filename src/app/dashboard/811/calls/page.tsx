@@ -66,20 +66,6 @@ export default function HotlineCalls() {
         eyebrow="Info-Santé 811"
         title="Appels du quart"
         description="Historique des orientations téléphoniques."
-        actions={
-          <>
-            <Link href="/dashboard/811" className="fs-btn fs-btn-pearl">
-              Vue d&apos;ensemble
-            </Link>
-            <Link
-              href="/dashboard/811/new"
-              className="fs-btn fs-btn-primary"
-            >
-              <Icon name="userPlus" size={14} />
-              Nouvelle évaluation
-            </Link>
-          </>
-        }
       />
 
       <div className="flex flex-col gap-6 px-10 py-8">
