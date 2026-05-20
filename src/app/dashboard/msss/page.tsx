@@ -104,20 +104,14 @@ export default function MsssHome() {
         title="Vue provinciale"
         description="Tableau de bord consolidé — 4 hôpitaux pilotes · ~58 cliniques de première ligne."
         actions={
-          <>
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="fs-btn fs-btn-ghost"
-            >
-              <Icon name="archive" size={14} />
-              Export rapport
-            </button>
-            <button type="button" className="fs-btn fs-btn-primary">
-              <Icon name="refresh" size={14} />
-              Rafraîchir
-            </button>
-          </>
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="fs-btn fs-btn-pearl"
+          >
+            <Icon name="archive" size={14} />
+            Export rapport provincial
+          </button>
         }
       />
 

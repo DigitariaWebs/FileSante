@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { EmptyState } from "@/components/dashboard/EmptyState";
@@ -124,19 +123,14 @@ export default function DirectionHome() {
         title="Performance d'établissement"
         description="KPIs, alertes patients > 3 h et flux d'inscriptions."
         actions={
-          <>
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="fs-btn fs-btn-ghost"
-            >
-              <Icon name="archive" size={14} />
-              Rapport PDF
-            </button>
-            <Link href="/dashboard" className="fs-btn fs-btn-pearl">
-              Changer de rôle
-            </Link>
-          </>
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="fs-btn fs-btn-pearl"
+          >
+            <Icon name="archive" size={14} />
+            Rapport PDF
+          </button>
         }
       />
 

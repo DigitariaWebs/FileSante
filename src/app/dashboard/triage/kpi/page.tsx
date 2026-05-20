@@ -66,6 +66,16 @@ export default function KpiPage() {
         eyebrow="Pilotage"
         title="Indicateurs"
         description="Performance temps réel du pilote FileSanté."
+        actions={
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="fs-btn fs-btn-pearl"
+          >
+            <Icon name="archive" size={14} />
+            Exporter PDF
+          </button>
+        }
       />
 
       <div className="flex flex-col gap-6 px-10 py-10">

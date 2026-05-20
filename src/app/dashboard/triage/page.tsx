@@ -93,44 +93,34 @@ export default function DashboardHome() {
         title="Bonjour, Marie."
         description="État de la file FileSanté — patients P4 / P5 routés vers la première ligne."
         actions={
-          <>
-            <Link href="/dashboard/triage/scan" className="fs-btn fs-btn-ghost">
-              <Icon name="qr" size={14} />
-              Scanner retour
-            </Link>
-            <Link href="/dashboard/triage/register" className="fs-btn fs-btn-primary">
-              <Icon name="userPlus" size={14} />
-              Inscrire un patient
-            </Link>
-          </>
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="fs-btn fs-btn-pearl"
+          >
+            <Icon name="archive" size={14} />
+            Rapport de quart
+          </button>
         }
       />
 
       <div className="flex flex-col gap-10 px-10 py-10">
-        <section className="fs-hero-strip">
+        <section className="fs-dash-card flex flex-wrap items-center justify-between gap-5 p-6">
           <div className="flex items-center gap-5">
-            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-white/10 text-white">
+            <div className="grid h-12 w-12 place-items-center rounded-xl bg-[rgba(30,144,214,0.1)] text-[var(--fs-primary)]">
               <Icon name="viewGrid" size={22} />
             </div>
             <div>
-              <div className="text-[11px] font-semibold tracking-[0.12em] uppercase text-white/60">
-                Session en cours · HMR
-              </div>
-              <h2 className="mt-1 text-[24px] font-semibold tracking-[-0.022em]">
+              <div className="fs-eyebrow">Session en cours · HMR</div>
+              <h2 className="fs-display-md mt-1 text-[24px]!">
                 {stats.active} patient{stats.active === 1 ? "" : "s"} dans la
                 file
               </h2>
-              <p className="mt-1 text-[14px] text-white/70">
+              <p className="mt-1 text-[14px] text-[var(--ap-ink-muted-80)]">
                 {stats.awaiting} à confirmer · {stats.confirmed} confirmés ·{" "}
                 {stats.arrived24} arrivés
               </p>
             </div>
-          </div>
-          <div className="hidden items-center gap-2 lg:flex">
-            <Link href="/dashboard/triage/queue" className="fs-btn fs-btn-utility">
-              File complète
-              <Icon name="arrowRight" size={13} />
-            </Link>
           </div>
         </section>
 

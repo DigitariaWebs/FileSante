@@ -7,14 +7,21 @@ import { Suspense, useMemo, useState } from "react";
 import { Countdown } from "@/components/dashboard/Countdown";
 import { QrCard } from "@/components/dashboard/QrCard";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
+import { Icon } from "@/components/ui/Icon";
+import { CLINICS, type Clinic } from "@/data/clinics";
 import { useFileSante } from "@/hooks/useFileSante";
 import { cancelPatient, confirmPatient } from "@/lib/filesante/store";
-import type { Patient, PatientStatus } from "@/lib/filesante/types";
+import type {
+  HospitalCode,
+  Patient,
+  PatientStatus,
+  Referral,
+} from "@/lib/filesante/types";
 
 const DEFAULT_CODE = "1875"; // Olivier Bélanger — AWAITING_CONFIRMATION
 
 const STEPS: { key: PatientStatus[]; label: string; tag: string }[] = [
-  { key: ["REGISTERED"], label: "Inscrit", tag: "Domicile" },
+  { key: ["REGISTERED"], label: "Inscrit", tag: "À la maison" },
   {
     key: ["AWAITING_CONFIRMATION", "AWAITING_CONFIRMATION_FINAL"],
     label: "Confirmation",
@@ -23,6 +30,32 @@ const STEPS: { key: PatientStatus[]; label: string; tag: string }[] = [
   { key: ["CONFIRMED"], label: "Confirmé", tag: "Fenêtre 60 min" },
   { key: ["ARRIVED", "COMPLETED"], label: "Arrivé", tag: "Triage retour" },
 ];
+
+const HOSPITAL_INFO: Record<
+  HospitalCode,
+  { name: string; address: string; phone: string }
+> = {
+  HMR: {
+    name: "Hôpital Maisonneuve-Rosemont",
+    address: "5415, boul. de l'Assomption, Montréal",
+    phone: "+1 514 252-3400",
+  },
+  HND: {
+    name: "Hôpital Notre-Dame",
+    address: "1560, rue Sherbrooke Est, Montréal",
+    phone: "+1 514 413-8777",
+  },
+  HSC: {
+    name: "Hôpital du Sacré-Cœur",
+    address: "5400, boul. Gouin Ouest, Montréal",
+    phone: "+1 514 338-2222",
+  },
+  HGM: {
+    name: "Hôpital général de Montréal",
+    address: "1650, av. Cedar, Montréal",
+    phone: "+1 514 934-1934",
+  },
+};
 
 export default function PatientPage() {
   return (
@@ -51,6 +84,22 @@ function PatientInner() {
       .sort((a, b) => b.at - a.at);
   }, [s.sms, patient]);
 
+  // If 811 routed this patient to a first-line clinic, surface the most
+  // recent accepted referral so the patient sees the actual destination.
+  const acceptedReferral: Referral | undefined = useMemo(() => {
+    if (!patient) return undefined;
+    return s.referrals
+      .filter(
+        (r) => r.patientId === patient.id && r.status === "ACCEPTED",
+      )
+      .sort((a, b) => (b.decidedAt ?? 0) - (a.decidedAt ?? 0))[0];
+  }, [s.referrals, patient]);
+
+  const destinationClinic: Clinic | undefined = useMemo(() => {
+    if (!acceptedReferral) return undefined;
+    return CLINICS.find((c) => c.id === acceptedReferral.destinationId);
+  }, [acceptedReferral]);
+
   function submitLookup(e: React.FormEvent) {
     e.preventDefault();
     setActiveCode(codeInput.trim());
@@ -63,10 +112,7 @@ function PatientInner() {
         className="fs-dash-card mb-8 flex flex-col gap-3 p-5 sm:flex-row sm:items-end"
       >
         <div className="flex-1">
-          <label
-            htmlFor="code"
-            className="fs-eyebrow mb-1.5 inline-block"
-          >
+          <label htmlFor="code" className="fs-eyebrow mb-1.5 inline-block">
             Votre code retour à 4 chiffres
           </label>
           <input
@@ -87,8 +133,14 @@ function PatientInner() {
       {!patient ? (
         <NotFound code={activeCode} />
       ) : (
-        <PatientView patient={patient} sms={sms} />
+        <PatientView
+          patient={patient}
+          sms={sms}
+          destinationClinic={destinationClinic}
+        />
       )}
+
+      <HelpBar />
     </div>
   );
 }
@@ -97,27 +149,18 @@ function NotFound({ code }: { code: string }) {
   return (
     <div className="fs-dash-card flex flex-col items-center gap-3 px-6 py-14 text-center">
       <div className="grid h-12 w-12 place-items-center rounded-full bg-[var(--ap-surface-strong)] text-[var(--ap-ink-muted-48)]">
-        <svg
-          width="22"
-          height="22"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <circle cx="11" cy="11" r="8" />
-          <path d="m21 21-4.3-4.3" />
-        </svg>
+        <Icon name="search" size={22} />
       </div>
       <div>
-        <div className="fs-tagline">Aucun dossier pour le code {code || "—"}</div>
+        <div className="fs-tagline">
+          Aucun dossier pour le code {code || "—"}
+        </div>
         <p className="mt-1 text-[14px] text-[var(--ap-ink-muted-80)]">
-          Vérifiez votre SMS d&apos;inscription ou contactez Info-Santé 811.
+          Vérifiez votre SMS d&apos;inscription ou composez 811 pour vous
+          réinscrire.
         </p>
       </div>
-      <Link href="/dashboard" className="fs-btn fs-btn-ghost">
+      <Link href="/" className="fs-btn fs-btn-ghost">
         Retour à l&apos;accueil
       </Link>
     </div>
@@ -127,9 +170,11 @@ function NotFound({ code }: { code: string }) {
 function PatientView({
   patient,
   sms,
+  destinationClinic,
 }: {
   patient: Patient;
   sms: { id: string; at: number; body: string }[];
+  destinationClinic?: Clinic;
 }) {
   const qrPayload = `filesante:${patient.id}:${patient.code}`;
   const closed =
@@ -158,6 +203,8 @@ function PatientView({
             patient.status === "AWAITING_CONFIRMATION_FINAL"
           ? "Vous avez encore"
           : "—";
+
+  const hospital = HOSPITAL_INFO[patient.hospital];
 
   return (
     <div className="flex flex-col gap-6">
@@ -262,14 +309,41 @@ function PatientView({
             />
           )}
 
-          {/* Itinerary */}
+          {/* Destination — hospital + optional first-line clinic */}
+          <div className="fs-dash-card p-6">
+            <div className="fs-eyebrow mb-3">Où vous présenter</div>
+            <div className="text-[14px] font-semibold text-[var(--ap-ink)]">
+              {hospital.name}
+            </div>
+            <div className="mt-0.5 text-[12.5px] text-[var(--ap-ink-muted-80)]">
+              {hospital.address}
+            </div>
+            <div className="mt-1 font-mono text-[12.5px] tabular-nums text-[var(--ap-ink-muted-80)]">
+              {hospital.phone}
+            </div>
+
+            {destinationClinic && (
+              <div className="mt-4 rounded-lg border border-[var(--ap-hairline)] bg-[var(--ap-canvas-parchment)] p-3">
+                <div className="flex items-center gap-2">
+                  <span className="fs-chip">{destinationClinic.type}</span>
+                  <span className="text-[13px] font-semibold text-[var(--ap-ink)]">
+                    {destinationClinic.name}
+                  </span>
+                </div>
+                <div className="mt-1 text-[12px] text-[var(--ap-ink-muted-80)]">
+                  Routage 811 — secteur {destinationClinic.sector}
+                </div>
+                <div className="mt-1 text-[12px] text-[var(--ap-ink-muted-48)]">
+                  Heures : {destinationClinic.hours} · ETA {destinationClinic.eta}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Summary */}
           <div className="fs-dash-card p-6">
             <div className="fs-eyebrow mb-3">Détails de votre demande</div>
             <dl className="grid grid-cols-2 gap-y-3 text-[13.5px]">
-              <dt className="text-[var(--ap-ink-muted-80)]">Hôpital</dt>
-              <dd className="text-right font-medium text-[var(--ap-ink)]">
-                {patient.hospital}
-              </dd>
               <dt className="text-[var(--ap-ink-muted-80)]">Priorité CTAS</dt>
               <dd className="text-right font-medium text-[var(--ap-ink)]">
                 {patient.priority}
@@ -283,6 +357,12 @@ function PatientView({
               <dt className="text-[var(--ap-ink-muted-80)]">Téléphone</dt>
               <dd className="text-right font-mono tabular-nums text-[var(--ap-ink)]">
                 {patient.phone}
+              </dd>
+              <dt className="text-[var(--ap-ink-muted-80)]">
+                Méthode de contact
+              </dt>
+              <dd className="text-right font-medium text-[var(--ap-ink)]">
+                {patient.contact === "SMS" ? "SMS" : "Appel"}
               </dd>
             </dl>
           </div>
@@ -306,18 +386,7 @@ function PatientView({
             {sms.map((m) => (
               <li key={m.id} className="flex items-start gap-3 px-6 py-4">
                 <div className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--ap-surface-strong)] text-[var(--ap-ink-muted-80)]">
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8z" />
-                  </svg>
+                  <Icon name="chat" size={14} />
                 </div>
                 <div className="flex-1 text-[13.5px]">
                   <p className="text-[var(--ap-ink)]">{m.body}</p>
@@ -331,6 +400,45 @@ function PatientView({
         )}
       </section>
     </div>
+  );
+}
+
+function HelpBar() {
+  return (
+    <section className="mt-8 grid gap-3 sm:grid-cols-2">
+      <a
+        href="tel:811"
+        className="fs-dash-card flex items-center gap-3 p-4 transition-colors hover:bg-[var(--ap-canvas-parchment)]"
+      >
+        <span className="grid h-10 w-10 place-items-center rounded-full bg-[rgba(30,144,214,0.1)] text-[var(--fs-primary)]">
+          <Icon name="chat" size={18} />
+        </span>
+        <div>
+          <div className="text-[14px] font-semibold text-[var(--ap-ink)]">
+            Besoin d&apos;aide ? Composez 811
+          </div>
+          <div className="text-[12px] text-[var(--ap-ink-muted-48)]">
+            Info-Santé · 24 h sur 24, 7 jours sur 7
+          </div>
+        </div>
+      </a>
+      <a
+        href="tel:911"
+        className="fs-dash-card flex items-center gap-3 p-4 transition-colors hover:bg-[var(--ap-canvas-parchment)]"
+      >
+        <span className="grid h-10 w-10 place-items-center rounded-full bg-[rgba(200,16,46,0.1)] text-[#c8102e]">
+          <Icon name="warning" size={18} />
+        </span>
+        <div>
+          <div className="text-[14px] font-semibold text-[var(--ap-ink)]">
+            Urgence vitale ? Composez 911
+          </div>
+          <div className="text-[12px] text-[var(--ap-ink-muted-48)]">
+            Douleur thoracique, AVC, perte de conscience…
+          </div>
+        </div>
+      </a>
+    </section>
   );
 }
 
@@ -355,11 +463,9 @@ function StepRail({ status }: { status: PatientStatus }) {
             <div className="flex items-center gap-2">
               <span
                 className={`grid h-5 w-5 place-items-center rounded-full text-[10px] font-semibold ${
-                  done
+                  done || active
                     ? "bg-[var(--ap-ink)] text-white"
-                    : active
-                      ? "bg-[var(--ap-ink)] text-white"
-                      : "bg-[var(--ap-surface-strong)] text-[var(--ap-ink-muted-48)]"
+                    : "bg-[var(--ap-surface-strong)] text-[var(--ap-ink-muted-48)]"
                 }`}
               >
                 {done ? "✓" : i + 1}
@@ -404,9 +510,7 @@ function ActionCard({
     neutral: "border-[var(--ap-hairline-strong)] bg-[var(--ap-canvas)]",
   };
   return (
-    <div
-      className={`rounded-lg border p-5 ${toneClasses[tone]}`}
-    >
+    <div className={`rounded-lg border p-5 ${toneClasses[tone]}`}>
       <div className="fs-tagline text-[16px]!">{title}</div>
       <p className="mt-1.5 text-[13.5px] text-[var(--ap-ink-muted-80)]">
         {body}

@@ -76,16 +76,14 @@ function QueuePageInner() {
         title="File d'attente"
         description="Patients P4 / P5 routés via FileSanté."
         actions={
-          <>
-            <Link href="/dashboard/triage/scan" className="fs-btn fs-btn-ghost">
-              <Icon name="qr" size={14} />
-              Retour patient
-            </Link>
-            <Link href="/dashboard/triage/register" className="fs-btn fs-btn-primary">
-              <Icon name="userPlus" size={14} />
-              Inscrire
-            </Link>
-          </>
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="fs-btn fs-btn-pearl"
+          >
+            <Icon name="archive" size={14} />
+            Exporter PDF
+          </button>
         }
       />
 
