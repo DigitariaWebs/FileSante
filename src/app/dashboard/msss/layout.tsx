@@ -33,10 +33,10 @@ const SECTIONS: SidebarSection[] = [
 ];
 
 const USER: SidebarUser = {
-  initials: "MS",
-  name: "Marc Soucy",
+  initials: "NB",
+  name: "Nathalie Bédard",
   role: "MSSS · Analyste réseau",
-  email: "marc.soucy@msss.gouv.qc.ca",
+  email: "nathalie.bedard@msss.gouv.qc.ca",
   accentClass: "bg-[#0d74ce]",
 };
 

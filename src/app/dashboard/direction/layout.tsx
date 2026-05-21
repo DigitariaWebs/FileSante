@@ -33,10 +33,10 @@ const SECTIONS: SidebarSection[] = [
 ];
 
 const USER: SidebarUser = {
-  initials: "JL",
-  name: "Dr. Jean Lapointe",
+  initials: "FL",
+  name: "Dr. François Lévesque",
   role: "Direction · HMR",
-  email: "jean.lapointe@hmr.qc.ca",
+  email: "francois.levesque@hmr.qc.ca",
   accentClass: "bg-[var(--ap-ink)]",
 };
 

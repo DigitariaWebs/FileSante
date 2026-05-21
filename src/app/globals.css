@@ -524,16 +524,16 @@
 
   /* ─── Dashboard aliases (keep current class names working) ─── */
   .fs-dash-page {
-    /* Warm card/table surfaces on a white page.
-       Cards & tables inherit beige via --ap-canvas token; page bg stays pure white for max readability.
+    /* Medical blue card/table surfaces on a white page.
+       Cards & tables inherit blue tint via --ap-canvas token; page bg stays pure white for max readability.
        Brand vars (--fs-primary etc) untouched: blue chips/buttons/links keep their color. */
-    --ap-canvas: #fbf6ea;
-    --ap-canvas-parchment: #f5edd9;
-    --ap-surface-pearl: #fff9eb;
-    --ap-surface-strong: #ede2c4;
-    --ap-hairline: #e5d4ad;
-    --ap-hairline-strong: #d4bf8a;
-    --ap-divider-soft: rgba(146, 98, 32, 0.08);
+    --ap-canvas: #f0f7fd;
+    --ap-canvas-parchment: #e1f0fb;
+    --ap-surface-pearl: #f5fafd;
+    --ap-surface-strong: #c8e2f5;
+    --ap-hairline: #b8d8ee;
+    --ap-hairline-strong: #8fbfdf;
+    --ap-divider-soft: rgba(30, 144, 214, 0.08);
 
     background: #ffffff;
     font-family: var(--ap-font-text);

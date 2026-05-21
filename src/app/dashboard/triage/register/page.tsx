@@ -19,7 +19,6 @@ import { addPatient } from "@/lib/filesante/store";
 import type {
   ContactMethod,
   HospitalCode,
-  Origin,
   Patient,
   Priority,
 } from "@/lib/filesante/types";
@@ -54,7 +53,6 @@ function persistBoundHospital(code: HospitalCode) {
 }
 
 export default function RegisterPage() {
-  const [origin, setOrigin] = useState<Origin>("DESK");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
@@ -111,7 +109,7 @@ export default function RegisterPage() {
       motif: motif.trim(),
       priority,
       contact,
-      origin,
+      origin: "DESK",
       hospital,
       consent: true,
     });
@@ -129,27 +127,6 @@ export default function RegisterPage() {
 
       <div className="px-10 py-10">
         <form onSubmit={submit} className="fs-dash-card mx-auto w-full">
-          <SectionHeader
-            title="Origine"
-            description="Où se trouve actuellement le patient ?"
-          />
-          <div className="grid grid-cols-2 gap-3 px-8 pb-7">
-            <OriginButton
-              active={origin === "DESK"}
-              onClick={() => setOrigin("DESK")}
-              title="Sur place"
-              sub="Patient présent au triage"
-            />
-            <OriginButton
-              active={origin === "HOME_811"}
-              onClick={() => setOrigin("HOME_811")}
-              title="811 / Domicile"
-              sub="Appel ou portail patient"
-            />
-          </div>
-
-          <Divider />
-
           <SectionHeader title="Identité et contact" />
           <div className="grid gap-5 px-8 pb-7 md:grid-cols-2">
             <Field label="Prénom" htmlFor="first" error={errors.firstName}>
@@ -374,36 +351,6 @@ function Field({
   );
 }
 
-function OriginButton({
-  active,
-  onClick,
-  title,
-  sub,
-}: {
-  active: boolean;
-  onClick: () => void;
-  title: string;
-  sub: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex flex-col items-start rounded-xl border p-4 text-left transition-colors ${
-        active
-          ? "border-[var(--fs-primary)] bg-[rgba(30,144,214,0.06)]"
-          : "border-[var(--ap-hairline)] bg-[var(--ap-canvas)] hover:border-[var(--ap-ink-muted-48)]"
-      }`}
-    >
-      <span className="text-[15px] font-semibold text-[var(--ap-ink)] tracking-[-0.016em]">
-        {title}
-      </span>
-      <span className="mt-0.5 text-[12.5px] text-[var(--ap-ink-muted-48)]">
-        {sub}
-      </span>
-    </button>
-  );
-}
 
 function ContactButton({
   active,

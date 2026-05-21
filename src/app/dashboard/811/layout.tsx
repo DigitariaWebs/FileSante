@@ -29,10 +29,10 @@ const SECTIONS: SidebarSection[] = [
 ];
 
 const USER: SidebarUser = {
-  initials: "SR",
-  name: "Sophie Renaud",
-  role: "Infirmière 811 · Province",
-  email: "sophie.renaud@infosante.qc.ca",
+  initials: "YD",
+  name: "Yann Deschamps",
+  role: "Infirmier 811 · Province",
+  email: "yann.deschamps@infosante.qc.ca",
   accentClass: "bg-[#0d74ce]",
 };
 

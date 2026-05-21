@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { CiviereAlertBar } from "@/components/dashboard/CiviereAlertBar";
-import { ConfirmDelayCard } from "@/components/dashboard/ConfirmDelayCard";
 import { PendingCallsBar } from "@/components/dashboard/PendingCallsBar";
 import { Countdown } from "@/components/dashboard/Countdown";
 import { EmptyState } from "@/components/dashboard/EmptyState";
@@ -64,9 +63,8 @@ export default function DashboardHome() {
       confirmed: confirmed.length,
       registered: registered.length,
       arrived24,
-      lwbs: s.lwbs,
     };
-  }, [s.patients, s.lwbs]);
+  }, [s.patients]);
 
   const toConfirm: Patient[] = useMemo(() => {
     return s.patients
@@ -158,67 +156,52 @@ export default function DashboardHome() {
       <div className="flex flex-col gap-10 px-10 py-10">
         <PendingCallsBar hospital={hospital} />
         <CiviereAlertBar />
-        <ConfirmDelayCard hospital={hospital} />
 
-        <section className="fs-dash-card flex flex-wrap items-center justify-between gap-5 p-6">
-          <div className="flex items-center gap-5">
+        <section className="fs-dash-card p-6">
+          <div className="flex flex-wrap items-center gap-5 border-b border-[var(--ap-divider-soft)] pb-5">
             <div className="grid h-12 w-12 place-items-center rounded-xl bg-[rgba(30,144,214,0.1)] text-[var(--fs-primary)]">
               <Icon name="viewGrid" size={22} />
             </div>
-            <div>
-              <div className="fs-eyebrow">
-                Session en cours · {hospital} · {s.nurseShift.firstName} {s.nurseShift.lastName}
-              </div>
-              <h2 className="fs-display-md mt-1 text-[24px]!">
-                {stats.active} patient{stats.active === 1 ? "" : "s"} dans la
-                file
+            <div className="min-w-0 flex-1">
+              <div className="fs-eyebrow">Session en cours</div>
+              <h2 className="fs-display-md mt-1 text-[20px]!">
+                {hospital} · {s.nurseShift.firstName} {s.nurseShift.lastName}
               </h2>
-              <p className="mt-1 text-[14px] text-[var(--ap-ink-muted-80)]">
-                {stats.awaiting} à confirmer · {stats.confirmed} confirmés ·{" "}
-                {stats.arrived24} arrivés
-                {surgeMin > 0 && (
-                  <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-[#fff8e6] px-2 py-0.5 text-[12px] font-semibold text-[#a06400]">
-                    <Icon name="warning" size={11} />
-                    Surcharge +{surgeMin} min active
-                  </span>
-                )}
-              </p>
             </div>
+            {surgeMin > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#fff8e6] px-2.5 py-1 text-[12px] font-semibold text-[#a06400]">
+                <Icon name="warning" size={12} />
+                Surcharge +{surgeMin} min
+              </span>
+            )}
+          </div>
+
+          <div className="grid gap-5 pt-6 md:grid-cols-3">
+            <StatTile
+              label="Dans la file"
+              value={stats.active}
+              sub={`${stats.registered} inscrits · ${stats.confirmed} confirmés`}
+              icon="archive"
+              spark={activitySeries}
+            />
+            <StatTile
+              label="À confirmer"
+              value={stats.awaiting}
+              sub="Réponse OUI / NON attendue"
+              icon="bell"
+              tone={stats.awaiting > 0 ? "warn" : "neutral"}
+            />
+            <StatTile
+              label="Arrivés (session)"
+              value={stats.arrived24}
+              sub="Scannés au triage retour"
+              icon="checkCircle"
+              tone="success"
+            />
           </div>
         </section>
 
         <StaffIndicator />
-
-        <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-          <StatTile
-            label="Dans la file"
-            value={stats.active}
-            sub={`${stats.registered} inscrits · ${stats.confirmed} confirmés`}
-            icon="archive"
-            spark={activitySeries}
-          />
-          <StatTile
-            label="À confirmer"
-            value={stats.awaiting}
-            sub="Réponse OUI / NON attendue"
-            icon="bell"
-            tone={stats.awaiting > 0 ? "warn" : "neutral"}
-          />
-          <StatTile
-            label="Arrivés (session)"
-            value={stats.arrived24}
-            sub="Scannés au triage retour"
-            icon="checkCircle"
-            tone="success"
-          />
-          <StatTile
-            label="LWBS"
-            value={stats.lwbs}
-            sub="Non-présentations cumulées"
-            icon="warning"
-            tone={stats.lwbs > 0 ? "danger" : "neutral"}
-          />
-        </section>
 
         <section className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
           <Panel

@@ -89,7 +89,7 @@ export function AddStretcherModal({ open, onClose, hospital = "HMR" }: Props) {
               id="civ-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Jean Dupont"
+              placeholder="Michel Bélanger"
               className="mt-1.5 h-11"
             />
           </div>

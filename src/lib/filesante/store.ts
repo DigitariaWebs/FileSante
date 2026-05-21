@@ -22,8 +22,8 @@ const KEY = "filesante.store.v5";
 const MIN = 60_000;
 
 const DEFAULT_SHIFT: NurseShift = {
-  firstName: "Marie",
-  lastName: "Tremblay",
+  firstName: "Isabelle",
+  lastName: "Proulx",
   changedAt: 0,
 };
 

@@ -77,10 +77,10 @@ const DEFAULT_SECTIONS: SidebarSection[] = [
 ];
 
 const DEFAULT_USER: SidebarUser = {
-  initials: "MT",
-  name: "Marie Tremblay",
+  initials: "IP",
+  name: "Isabelle Proulx",
   role: "Infirmière triage · HMR",
-  email: "marie.tremblay@hmr.qc.ca",
+  email: "isabelle.proulx@hmr.qc.ca",
 };
 
 type Props = {
