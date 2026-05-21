@@ -32,6 +32,7 @@ export type SidebarUser = {
   role: string;
   email: string;
   accentClass?: string;
+  avatar?: string;
 };
 
 const DEFAULT_SECTIONS: SidebarSection[] = [
@@ -81,6 +82,7 @@ const DEFAULT_USER: SidebarUser = {
   name: "Isabelle Proulx",
   role: "Infirmière triage · HMR",
   email: "isabelle.proulx@hmr.qc.ca",
+  avatar: "https://i.pravatar.cc/150?img=47",
 };
 
 type Props = {
@@ -111,6 +113,7 @@ export function Sidebar({
           : ROLE_LABEL[authed.role],
         email: authed.email ?? "—",
         accentClass: fallbackUser.accentClass,
+        avatar: fallbackUser.avatar,
       }
     : fallbackUser;
 
@@ -183,13 +186,25 @@ export function Sidebar({
               type="button"
               className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-[var(--ap-canvas-parchment)]"
             >
-              <div
-                className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-[12px] font-semibold text-white ${
-                  user.accentClass ?? "bg-[var(--fs-primary)]"
-                }`}
-              >
-                {user.initials}
-              </div>
+              {user.avatar ? (
+                <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full">
+                  <Image
+                    src={user.avatar}
+                    alt={user.name}
+                    fill
+                    className="object-cover"
+                    sizes="36px"
+                  />
+                </div>
+              ) : (
+                <div
+                  className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-[12px] font-semibold text-white ${
+                    user.accentClass ?? "bg-[var(--fs-primary)]"
+                  }`}
+                >
+                  {user.initials}
+                </div>
+              )}
               <div className="flex min-w-0 flex-1 flex-col">
                 <span className="truncate text-[13.5px] font-semibold tracking-[-0.016em] text-[var(--ap-ink)]">
                   {user.name}

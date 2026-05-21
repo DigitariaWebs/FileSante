@@ -34,6 +34,7 @@ const USER: SidebarUser = {
   role: "Infirmier 811 · Province",
   email: "yann.deschamps@infosante.qc.ca",
   accentClass: "bg-[#0d74ce]",
+  avatar: "https://i.pravatar.cc/150?img=12",
 };
 
 export default function HotlineLayout({ children }: { children: ReactNode }) {

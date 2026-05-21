@@ -38,6 +38,7 @@ const USER: SidebarUser = {
   role: "MSSS · Analyste réseau",
   email: "nathalie.bedard@msss.gouv.qc.ca",
   accentClass: "bg-[#0d74ce]",
+  avatar: "https://i.pravatar.cc/150?img=49",
 };
 
 export default function MsssLayout({ children }: { children: ReactNode }) {

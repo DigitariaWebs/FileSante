@@ -79,29 +79,6 @@ function HeroStat({ num, label }: { num: string; label: string }) {
 function DashboardPanel() {
   return (
     <div className="relative">
-      {/* Floating notification cards */}
-      <FloatingNotif
-        className="-top-4 -left-4 md:-top-6 md:-left-10"
-        tone="neutral"
-        icon={<IconMessage2 size={14} strokeWidth={1.5} />}
-        title="SMS envoyé"
-        body="Antoine G. · code 4218"
-      />
-      <FloatingNotif
-        className="-top-2 -right-4 md:-top-3 md:-right-8"
-        tone="success"
-        icon={<IconCircleCheck size={14} strokeWidth={1.5} />}
-        title="Confirmé · 60 min"
-        body="Jean-F. L. · HGM"
-      />
-      <FloatingNotif
-        className="-bottom-4 left-2 md:-bottom-6 md:left-6"
-        tone="primary"
-        icon={<IconQrcode size={14} strokeWidth={1.5} />}
-        title="Retour scanné"
-        body="Lucas B. · code 3024"
-      />
-
       <div
         className="overflow-hidden rounded-3xl border border-[var(--fs-line)] bg-white"
         style={{ boxShadow: "0 30px 60px -30px rgba(15, 111, 180, 0.35), 0 8px 20px -10px rgba(15, 111, 180, 0.15)" }}

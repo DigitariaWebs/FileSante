@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "upload.wikimedia.org" },
+      { protocol: "https", hostname: "i.pravatar.cc" },
     ],
   },
   // Legacy `.html` URL aliases from the original HTML-only mock site.
