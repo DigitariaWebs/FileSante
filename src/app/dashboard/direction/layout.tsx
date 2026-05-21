@@ -38,7 +38,7 @@ const USER: SidebarUser = {
   role: "Direction · HMR",
   email: "francois.levesque@hmr.qc.ca",
   accentClass: "bg-[var(--ap-ink)]",
-  avatar: "https://i.pravatar.cc/150?img=15",
+  avatar: "https://images.unsplash.com/photo-1659353885824-1199aeeebfc6?w=150&h=150&fit=crop&crop=faces&auto=format",
 };
 
 export default function DirectionLayout({

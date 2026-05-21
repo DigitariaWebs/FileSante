@@ -82,7 +82,7 @@ const DEFAULT_USER: SidebarUser = {
   name: "Isabelle Proulx",
   role: "Infirmière triage · HMR",
   email: "isabelle.proulx@hmr.qc.ca",
-  avatar: "https://i.pravatar.cc/150?img=47",
+  avatar: "https://images.unsplash.com/photo-1638202993928-7267aad84c31?w=150&h=150&fit=crop&crop=faces&auto=format",
 };
 
 type Props = {

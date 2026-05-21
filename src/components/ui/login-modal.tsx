@@ -44,24 +44,12 @@ import { useState } from "react";
 type RoleKey = AuthRole;
 
 const ROLES: { key: RoleKey; label: string; href: string }[] = [
-  { key: "TRIAGE", label: "🩺 Triage urgences", href: ROLE_HOME.TRIAGE },
-  {
-    key: "HOTLINE_811",
-    label: "📞 Info-Santé 811",
-    href: ROLE_HOME.HOTLINE_811,
-  },
-  {
-    key: "DIRECTION",
-    label: "🏥 Direction d'hôpital",
-    href: ROLE_HOME.DIRECTION,
-  },
-  { key: "MSSS", label: "🏛️ Gouvernement du Québec", href: ROLE_HOME.MSSS },
-  {
-    key: "CLINIQUE",
-    label: "🏘️ Première ligne (GMF / CLSC)",
-    href: ROLE_HOME.CLINIQUE,
-  },
-  { key: "PATIENT", label: "👤 Patient", href: ROLE_HOME.PATIENT },
+  { key: "TRIAGE", label: "Triage urgences", href: ROLE_HOME.TRIAGE },
+  { key: "HOTLINE_811", label: "Info-Santé 811", href: ROLE_HOME.HOTLINE_811 },
+  { key: "DIRECTION", label: "Direction d'hôpital", href: ROLE_HOME.DIRECTION },
+  { key: "MSSS", label: "Gouvernement du Québec", href: ROLE_HOME.MSSS },
+  { key: "CLINIQUE", label: "Première ligne (GMF / CLSC)", href: ROLE_HOME.CLINIQUE },
+  { key: "PATIENT", label: "Patient", href: ROLE_HOME.PATIENT },
 ];
 
 const HOSPITALS = [
