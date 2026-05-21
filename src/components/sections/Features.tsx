@@ -1,3 +1,4 @@
+import { IconBed, IconBuildingHospital, IconClipboardList, IconStethoscope } from "@tabler/icons-react";
 import type { ReactNode } from "react";
 
 type Feature = {
@@ -12,82 +13,25 @@ const features: Feature[] = [
     title: "File virtuelle P4/P5",
     body: "Position en direct, attente estimée, glisser-déposer pour réordonner.",
     tags: ["QR", "SMS", "Codes 4 chiffres"],
-    icon: (
-      <svg
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.1"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M4 5h16M4 12h11M4 19h7" />
-        <circle cx="19" cy="19" r="3" />
-      </svg>
-    ),
+    icon: <IconClipboardList size={22} strokeWidth={1.5} />,
   },
   {
     title: "Suivi des civières",
     body: "20 lits, statut en direct, durée d'occupation, alertes de libération.",
     tags: ["20 lits", "Alertes"],
-    icon: (
-      <svg
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.1"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <rect x="3" y="9" width="18" height="9" rx="3" />
-        <path d="M3 18v3M21 18v3" />
-        <circle cx="8" cy="13.5" r="1.6" />
-        <path d="M13 13.5h5" />
-      </svg>
-    ),
+    icon: <IconBed size={22} strokeWidth={1.5} />,
   },
   {
     title: "Ajustement d'attente",
     body: "+15, +30 ou +45 min — diffusé instantanément par SMS aux patients.",
     tags: ["+15", "+30", "+45 min"],
-    icon: (
-      <svg
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.1"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 7v5l3 2" />
-      </svg>
-    ),
+    icon: <IconStethoscope size={22} strokeWidth={1.5} />,
   },
   {
     title: "Carte & GMF/CLSC",
     body: "Ressources de première ligne géolocalisées avec dispo en direct.",
     tags: ["GMF", "CLSC", "IPS", "UMF"],
-    icon: (
-      <svg
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.1"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M3 12c0-4 4-7 9-7s9 3 9 7-4 7-9 7c-1 0-2 0-3-.3L4 21l1.3-3.7C4.4 16.2 3 14.2 3 12Z" />
-      </svg>
-    ),
+    icon: <IconBuildingHospital size={22} strokeWidth={1.5} />,
   },
 ];
 

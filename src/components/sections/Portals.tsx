@@ -1,3 +1,4 @@
+import { IconBuildingCommunity, IconBuildingEstate, IconBuildingHospital, IconMap, IconPhone, IconStethoscope, IconUserHeart } from "@tabler/icons-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -21,21 +22,7 @@ const portals: Portal[] = [
         <b>4 hôpitaux</b> · accès complet
       </>
     ),
-    icon: (
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.1"
-        strokeLinecap="round"
-      >
-        <path d="M12 4v6" />
-        <path d="M9 7h6" />
-        <circle cx="12" cy="15" r="4" />
-      </svg>
-    ),
+    icon: <IconStethoscope size={20} strokeWidth={1.5} />,
   },
   {
     title: "Info-Santé 811",
@@ -47,21 +34,7 @@ const portals: Portal[] = [
         <b>Province</b> · vue d&apos;écoute
       </>
     ),
-    icon: (
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.1"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M5 4h12l3 3v13a1 1 0 0 1-1 1H5z" />
-        <path d="M9 12h6M9 16h4" />
-      </svg>
-    ),
+    icon: <IconPhone size={20} strokeWidth={1.5} />,
   },
   {
     title: "Direction d'hôpital",
@@ -73,22 +46,7 @@ const portals: Portal[] = [
         <b>HMR · HND · HSC · HGM</b>
       </>
     ),
-    icon: (
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.1"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M3 21h18" />
-        <path d="M5 21V9l7-5 7 5v12" />
-        <path d="M10 21v-6h4v6" />
-      </svg>
-    ),
+    icon: <IconBuildingHospital size={20} strokeWidth={1.5} />,
   },
   {
     title: "Gouvernement du Québec",
@@ -100,22 +58,7 @@ const portals: Portal[] = [
         <b>MSSS</b> · pilote 2026
       </>
     ),
-    icon: (
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.1"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M3 7l9-4 9 4-9 4z" />
-        <path d="M3 12l9 4 9-4" />
-        <path d="M3 17l9 4 9-4" />
-      </svg>
-    ),
+    icon: <IconBuildingEstate size={20} strokeWidth={1.5} />,
   },
   {
     title: "GMF / CLSC / IPS / UMF",
@@ -127,21 +70,7 @@ const portals: Portal[] = [
         <b>+38 partenaires</b> en pilote
       </>
     ),
-    icon: (
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.1"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <circle cx="12" cy="12" r="9" />
-        <path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" />
-      </svg>
-    ),
+    icon: <IconBuildingCommunity size={20} strokeWidth={1.5} />,
   },
   {
     title: "Carte sectorielle",
@@ -153,21 +82,7 @@ const portals: Portal[] = [
         <b>12 secteurs</b> · temps réel
       </>
     ),
-    icon: (
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.1"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2z" />
-        <path d="M9 3v16M15 5v16" />
-      </svg>
-    ),
+    icon: <IconMap size={20} strokeWidth={1.5} />,
   },
   {
     title: "Patient",
@@ -179,21 +94,7 @@ const portals: Portal[] = [
         <b>SMS + Web</b> · sans installation
       </>
     ),
-    icon: (
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.1"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <circle cx="12" cy="8" r="4" />
-        <path d="M4 21c0-4 4-7 8-7s8 3 8 7" />
-      </svg>
-    ),
+    icon: <IconUserHeart size={20} strokeWidth={1.5} />,
   },
 ];
 
@@ -209,10 +110,6 @@ export function Portals() {
                 Le bon portail pour chaque acteur du réseau
               </h2>
             </div>
-            <p className="max-w-[380px] text-[15px]">
-              Chaque rôle dispose d&apos;une vue adaptée à ses besoins — du
-              triage à la gouvernance provinciale.
-            </p>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
