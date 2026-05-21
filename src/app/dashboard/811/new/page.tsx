@@ -1,12 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { useMemo, useState } from "react";
-
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { RegistrationModal } from "@/components/dashboard/RegistrationModal";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Icon } from "@/components/ui/Icon";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -25,6 +22,8 @@ import type {
   Patient,
   Priority,
 } from "@/lib/filesante/types";
+import Link from "next/link";
+import { useMemo, useState } from "react";
 
 const HOSPITALS: { code: HospitalCode; name: string }[] = [
   { code: "HMR", name: "HMR — Maisonneuve-Rosemont" },
@@ -169,7 +168,7 @@ export default function HotlineNew() {
                     id="first"
                     value={firstName}
                     onChange={(ev) => setFirstName(ev.target.value)}
-                    placeholder="Marie"
+                    placeholder="Claude"
                     className="h-11"
                     aria-invalid={!!errors.firstName}
                   />
@@ -179,16 +178,12 @@ export default function HotlineNew() {
                     id="last"
                     value={lastName}
                     onChange={(ev) => setLastName(ev.target.value)}
-                    placeholder="Tremblay"
+                    placeholder="Yann"
                     className="h-11"
                     aria-invalid={!!errors.lastName}
                   />
                 </Field>
-                <Field
-                  label="Téléphone"
-                  htmlFor="phone"
-                  error={errors.phone}
-                >
+                <Field label="Téléphone" htmlFor="phone" error={errors.phone}>
                   <Input
                     id="phone"
                     type="tel"
@@ -312,11 +307,7 @@ export default function HotlineNew() {
               </div>
 
               <div className="mt-5">
-                <Field
-                  label="Notes additionnelles"
-                  htmlFor="notes"
-                  full
-                >
+                <Field label="Notes additionnelles" htmlFor="notes" full>
                   <textarea
                     id="notes"
                     value={notes}
@@ -442,7 +433,8 @@ export default function HotlineNew() {
                               {r.name}
                             </div>
                             <div className="text-[11.5px] text-[var(--ap-ink-muted-48)]">
-                              {r.sector} · ETA {r.eta} · {r.distanceKm.toFixed(1)} km
+                              {r.sector} · ETA {r.eta} ·{" "}
+                              {r.distanceKm.toFixed(1)} km
                             </div>
                           </div>
                           <div
@@ -499,8 +491,8 @@ export default function HotlineNew() {
 
               <div className="mt-5 rounded-2xl border border-[var(--ap-hairline)] bg-[var(--ap-canvas-parchment)] p-4 text-[12px] text-[var(--ap-ink-muted-80)]">
                 <b className="text-[var(--ap-ink)]">À l&apos;inscription</b> —
-                un code à 4 chiffres + QR est envoyé à l&apos;appelant par
-                SMS. La clinique destinataire reçoit la demande en temps réel.
+                un code à 4 chiffres + QR est envoyé à l&apos;appelant par SMS.
+                La clinique destinataire reçoit la demande en temps réel.
               </div>
             </div>
           </aside>

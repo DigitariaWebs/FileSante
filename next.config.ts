@@ -2,6 +2,11 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "upload.wikimedia.org" },
+    ],
+  },
   // Legacy `.html` URL aliases from the original HTML-only mock site.
   // Permanent redirects so old QR codes / printed links keep working.
   async redirects() {

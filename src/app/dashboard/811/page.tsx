@@ -88,14 +88,20 @@ export default function HotlineHome() {
         title="Orientation téléphonique"
         description="Triagez les patients non urgents et orientez vers la première ligne disponible."
         actions={
-          <button
-            type="button"
-            onClick={() => exportHotlinePdf(kpi, recent)}
-            className="fs-btn fs-btn-pearl"
-          >
-            <Icon name="archive" size={14} />
-            Rapport de quart
-          </button>
+          <>
+            <Link href="/dashboard/811/new" className="fs-btn fs-btn-primary">
+              <Icon name="userPlus" size={14} />
+              Inscrire un patient
+            </Link>
+            <button
+              type="button"
+              onClick={() => exportHotlinePdf(kpi, recent)}
+              className="fs-btn fs-btn-pearl"
+            >
+              <Icon name="archive" size={14} />
+              Rapport de quart
+            </button>
+          </>
         }
       />
 

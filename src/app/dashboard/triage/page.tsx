@@ -122,6 +122,13 @@ export default function DashboardHome() {
         description="État de la file FileSanté — patients P4 / P5 routés vers la première ligne."
         actions={
           <>
+            <Link
+              href="/dashboard/triage/register"
+              className="fs-btn fs-btn-primary"
+            >
+              <Icon name="userPlus" size={14} />
+              Inscrire un patient
+            </Link>
             <button
               type="button"
               onClick={() => setShiftOpen(true)}

@@ -1,27 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 import { PageHeader } from "@/components/dashboard/PageHeader";
-import { Icon } from "@/components/ui/Icon";
 import { RegistrationModal } from "@/components/dashboard/RegistrationModal";
+import { Icon } from "@/components/ui/Icon";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { addPatient } from "@/lib/filesante/store";
-import type {
-  ContactMethod,
-  HospitalCode,
-  Patient,
-  Priority,
-} from "@/lib/filesante/types";
+import type { ContactMethod, HospitalCode, Patient, Priority } from "@/lib/filesante/types";
+import { useEffect, useState } from "react";
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 const HOSPITALS: { code: HospitalCode; name: string }[] = [
   { code: "HMR", name: "HMR — Maisonneuve-Rosemont" },
@@ -134,7 +135,7 @@ export default function RegisterPage() {
                 id="first"
                 value={firstName}
                 onChange={(ev) => setFirstName(ev.target.value)}
-                placeholder="Marie"
+                placeholder="Claude"
                 className="h-11"
                 aria-invalid={!!errors.firstName}
               />
@@ -144,7 +145,7 @@ export default function RegisterPage() {
                 id="last"
                 value={lastName}
                 onChange={(ev) => setLastName(ev.target.value)}
-                placeholder="Tremblay"
+                placeholder="Yann"
                 className="h-11"
                 aria-invalid={!!errors.lastName}
               />
@@ -257,10 +258,9 @@ export default function RegisterPage() {
                 <b className="text-[var(--ap-ink)] font-semibold">
                   Loi 25 — consentement.
                 </b>{" "}
-                Le patient autorise la collecte de ses renseignements
-                personnels pour le routage vers une ressource de première ligne
-                et la réception de notifications SMS. Tous les accès sont
-                journalisés.
+                Le patient autorise la collecte de ses renseignements personnels
+                pour le routage vers une ressource de première ligne et la
+                réception de notifications SMS. Tous les accès sont journalisés.
               </span>
             </label>
             {errors.consent && (

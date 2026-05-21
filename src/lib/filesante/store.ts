@@ -1,7 +1,5 @@
 "use client";
 
-import { buildSeed } from "@/data/seed";
-
 import type {
   Civiere,
   CiviereReason,
@@ -17,6 +15,20 @@ import type {
   Store,
   SurgeState,
 } from "./types";
+import { buildSeed } from "@/data/seed";
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 const KEY = "filesante.store.v5";
 const MIN = 60_000;
@@ -115,11 +127,39 @@ function seededDemo(): Store {
     closedAt: null,
   });
   const patients: Patient[] = [
-    make("demo_p1", "Marie", "Tremblay", "+1 514 555 0001", "P4", "Douleur lombaire"),
-    make("demo_p2", "Fatima", "El-Amrani", "+1 514 555 0002", "P4", "Migraine persistante"),
+    make(
+      "demo_p1",
+      "Claude",
+      "Yann",
+      "+1 514 555 0001",
+      "P4",
+      "Douleur lombaire",
+    ),
+    make(
+      "demo_p2",
+      "Fatima",
+      "El-Amrani",
+      "+1 514 555 0002",
+      "P4",
+      "Migraine persistante",
+    ),
     make("demo_p3", "Sophie", "Roy", "+1 514 555 0003", "P4", "Otite — adulte"),
-    make("demo_p4", "Jean", "Bouchard", "+1 514 555 0004", "P5", "Éraflure profonde"),
-    make("demo_p5", "Roger", "Lavoie", "+1 514 555 0005", "P5", "Toux > 2 semaines"),
+    make(
+      "demo_p4",
+      "Jean",
+      "Bouchard",
+      "+1 514 555 0004",
+      "P5",
+      "Éraflure profonde",
+    ),
+    make(
+      "demo_p5",
+      "Roger",
+      "Lavoie",
+      "+1 514 555 0005",
+      "P5",
+      "Toux > 2 semaines",
+    ),
   ];
   return {
     ...initial,

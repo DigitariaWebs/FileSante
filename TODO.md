@@ -89,7 +89,7 @@
 - [x] UI: `ConfirmDelayCard` slider (1-15 min) on triage dashboard, scoped to bound hospital ([ConfirmDelayCard.tsx](src/components/dashboard/ConfirmDelayCard.tsx))
 
 ## 14. Reset démo
-- [x] `store.resetDemo()` wipes state and reseeds 5 HMR patients exactly: Marie Tremblay / Fatima El-Amrani / Sophie Roy (P4), Jean Bouchard / Roger Lavoie (P5) — REGISTERED, askConfirmAt +30 min ([store.ts](src/lib/filesante/store.ts))
+- [x] `store.resetDemo()` wipes state and reseeds 5 HMR patients exactly: Claude Yann / Fatima El-Amrani / Sophie Roy (P4), Jean Bouchard / Roger Lavoie (P5) — REGISTERED, askConfirmAt +30 min ([store.ts](src/lib/filesante/store.ts))
 - [x] `triggerDemoNotify(code="HMR")` picks next REGISTERED via `pickNextForHospital` and fires `notifyPatient({manual:true})` → push notification + neutral SMS
 - [x] UI: `DemoTools` widget on triage dashboard with "Test notify" + confirm-gated "Reset démo" buttons ([DemoTools.tsx](src/components/dashboard/DemoTools.tsx))
 

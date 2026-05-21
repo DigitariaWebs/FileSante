@@ -1,8 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-
 import {
   Dialog,
   DialogContent,
@@ -21,15 +18,49 @@ import {
 } from "@/components/ui/select";
 import { auth, ROLE_HOME, type AuthRole } from "@/lib/filesante/auth";
 import type { HospitalCode } from "@/lib/filesante/types";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 type RoleKey = AuthRole;
 
 const ROLES: { key: RoleKey; label: string; href: string }[] = [
   { key: "TRIAGE", label: "🩺 Triage urgences", href: ROLE_HOME.TRIAGE },
-  { key: "HOTLINE_811", label: "📞 Info-Santé 811", href: ROLE_HOME.HOTLINE_811 },
-  { key: "DIRECTION", label: "🏥 Direction d'hôpital", href: ROLE_HOME.DIRECTION },
+  {
+    key: "HOTLINE_811",
+    label: "📞 Info-Santé 811",
+    href: ROLE_HOME.HOTLINE_811,
+  },
+  {
+    key: "DIRECTION",
+    label: "🏥 Direction d'hôpital",
+    href: ROLE_HOME.DIRECTION,
+  },
   { key: "MSSS", label: "🏛️ Gouvernement du Québec", href: ROLE_HOME.MSSS },
-  { key: "CLINIQUE", label: "🏘️ Première ligne (GMF / CLSC)", href: ROLE_HOME.CLINIQUE },
+  {
+    key: "CLINIQUE",
+    label: "🏘️ Première ligne (GMF / CLSC)",
+    href: ROLE_HOME.CLINIQUE,
+  },
   { key: "PATIENT", label: "👤 Patient", href: ROLE_HOME.PATIENT },
 ];
 
@@ -47,8 +78,8 @@ type Props = {
 
 export function LoginModal({ open, onOpenChange }: Props) {
   const router = useRouter();
-  const [first, setFirst] = useState("Marie");
-  const [last, setLast] = useState("Tremblay");
+  const [first, setFirst] = useState("Claude");
+  const [last, setLast] = useState("Yann");
   const [hospital, setHospital] = useState("HMR");
   const [role, setRole] = useState<RoleKey>("TRIAGE");
 
@@ -109,7 +140,7 @@ export function LoginModal({ open, onOpenChange }: Props) {
               id="f-first"
               value={first}
               onChange={(e) => setFirst(e.target.value)}
-              placeholder="Marie"
+              placeholder="Claude"
               className="h-11"
             />
           </div>
@@ -119,7 +150,7 @@ export function LoginModal({ open, onOpenChange }: Props) {
               id="f-last"
               value={last}
               onChange={(e) => setLast(e.target.value)}
-              placeholder="Tremblay"
+              placeholder="Yann"
               className="h-11"
             />
           </div>
@@ -142,16 +173,6 @@ export function LoginModal({ open, onOpenChange }: Props) {
             </Select>
           </div>
         )}
-
-        <div className="mt-2 flex items-start gap-2.5 rounded-xl border border-[#ffe3a3] bg-[#fff7e6] p-3.5 text-[12.5px] text-[#7a5b14]">
-          <span className="text-sm">⚠</span>
-          <div>
-            <b className="text-[#5e4408]">Authentification faible (pilote).</b>{" "}
-            Aucun mot de passe n&apos;est demandé — l&apos;identification se
-            fait par <b>rôle + prénom + nom</b>. Tous les accès sont
-            journalisés.
-          </div>
-        </div>
 
         <div className="mt-4 flex items-center justify-end gap-2.5">
           <button
