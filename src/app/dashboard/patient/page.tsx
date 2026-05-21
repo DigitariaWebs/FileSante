@@ -79,13 +79,15 @@ const HOSPITAL_INFO: Record<
   },
 };
 
+// Subtle phase tints — full bg stays soft. Urgency conveyed via banner/pill inside,
+// not by saturating the whole page.
 const PHASE_GRADIENT: Record<Phase, string> = {
-  lookup: "linear-gradient(135deg, #e8f3fb 0%, #f5f5f7 100%)",
-  activation: "linear-gradient(135deg, #e8f3fb 0%, #ffffff 70%)",
-  waiting: "linear-gradient(135deg, #1e90d6 0%, #0f6fb4 100%)",
-  soon: "linear-gradient(135deg, #f59e0b 0%, #b45309 100%)",
-  depart: "linear-gradient(135deg, #22c55e 0%, #166534 100%)",
-  closed: "linear-gradient(135deg, #f5f5f7 0%, #e0e0e0 100%)",
+  lookup: "#ffffff",
+  activation: "#ffffff",
+  waiting: "#ffffff",
+  soon: "#ffffff",
+  depart: "#ffffff",
+  closed: "#ffffff",
 };
 
 function statusToPhase(p?: Patient): Phase {
@@ -157,13 +159,7 @@ function PatientInner() {
       className="min-h-screen px-6 py-10 transition-colors"
       style={{ background: PHASE_GRADIENT[phase] }}
     >
-      <div
-        className={`mx-auto max-w-[920px] ${
-          phase === "waiting" || phase === "soon" || phase === "depart"
-            ? "text-white"
-            : ""
-        }`}
-      >
+      <div className="mx-auto max-w-230">
         <LookupForm
           codeInput={codeInput}
           setCodeInput={setCodeInput}
