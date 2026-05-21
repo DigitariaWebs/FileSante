@@ -21,6 +21,15 @@ import {
   sortQueue,
 } from "@/lib/filesante/store";
 import type { HospitalCode, Patient, PatientStatus } from "@/lib/filesante/types";
+import {
+  PDF_COLORS,
+  dataTable,
+  downloadPdf,
+  nowStamp,
+  reportHeader,
+  sectionTitle,
+  statTiles,
+} from "@/lib/pdf/export";
 
 const HOSPITAL_BINDING_KEY = "filesante.triage.hospital";
 const VALID_HOSPITALS: HospitalCode[] = ["HMR", "HND", "HSC", "HGM"];
@@ -129,7 +138,7 @@ function QueuePageInner() {
             </select>
             <button
               type="button"
-              onClick={() => window.print()}
+              onClick={() => exportQueuePdf(list, hospitalFilter, tab)}
               className="fs-btn fs-btn-pearl"
             >
               <Icon name="archive" size={14} />
@@ -201,6 +210,94 @@ function QueuePageInner() {
       </div>
     </>
   );
+}
+
+const TAB_LABEL: Record<TabKey, string> = {
+  all: "Tous actifs",
+  registered: "Inscrits",
+  awaiting: "À confirmer",
+  confirmed: "Confirmés",
+  closed: "Fermés",
+};
+
+const STATUS_FR: Record<PatientStatus, string> = {
+  REGISTERED: "Inscrit",
+  AWAITING_CONFIRMATION: "À confirmer",
+  AWAITING_CONFIRMATION_FINAL: "Confirm. finale",
+  CONFIRMED: "Confirmé",
+  ARRIVED: "Arrivé",
+  COMPLETED: "Terminé",
+  CANCELLED_BY_PATIENT: "Annulé patient",
+  NO_RESPONSE: "Sans réponse",
+  NO_SHOW: "No-show",
+};
+
+async function exportQueuePdf(
+  rows: Patient[],
+  hospital: HospitalCode | "ALL",
+  tab: TabKey,
+) {
+  const scope = hospital === "ALL" ? "Tous les hôpitaux" : hospital;
+  await downloadPdf({
+    filename: `filesante-queue-${hospital}-${tab}-${nowStamp()}.pdf`,
+    content: [
+      ...reportHeader({
+        eyebrow: "Opérations · file d'attente",
+        title: "Export — file d'attente",
+        subtitle: "Patients P4 / P5 routés via FileSanté.",
+        metadata: [
+          { label: "Hôpital", value: scope },
+          { label: "Vue", value: TAB_LABEL[tab] },
+          { label: "Total", value: String(rows.length) },
+          { label: "Édité", value: new Date().toLocaleString("fr-CA") },
+        ],
+      }),
+      statTiles([
+        { label: "Patients", value: rows.length },
+        {
+          label: "P4",
+          value: rows.filter((r) => r.priority === "P4").length,
+        },
+        {
+          label: "P5",
+          value: rows.filter((r) => r.priority === "P5").length,
+        },
+        {
+          label: "Notifiés",
+          value: rows.filter((r) => r.notifiedAt !== null).length,
+        },
+      ]),
+      sectionTitle("Détail"),
+      dataTable<Patient>(rows, [
+        {
+          header: "Patient",
+          width: "*",
+          render: (p) => `${p.firstName} ${p.lastName}`,
+        },
+        { header: "Pr.", width: 22, render: (p) => p.priority },
+        { header: "Code", width: 36, render: (p) => p.code },
+        {
+          header: "Statut",
+          width: 70,
+          render: (p) => STATUS_FR[p.status] ?? p.status,
+        },
+        { header: "Contact", width: 70, render: (p) => p.phone },
+        {
+          header: "Méthode",
+          width: 50,
+          render: (p) => p.contact,
+        },
+        { header: "Hôp.", width: 30, render: (p) => p.hospital },
+        {
+          header: "Motif",
+          width: "*",
+          render: (p) => p.motif,
+          color: () => PDF_COLORS.inkMuted,
+        },
+      ]),
+    ],
+    pageOrientation: "landscape",
+  });
 }
 
 function filterPatients(

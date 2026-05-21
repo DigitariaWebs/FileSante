@@ -10,6 +10,15 @@ import { Input } from "@/components/ui/input";
 import { useFileSante } from "@/hooks/useFileSante";
 import { isActive } from "@/lib/filesante/store";
 import type { HospitalCode, Patient } from "@/lib/filesante/types";
+import {
+  PDF_COLORS,
+  dataTable,
+  downloadPdf,
+  nowStamp,
+  reportHeader,
+  sectionTitle,
+  statTiles,
+} from "@/lib/pdf/export";
 
 const MIN = 60_000;
 const HOSPITALS: { code: HospitalCode | "ALL"; label: string }[] = [
@@ -74,7 +83,7 @@ export default function DirectionAlerts() {
         actions={
           <button
             type="button"
-            onClick={() => window.print()}
+            onClick={() => exportAlertsPdf(hospital, tiered, counts)}
             className="fs-btn fs-btn-pearl"
           >
             <Icon name="archive" size={14} />
@@ -179,6 +188,94 @@ export default function DirectionAlerts() {
       </div>
     </>
   );
+}
+
+type AlertRowData = { patient: Patient; waitMin: number };
+
+async function exportAlertsPdf(
+  hospital: HospitalCode | "ALL",
+  tiered: Record<string, AlertRowData[]>,
+  counts: { CRITICAL: number; WARNING: number; WATCH: number },
+) {
+  const scope = hospital === "ALL" ? "Réseau" : hospital;
+  const sectionFor = (key: "CRITICAL" | "WARNING" | "WATCH", title: string, color: string) => {
+    const rows = tiered[key] ?? [];
+    return [
+      sectionTitle(`${title} — ${rows.length} patient${rows.length === 1 ? "" : "s"}`),
+      dataTable<AlertRowData>(
+        rows,
+        [
+          {
+            header: "Patient",
+            width: "*",
+            render: (r) => `${r.patient.firstName} ${r.patient.lastName}`,
+          },
+          { header: "Pr.", width: 25, render: (r) => r.patient.priority },
+          { header: "Hôp.", width: 35, render: (r) => r.patient.hospital },
+          {
+            header: "Attente",
+            width: 55,
+            align: "right",
+            render: (r) => {
+              const h = Math.floor(r.waitMin / 60);
+              const m = r.waitMin % 60;
+              return h > 0 ? `${h}h${m.toString().padStart(2, "0")}` : `${m} min`;
+            },
+            color: () => color,
+          },
+          {
+            header: "Statut",
+            width: 80,
+            render: (r) => r.patient.status,
+            color: () => PDF_COLORS.inkMuted,
+          },
+          {
+            header: "Motif",
+            width: "*",
+            render: (r) => r.patient.motif,
+            color: () => PDF_COLORS.inkMuted,
+          },
+        ],
+        { emptyText: "Aucun patient à ce seuil." },
+      ),
+    ];
+  };
+  await downloadPdf({
+    filename: `filesante-alertes-${hospital}-${nowStamp()}.pdf`,
+    pageOrientation: "landscape",
+    content: [
+      ...reportHeader({
+        eyebrow: "Direction · alertes",
+        title: "Patients en attente prolongée",
+        subtitle:
+          "Surveillance des attentes > 1 h. Escalade automatique au-delà de 3 h (risque LWBS).",
+        metadata: [
+          { label: "Périmètre", value: scope },
+          { label: "Édité", value: new Date().toLocaleString("fr-CA") },
+        ],
+      }),
+      statTiles([
+        {
+          label: "Critique > 3 h",
+          value: counts.CRITICAL,
+          tone: counts.CRITICAL > 0 ? "danger" : "default",
+        },
+        {
+          label: "Alerte 2–3 h",
+          value: counts.WARNING,
+          tone: counts.WARNING > 0 ? "warn" : "default",
+        },
+        {
+          label: "Vigilance 1–2 h",
+          value: counts.WATCH,
+          tone: counts.WATCH > 0 ? "warn" : "default",
+        },
+      ]),
+      ...sectionFor("CRITICAL", "> 3 h · critique", PDF_COLORS.danger),
+      ...sectionFor("WARNING", "2–3 h · alerte", PDF_COLORS.warn),
+      ...sectionFor("WATCH", "1–2 h · vigilance", PDF_COLORS.warn),
+    ],
+  });
 }
 
 function AlertRow({

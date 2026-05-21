@@ -12,6 +12,15 @@ import { CLINICS } from "@/data/clinics";
 import { useFileSante } from "@/hooks/useFileSante";
 import { isActive } from "@/lib/filesante/store";
 import type { Patient } from "@/lib/filesante/types";
+import {
+  PDF_COLORS,
+  dataTable,
+  downloadPdf,
+  nowStamp,
+  reportHeader,
+  sectionTitle,
+  statTiles,
+} from "@/lib/pdf/export";
 
 const MIN = 60_000;
 
@@ -81,7 +90,7 @@ export default function HotlineHome() {
         actions={
           <button
             type="button"
-            onClick={() => window.print()}
+            onClick={() => exportHotlinePdf(kpi, recent)}
             className="fs-btn fs-btn-pearl"
           >
             <Icon name="archive" size={14} />
@@ -179,6 +188,78 @@ export default function HotlineHome() {
       </div>
     </>
   );
+}
+
+async function exportHotlinePdf(
+  kpi: {
+    total: number;
+    activeNow: number;
+    oriented: number;
+    refused: number;
+    avgWaitMin: number;
+  },
+  recent: Patient[],
+) {
+  await downloadPdf({
+    filename: `filesante-811-${nowStamp()}.pdf`,
+    content: [
+      ...reportHeader({
+        eyebrow: "Info-Santé · 811",
+        title: "Rapport de quart — orientation téléphonique",
+        subtitle:
+          "Patients non urgents triés et orientés vers la première ligne.",
+        metadata: [
+          { label: "Édité", value: new Date().toLocaleString("fr-CA") },
+          {
+            label: "Statut",
+            value: `${kpi.activeNow} actifs · ${kpi.total - kpi.activeNow} fermés`,
+          },
+        ],
+      }),
+      sectionTitle("Indicateurs du quart"),
+      statTiles([
+        { label: "Appels du quart", value: kpi.total },
+        {
+          label: "Orientés réseau",
+          value: kpi.oriented,
+          tone: "success",
+        },
+        {
+          label: "Refus / abandons",
+          value: kpi.refused,
+          tone: kpi.refused > 0 ? "danger" : "default",
+        },
+        {
+          label: "Attente moyenne",
+          value: `${kpi.avgWaitMin} min`,
+          hint: "Du tri à la convocation",
+        },
+      ]),
+      sectionTitle("Appels récents"),
+      dataTable<Patient>(recent, [
+        {
+          header: "Patient",
+          width: "*",
+          render: (p) => `${p.firstName} ${p.lastName}`,
+        },
+        { header: "Pr.", width: 25, render: (p) => p.priority },
+        { header: "Tél.", width: 75, render: (p) => p.phone },
+        {
+          header: "Statut",
+          width: 90,
+          render: (p) => p.status,
+          color: () => PDF_COLORS.inkMuted,
+        },
+        { header: "Hôp.", width: 35, render: (p) => p.hospital },
+        {
+          header: "Motif",
+          width: "*",
+          render: (p) => p.motif,
+          color: () => PDF_COLORS.inkMuted,
+        },
+      ]),
+    ],
+  });
 }
 
 function CallRow({ patient, now }: { patient: Patient; now: number }) {

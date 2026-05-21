@@ -6,6 +6,15 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Icon } from "@/components/ui/Icon";
 import { CLINICS, SECTORS, type Sector } from "@/data/clinics";
 import { useFileSante } from "@/hooks/useFileSante";
+import {
+  PDF_COLORS,
+  dataTable,
+  downloadPdf,
+  nowStamp,
+  reportHeader,
+  sectionTitle,
+  statTiles,
+} from "@/lib/pdf/export";
 
 const STALE_THRESHOLD_MIN = 240; // 4h
 
@@ -81,7 +90,7 @@ export default function MsssSectors() {
         actions={
           <button
             type="button"
-            onClick={() => window.print()}
+            onClick={() => exportSectorsPdf(sectorRows, totals, selected)}
             className="fs-btn fs-btn-pearl"
           >
             <Icon name="archive" size={14} />
@@ -211,6 +220,100 @@ export default function MsssSectors() {
       </div>
     </>
   );
+}
+
+async function exportSectorsPdf(
+  rows: SectorRow[],
+  totals: {
+    totalClinics: number;
+    totalInactive: number;
+    avgLoad: number;
+    overloaded: number;
+  },
+  focused: Sector,
+) {
+  const stale = CLINICS.filter((c) => c.lastActivitySimMin >= STALE_THRESHOLD_MIN);
+  await downloadPdf({
+    filename: `filesante-msss-secteurs-${nowStamp()}.pdf`,
+    content: [
+      ...reportHeader({
+        eyebrow: "MSSS · Carte sectorielle",
+        title: "Heatmap d'utilisation — Montréal",
+        subtitle: "Charge par secteur · détection des cliniques inactives.",
+        metadata: [
+          { label: "Édité", value: new Date().toLocaleString("fr-CA") },
+          { label: "Secteur focus", value: focused },
+        ],
+      }),
+      sectionTitle("Indicateurs réseau"),
+      statTiles([
+        { label: "Secteurs couverts", value: SECTORS.length },
+        { label: "Cliniques pilotes", value: totals.totalClinics },
+        {
+          label: "Inactives",
+          value: totals.totalInactive,
+          tone: totals.totalInactive > 0 ? "warn" : "default",
+        },
+        {
+          label: "Secteurs saturés",
+          value: totals.overloaded,
+          tone: totals.overloaded > 0 ? "danger" : "default",
+          hint: `Charge moy. ${Math.round(totals.avgLoad * 100)}%`,
+        },
+      ]),
+      sectionTitle("Charge par secteur"),
+      dataTable<SectorRow>(rows, [
+        { header: "Secteur", width: "*", render: (r) => r.name },
+        {
+          header: "Charge",
+          width: 70,
+          align: "right",
+          render: (r) => `${Math.round(r.load * 100)}%`,
+          color: (r) =>
+            r.load > 0.85
+              ? PDF_COLORS.danger
+              : r.load > 0.6
+                ? PDF_COLORS.warn
+                : PDF_COLORS.success,
+        },
+        {
+          header: "Cliniques",
+          width: 70,
+          align: "right",
+          render: (r) => r.clinics,
+        },
+        {
+          header: "Inactives",
+          width: 70,
+          align: "right",
+          render: (r) => r.inactive,
+          color: (r) => (r.inactive > 0 ? PDF_COLORS.danger : undefined),
+        },
+      ]),
+      sectionTitle("Cliniques sans heartbeat > 4 h"),
+      dataTable(
+        stale,
+        [
+          { header: "Type", width: 50, render: (c) => c.type },
+          { header: "Nom", width: "*", render: (c) => c.name },
+          { header: "Secteur", width: 110, render: (c) => c.sector },
+          {
+            header: "Inactif depuis",
+            width: 90,
+            align: "right",
+            render: (c) => {
+              const h = Math.floor(c.lastActivitySimMin / 60);
+              const m = c.lastActivitySimMin % 60;
+              return `${h}h${m.toString().padStart(2, "0")}`;
+            },
+            color: () => PDF_COLORS.warn,
+          },
+          { header: "Téléphone", width: 90, render: (c) => c.phone },
+        ],
+        { emptyText: "Toutes les cliniques émettent un heartbeat actif." },
+      ),
+    ],
+  });
 }
 
 function SectorCell({

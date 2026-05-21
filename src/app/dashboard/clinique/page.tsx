@@ -10,6 +10,15 @@ import { Icon, type IconName } from "@/components/ui/Icon";
 import { useFileSante } from "@/hooks/useFileSante";
 import { decideReferral } from "@/lib/filesante/store";
 import type { Referral } from "@/lib/filesante/types";
+import {
+  PDF_COLORS,
+  dataTable,
+  downloadPdf,
+  nowStamp,
+  reportHeader,
+  sectionTitle,
+  statTiles,
+} from "@/lib/pdf/export";
 
 export default function CliniqueHome() {
   const s = useFileSante();
@@ -53,7 +62,17 @@ export default function CliniqueHome() {
         actions={
           <button
             type="button"
-            onClick={() => window.print()}
+            onClick={() =>
+              exportCliniquePdf({
+                counts,
+                load,
+                loadPct,
+                totalDaily: s.clinic.totalDaily,
+                pending: s.referrals.filter((r) => r.status === "PENDING"),
+                accepted: s.referrals.filter((r) => r.status === "ACCEPTED"),
+                refused: s.referrals.filter((r) => r.status === "REFUSED"),
+              })
+            }
             className="fs-btn fs-btn-pearl"
           >
             <Icon name="archive" size={14} />
@@ -207,6 +226,107 @@ export default function CliniqueHome() {
       </div>
     </>
   );
+}
+
+async function exportCliniquePdf(args: {
+  counts: { pending: number; accepted: number; refused: number; total: number };
+  load: number;
+  loadPct: number;
+  totalDaily: number;
+  pending: Referral[];
+  accepted: Referral[];
+  refused: Referral[];
+}) {
+  const renderReferral = (r: Referral) => r.patientName;
+  await downloadPdf({
+    filename: `filesante-clinique-${nowStamp()}.pdf`,
+    content: [
+      ...reportHeader({
+        eyebrow: "Première ligne · GMF Plateau",
+        title: "Rapport de quart — clinique",
+        subtitle: "Demandes reçues, décisions et charge.",
+        metadata: [
+          { label: "Édité", value: new Date().toLocaleString("fr-CA") },
+          { label: "Secteur", value: "Plateau-Mont-Royal" },
+          { label: "Heures", value: "08:00 – 20:00" },
+          { label: "Champ d'exercice", value: "P4 / P5" },
+        ],
+      }),
+      sectionTitle("Indicateurs"),
+      statTiles([
+        {
+          label: "En attente",
+          value: args.counts.pending,
+          tone: args.counts.pending > 0 ? "warn" : "default",
+        },
+        {
+          label: "Acceptés",
+          value: args.counts.accepted,
+          tone: "success",
+        },
+        {
+          label: "Refusés",
+          value: args.counts.refused,
+          tone: args.counts.refused > 0 ? "danger" : "default",
+        },
+        {
+          label: "Charge actuelle",
+          value: `${args.loadPct}%`,
+          hint: `${Math.round(args.load * args.totalDaily)} / ${args.totalDaily} patients`,
+          tone:
+            args.load > 0.85 ? "danger" : args.load > 0.65 ? "warn" : "success",
+        },
+      ]),
+      sectionTitle("Demandes en attente"),
+      dataTable<Referral>(
+        args.pending,
+        [
+          { header: "Patient", width: "*", render: renderReferral },
+          { header: "Pr.", width: 25, render: (r) => r.priority },
+          { header: "Source", width: 80, render: (r) => r.sourceLabel },
+          {
+            header: "Motif",
+            width: "*",
+            render: (r) => r.motif,
+            color: () => PDF_COLORS.inkMuted,
+          },
+        ],
+        { emptyText: "Aucune demande en attente." },
+      ),
+      sectionTitle("Demandes acceptées"),
+      dataTable<Referral>(
+        args.accepted,
+        [
+          { header: "Patient", width: "*", render: renderReferral },
+          { header: "Pr.", width: 25, render: (r) => r.priority },
+          { header: "Source", width: 80, render: (r) => r.sourceLabel },
+          {
+            header: "Motif",
+            width: "*",
+            render: (r) => r.motif,
+            color: () => PDF_COLORS.inkMuted,
+          },
+        ],
+        { emptyText: "Aucune demande acceptée." },
+      ),
+      sectionTitle("Demandes refusées"),
+      dataTable<Referral>(
+        args.refused,
+        [
+          { header: "Patient", width: "*", render: renderReferral },
+          { header: "Pr.", width: 25, render: (r) => r.priority },
+          { header: "Source", width: 80, render: (r) => r.sourceLabel },
+          {
+            header: "Motif",
+            width: "*",
+            render: (r) => r.motif,
+            color: () => PDF_COLORS.inkMuted,
+          },
+        ],
+        { emptyText: "Aucune demande refusée." },
+      ),
+    ],
+  });
 }
 
 function ReferralPreview({

@@ -8,6 +8,16 @@ import { Icon, type IconName } from "@/components/ui/Icon";
 import { useFileSante } from "@/hooks/useFileSante";
 import { isActive } from "@/lib/filesante/store";
 import type { HospitalCode, Patient } from "@/lib/filesante/types";
+import {
+  PDF_COLORS,
+  dataTable,
+  downloadPdf,
+  horizontalBars,
+  nowStamp,
+  reportHeader,
+  sectionTitle,
+  statTiles,
+} from "@/lib/pdf/export";
 
 const MIN = 60_000;
 const HOSPITALS: { code: HospitalCode | "ALL"; label: string }[] = [
@@ -95,7 +105,16 @@ export default function DirectionHourly() {
         actions={
           <button
             type="button"
-            onClick={() => window.print()}
+            onClick={() =>
+              exportHourlyPdf({
+                hospital,
+                window: win.label,
+                inscriptions,
+                arrivals,
+                hours,
+                totals: { totalIns, totalArr, conversion, peakIns, peakInsHour, activeNow },
+              })
+            }
             className="fs-btn fs-btn-pearl"
           >
             <Icon name="archive" size={14} />
@@ -265,6 +284,89 @@ export default function DirectionHourly() {
       </div>
     </>
   );
+}
+
+async function exportHourlyPdf(args: {
+  hospital: HospitalCode | "ALL";
+  window: string;
+  inscriptions: number[];
+  arrivals: number[];
+  hours: string[];
+  totals: {
+    totalIns: number;
+    totalArr: number;
+    conversion: number;
+    peakIns: number;
+    peakInsHour: string;
+    activeNow: number;
+  };
+}) {
+  const scope = args.hospital === "ALL" ? "Réseau" : args.hospital;
+  const bars = args.hours.map((label, i) => ({
+    label,
+    value: args.inscriptions[i] ?? 0,
+    color: PDF_COLORS.primary,
+  }));
+  const arrBars = args.hours.map((label, i) => ({
+    label,
+    value: args.arrivals[i] ?? 0,
+    color: PDF_COLORS.success,
+  }));
+  await downloadPdf({
+    filename: `filesante-horaire-${args.hospital}-${nowStamp()}.pdf`,
+    content: [
+      ...reportHeader({
+        eyebrow: "Direction · graphiques horaires",
+        title: "Fréquentation par heure",
+        subtitle: `Inscriptions vs arrivées — ${scope}, fenêtre ${args.window}.`,
+        metadata: [
+          { label: "Périmètre", value: scope },
+          { label: "Fenêtre", value: args.window },
+          { label: "Édité", value: new Date().toLocaleString("fr-CA") },
+        ],
+      }),
+      statTiles([
+        { label: "Inscriptions", value: args.totals.totalIns },
+        {
+          label: "Arrivées",
+          value: args.totals.totalArr,
+          hint: `${args.totals.conversion}% conversion`,
+          tone: "success",
+        },
+        { label: "Actifs maintenant", value: args.totals.activeNow },
+        {
+          label: "Heure de pointe",
+          value: args.totals.peakIns,
+          hint: `Maximum à ${args.totals.peakInsHour}`,
+          tone: args.totals.peakIns > 4 ? "warn" : "default",
+        },
+      ]),
+      sectionTitle("Inscriptions par heure"),
+      horizontalBars(bars),
+      sectionTitle("Arrivées par heure"),
+      horizontalBars(arrBars),
+      sectionTitle("Détail horaire"),
+      dataTable<{ label: string; ins: number; arr: number }>(
+        args.hours.map((label, i) => ({
+          label,
+          ins: args.inscriptions[i] ?? 0,
+          arr: args.arrivals[i] ?? 0,
+        })),
+        [
+          { header: "Heure", width: 50, render: (r) => r.label },
+          { header: "Inscriptions", width: 80, align: "right", render: (r) => r.ins },
+          { header: "Arrivées", width: 80, align: "right", render: (r) => r.arr },
+          {
+            header: "Conversion",
+            width: 80,
+            align: "right",
+            render: (r) =>
+              r.ins > 0 ? `${Math.round((r.arr / r.ins) * 100)}%` : "—",
+          },
+        ],
+      ),
+    ],
+  });
 }
 
 function PatientRow({ patient, now }: { patient: Patient; now: number }) {

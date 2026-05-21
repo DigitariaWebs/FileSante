@@ -8,6 +8,15 @@ import { Sparkline } from "@/components/dashboard/Sparkline";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { useFileSante } from "@/hooks/useFileSante";
 import { isActive } from "@/lib/filesante/store";
+import {
+  dataTable,
+  downloadPdf,
+  nowStamp,
+  paragraph,
+  reportHeader,
+  sectionTitle,
+  statTiles,
+} from "@/lib/pdf/export";
 
 type Tone = "info" | "success" | "warn" | "danger" | "neutral";
 
@@ -69,7 +78,7 @@ export default function KpiPage() {
         actions={
           <button
             type="button"
-            onClick={() => window.print()}
+            onClick={() => exportKpiPdf(stats, s.patients)}
             className="fs-btn fs-btn-pearl"
           >
             <Icon name="archive" size={14} />
@@ -193,6 +202,112 @@ export default function KpiPage() {
       </div>
     </>
   );
+}
+
+type KpiStats = {
+  total: number;
+  active: number;
+  arrived: number;
+  noShow: number;
+  cancelled: number;
+  noResp: number;
+  responseRate: number;
+  avgWaitMin: number;
+  lwbs: number;
+};
+
+async function exportKpiPdf(
+  stats: KpiStats,
+  patients: { status: string }[],
+) {
+  const confirmed = patients.filter(
+    (p) =>
+      p.status === "CONFIRMED" ||
+      p.status === "ARRIVED" ||
+      p.status === "COMPLETED",
+  ).length;
+  const denom = Math.max(1, stats.total);
+  await downloadPdf({
+    filename: `filesante-kpi-${nowStamp()}.pdf`,
+    content: [
+      ...reportHeader({
+        eyebrow: "Pilotage",
+        title: "Indicateurs FileSanté",
+        subtitle: "Performance temps réel du pilote — session courante.",
+        metadata: [
+          { label: "Édité", value: new Date().toLocaleString("fr-CA") },
+          { label: "Total session", value: String(stats.total) },
+        ],
+      }),
+      sectionTitle("Volume & flux"),
+      statTiles([
+        {
+          label: "Inscrits cumulés",
+          value: stats.total,
+          hint: `${stats.active} actifs`,
+        },
+        {
+          label: "Arrivés",
+          value: stats.arrived,
+          tone: "success",
+          hint: "ARRIVED / COMPLETED",
+        },
+        {
+          label: "Taux de réponse",
+          value: `${stats.responseRate}%`,
+        },
+        {
+          label: "Attente moyenne",
+          value: `${stats.avgWaitMin} min`,
+          hint: "Inscription → arrivée",
+        },
+      ]),
+      sectionTitle("Issues"),
+      statTiles([
+        {
+          label: "LWBS",
+          value: stats.lwbs,
+          tone: stats.lwbs > 0 ? "danger" : "default",
+        },
+        {
+          label: "No-show",
+          value: stats.noShow,
+          tone: stats.noShow > 0 ? "warn" : "default",
+        },
+        { label: "Annulé · patient", value: stats.cancelled },
+        { label: "Sans réponse", value: stats.noResp },
+      ]),
+      sectionTitle("Funnel — session courante"),
+      dataTable<{ label: string; count: number }>(
+        [
+          { label: "Inscrits", count: stats.total },
+          { label: "Confirmés", count: confirmed },
+          { label: "Arrivés", count: stats.arrived },
+          { label: "No-show", count: stats.noShow },
+          { label: "Annulés / Sans réponse", count: stats.cancelled + stats.noResp },
+        ],
+        [
+          { header: "Étape", width: "*", render: (r) => r.label },
+          {
+            header: "Nb",
+            width: 50,
+            align: "right",
+            render: (r) => r.count,
+          },
+          {
+            header: "%",
+            width: 50,
+            align: "right",
+            render: (r) => `${Math.round((r.count / denom) * 100)}%`,
+          },
+        ],
+      ),
+      paragraph(
+        "Du triage initial à l'arrivée à l'urgence — taux par rapport au total inscrits.",
+        { muted: true },
+      ),
+    ],
+  });
 }
 
 function Card({

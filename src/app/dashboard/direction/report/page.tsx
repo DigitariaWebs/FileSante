@@ -12,6 +12,16 @@ import {
   isActive,
 } from "@/lib/filesante/store";
 import type { HospitalCode, Patient } from "@/lib/filesante/types";
+import {
+  PDF_COLORS,
+  dataTable,
+  downloadPdf,
+  nowStamp,
+  paragraph,
+  reportHeader,
+  sectionTitle,
+  statTiles,
+} from "@/lib/pdf/export";
 
 const MIN = 60_000;
 const RAMQ_HOURLY = 85;
@@ -62,13 +72,6 @@ function DirectorReportInner() {
       : "ALL";
   const autoPrint = params.get("autoprint") === "1";
 
-  useEffect(() => {
-    if (autoPrint && typeof window !== "undefined") {
-      const t = window.setTimeout(() => window.print(), 400);
-      return () => window.clearTimeout(t);
-    }
-  }, [autoPrint]);
-
   const scoped = useMemo(
     () =>
       hospital === "ALL"
@@ -78,6 +81,32 @@ function DirectorReportInner() {
   );
 
   const report = useMemo(() => buildReport(scoped, hospital, s), [scoped, hospital, s]);
+
+  const triggerDownload = useMemo(
+    () => () =>
+      exportDirectorReportPdf({
+        hospital,
+        report,
+        civAvail: s.staff.civieresAvail,
+        civTotal: s.staff.civieresTotal,
+        nurses: s.staff.nurses,
+        doctors: s.staff.doctors,
+        shiftLabel: s.staff.shiftLabel,
+        allHospitals: ALL_HOSPITALS,
+        perHospital: ALL_HOSPITALS.map((h) => ({
+          code: h,
+          ...perHospitalSummary(s.patients, h),
+        })),
+      }),
+    [hospital, report, s.staff, s.patients],
+  );
+
+  useEffect(() => {
+    if (autoPrint && typeof window !== "undefined") {
+      const t = window.setTimeout(triggerDownload, 250);
+      return () => window.clearTimeout(t);
+    }
+  }, [autoPrint, triggerDownload]);
 
   return (
     <>
@@ -107,15 +136,15 @@ function DirectorReportInner() {
           ← Retour
         </Link>
         <div className="text-[12.5px] text-[var(--ap-ink-muted-80)]">
-          Rapport directeur — utilisez « Imprimer » du navigateur pour PDF.
+          Rapport directeur — téléchargez la version PDF pour archivage.
         </div>
         <button
           type="button"
-          onClick={() => window.print()}
+          onClick={triggerDownload}
           className="fs-btn fs-btn-primary fs-btn-sm"
         >
           <Icon name="archive" size={13} />
-          Imprimer / PDF
+          Télécharger PDF
         </button>
       </div>
 
@@ -453,6 +482,237 @@ function buildReport(
       annual,
     },
   };
+}
+
+type DirectorReport = ReturnType<typeof buildReport>;
+type PerHospitalRow = ReturnType<typeof perHospitalSummary> & { code: HospitalCode };
+
+async function exportDirectorReportPdf(args: {
+  hospital: HospitalCode | "ALL";
+  report: DirectorReport;
+  civAvail: number;
+  civTotal: number;
+  nurses: number;
+  doctors: number;
+  shiftLabel: string;
+  allHospitals: HospitalCode[];
+  perHospital: PerHospitalRow[];
+}) {
+  const { hospital, report, civAvail, civTotal, nurses, doctors, shiftLabel, allHospitals, perHospital } = args;
+  const title =
+    hospital === "ALL" ? "Réseau · 4 établissements" : HOSPITAL_LABEL[hospital];
+  const networkOcc = Math.round(getCivieresOccupancyAll().rate * 100);
+  await downloadPdf({
+    filename: `filesante-direction-${hospital}-${nowStamp()}.pdf`,
+    content: [
+      ...reportHeader({
+        eyebrow: "Rapport direction · FileSanté",
+        title,
+        metadata: [
+          {
+            label: "Périmètre",
+            value:
+              hospital === "ALL"
+                ? "Tous les hôpitaux (HMR · HND · HSC · HGM)"
+                : `${hospital} — ${HOSPITAL_LABEL[hospital]}`,
+          },
+          { label: "Édité", value: new Date().toLocaleString("fr-CA") },
+          { label: "Effectif", value: `${nurses} inf. · ${doctors} méd.` },
+          { label: "Quart", value: shiftLabel },
+        ],
+      }),
+      sectionTitle("Volumes & flux"),
+      statTiles([
+        { label: "Inscrits cumulés", value: report.total },
+        { label: "Actifs maintenant", value: report.activeNow },
+        { label: "P4 / P5", value: `${report.p4} / ${report.p5}` },
+        {
+          label: "Taux d'acceptation",
+          value: `${report.acceptanceRate}%`,
+          hint: `${report.confirmed} / ${report.total}`,
+        },
+        {
+          label: "No-show + LWBS",
+          value: report.noShow,
+          tone: report.noShow > 0 ? "warn" : "default",
+        },
+        { label: "Annulés", value: report.cancelled },
+        { label: "Notifications", value: report.notifsSent },
+        { label: "Attente moyenne", value: fmtMin(report.avgWaitMin) },
+      ]),
+      sectionTitle("Patients en attente > 3 h"),
+      dataTable(
+        report.overdue.slice(0, 30),
+        [
+          {
+            header: "Patient",
+            width: "*",
+            render: (p) => `${p.firstName} ${p.lastName}`,
+          },
+          { header: "Pr.", width: 25, render: (p) => p.priority },
+          { header: "Hôp.", width: 35, render: (p) => p.hospital },
+          {
+            header: "Attente",
+            width: 55,
+            align: "right",
+            render: (p) => {
+              const w = Math.floor((Date.now() - p.registeredAt) / 60000);
+              const h = Math.floor(w / 60);
+              const m = w % 60;
+              return `${h}h${m.toString().padStart(2, "0")}`;
+            },
+            color: () => PDF_COLORS.danger,
+          },
+          { header: "Statut", width: 100, render: (p) => p.status },
+        ],
+        { emptyText: "Aucune attente excessive. Bon respect des cibles." },
+      ),
+      sectionTitle("Civières & capacité"),
+      statTiles([
+        {
+          label: "Disponibles réseau",
+          value: `${civAvail}/${civTotal}`,
+        },
+        { label: "Taux d'occupation", value: `${networkOcc}%` },
+        { label: "Libérées (session)", value: report.civieresFreed },
+        { label: "Occupées", value: report.civieresOccupied },
+      ]),
+      ...(hospital === "ALL"
+        ? [
+            dataTable(
+              allHospitals.map((h) => {
+                const o = getCivieresOccupancyByHospital(h);
+                return {
+                  code: h,
+                  occupied: o.occupied,
+                  total: o.total,
+                  rate: Math.round(o.rate * 100),
+                };
+              }),
+              [
+                { header: "Hôpital", width: 60, render: (r) => r.code },
+                {
+                  header: "Occupées",
+                  width: 70,
+                  align: "right",
+                  render: (r) => r.occupied,
+                },
+                {
+                  header: "Cible",
+                  width: 60,
+                  align: "right",
+                  render: (r) => r.total,
+                },
+                {
+                  header: "Taux",
+                  width: 60,
+                  align: "right",
+                  render: (r) => `${r.rate}%`,
+                },
+              ],
+            ),
+          ]
+        : []),
+      sectionTitle("Événements de surcharge"),
+      dataTable(
+        report.surgeEvents,
+        [
+          { header: "Hôpital", width: 60, render: (e) => e.hospital },
+          { header: "Délai", width: 60, render: (e) => `+${e.minutes} min` },
+          {
+            header: "Début",
+            width: 100,
+            render: (e) => `il y a ${fmtDuration(Date.now() - e.startedAt)}`,
+          },
+          {
+            header: "Durée",
+            width: 80,
+            render: (e) =>
+              e.endedAt !== null ? fmtDuration(e.endedAt - e.startedAt) : "en cours",
+          },
+          {
+            header: "État",
+            width: "*",
+            render: (e) => (e.endedAt !== null ? "Levée" : "Active"),
+          },
+        ],
+        { emptyText: "Aucune surcharge enregistrée sur ce périmètre." },
+      ),
+      sectionTitle("Économies — méthodologie IEDM"),
+      statTiles([
+        {
+          label: "Économies du jour",
+          value: fmtCAD(report.savings.daily),
+          tone: "success",
+          hint: "RAMQ + civières",
+        },
+        {
+          label: "Projection annuelle",
+          value: fmtCAD(report.savings.annual),
+          hint: "× 365",
+        },
+        {
+          label: "Projection 5 ans",
+          value: fmtCAD(report.savings.annual * 5),
+        },
+        {
+          label: "Temps gagné / patient",
+          value: `${Math.round(report.savings.minSavedPerPatient)} min`,
+          hint: `baseline IEDM ${IEDM_BASELINE_MIN} min`,
+        },
+      ]),
+      paragraph(
+        `Formule : confirmés × (323 − attente moyenne) ÷ 60 × ${RAMQ_HOURLY} $/h + civières libérées × ${CIVIERE_NIGHT} $ (nuitée).`,
+        { muted: true },
+      ),
+      ...(hospital === "ALL"
+        ? [
+            sectionTitle("Performance par hôpital"),
+            dataTable<PerHospitalRow>(
+              perHospital,
+              [
+                { header: "Hôp.", width: 50, render: (r) => r.code },
+                {
+                  header: "Inscrits",
+                  width: 60,
+                  align: "right",
+                  render: (r) => r.total,
+                },
+                {
+                  header: "Actifs",
+                  width: 60,
+                  align: "right",
+                  render: (r) => r.active,
+                },
+                {
+                  header: "Confirmés",
+                  width: 70,
+                  align: "right",
+                  render: (r) => r.confirmed,
+                },
+                {
+                  header: "No-show",
+                  width: 60,
+                  align: "right",
+                  render: (r) => r.noShow,
+                  color: (r) => (r.noShow > 0 ? PDF_COLORS.danger : undefined),
+                },
+                {
+                  header: "Att. moy.",
+                  width: 70,
+                  align: "right",
+                  render: (r) => fmtMin(r.avgWaitMin),
+                },
+              ],
+            ),
+          ]
+        : []),
+      paragraph(
+        "Rapport agrégé — sans PII. Loi 25 : données opérationnelles anonymisées 24 h post-visite.",
+        { muted: true },
+      ),
+    ],
+  });
 }
 
 function perHospitalSummary(patients: Patient[], code: HospitalCode) {

@@ -10,6 +10,15 @@ import { MultiLineChart } from "@/components/ui/MultiLineChart";
 import { useFileSante } from "@/hooks/useFileSante";
 import { isActive } from "@/lib/filesante/store";
 import type { HospitalCode } from "@/lib/filesante/types";
+import {
+  PDF_COLORS,
+  dataTable,
+  downloadPdf,
+  nowStamp,
+  reportHeader,
+  sectionTitle,
+  statTiles,
+} from "@/lib/pdf/export";
 
 const HOSPITAL_COLORS: Record<HospitalCode, string> = {
   HMR: "#1e90d6",
@@ -193,7 +202,15 @@ export default function MsssHome() {
         actions={
           <button
             type="button"
-            onClick={() => window.print()}
+            onClick={() =>
+              exportMsssPdf({
+                provincial,
+                lwbs: s.lwbs,
+                byHospital,
+                occupancyByHospital,
+                sectors: SECTORS,
+              })
+            }
             className="fs-btn fs-btn-pearl"
           >
             <Icon name="archive" size={14} />
@@ -395,6 +412,184 @@ export default function MsssHome() {
       </div>
     </>
   );
+}
+
+type ByHospitalRow = {
+  code: HospitalCode;
+  name: string;
+  ciusss: string;
+  total: number;
+  active: number;
+  arrived: number;
+  noShow: number;
+  avgWait: number;
+};
+
+type OccupancyRow = {
+  code: HospitalCode;
+  name: string;
+  civieres: number;
+  pct: number;
+  color: string;
+  status: string;
+};
+
+async function exportMsssPdf(args: {
+  provincial: {
+    total: number;
+    active: number;
+    arrived: number;
+    noShow: number;
+    confirmed: number;
+    avgWaitMin: number;
+    civieresFreed: number;
+    totalSectorClinics: number;
+    inactive: number;
+  };
+  lwbs: number;
+  byHospital: ByHospitalRow[];
+  occupancyByHospital: OccupancyRow[];
+  sectors: Sector[];
+}) {
+  await downloadPdf({
+    filename: `filesante-msss-${nowStamp()}.pdf`,
+    pageOrientation: "landscape",
+    content: [
+      ...reportHeader({
+        eyebrow: "MSSS · Réseau Québec",
+        title: "Vue provinciale",
+        subtitle:
+          "Tableau consolidé — 4 hôpitaux pilotes · ~58 cliniques de première ligne.",
+        metadata: [
+          { label: "Édité", value: new Date().toLocaleString("fr-CA") },
+          {
+            label: "Cliniques",
+            value: `${args.provincial.totalSectorClinics} (${args.provincial.inactive} inactives)`,
+          },
+        ],
+      }),
+      sectionTitle("Indicateurs provinciaux"),
+      statTiles([
+        {
+          label: "Inscrits cumulés",
+          value: args.provincial.total,
+          hint: `${args.provincial.active} actifs`,
+        },
+        {
+          label: "Arrivés réseau",
+          value: args.provincial.arrived,
+          tone: "success",
+        },
+        {
+          label: "LWBS + No-show",
+          value: args.provincial.noShow + args.lwbs,
+          tone: args.provincial.noShow + args.lwbs > 0 ? "danger" : "default",
+        },
+        {
+          label: "Cliniques inactives",
+          value: args.provincial.inactive,
+          tone: args.provincial.inactive > 0 ? "warn" : "default",
+          hint: `sur ${args.provincial.totalSectorClinics}`,
+        },
+      ]),
+      sectionTitle("Performance par établissement"),
+      dataTable<ByHospitalRow>(args.byHospital, [
+        { header: "Hôp.", width: 50, render: (h) => h.code },
+        { header: "Nom", width: "*", render: (h) => h.name },
+        { header: "CIUSSS", width: 100, render: (h) => h.ciusss },
+        {
+          header: "Inscrits",
+          width: 55,
+          align: "right",
+          render: (h) => h.total,
+        },
+        {
+          header: "Actifs",
+          width: 50,
+          align: "right",
+          render: (h) => h.active,
+        },
+        {
+          header: "Arrivés",
+          width: 55,
+          align: "right",
+          render: (h) => h.arrived,
+          color: () => PDF_COLORS.success,
+        },
+        {
+          header: "No-show",
+          width: 55,
+          align: "right",
+          render: (h) => h.noShow,
+          color: (h) => (h.noShow > 0 ? PDF_COLORS.danger : undefined),
+        },
+        {
+          header: "Att. moy.",
+          width: 60,
+          align: "right",
+          render: (h) => (h.avgWait > 0 ? `${h.avgWait} min` : "—"),
+        },
+      ]),
+      sectionTitle("Occupation civières"),
+      dataTable<OccupancyRow>(args.occupancyByHospital, [
+        { header: "Hôp.", width: 50, render: (o) => o.code },
+        { header: "Nom", width: "*", render: (o) => o.name },
+        {
+          header: "Civières actives",
+          width: 100,
+          align: "right",
+          render: (o) => o.civieres,
+        },
+        {
+          header: "Taux",
+          width: 60,
+          align: "right",
+          render: (o) => `${o.pct}%`,
+          color: (o) =>
+            o.pct > 85
+              ? PDF_COLORS.danger
+              : o.pct > 65
+                ? PDF_COLORS.warn
+                : PDF_COLORS.success,
+        },
+        {
+          header: "Statut",
+          width: 70,
+          render: (o) =>
+            o.status === "alert" ? "Critique" : o.status === "warn" ? "Tendu" : "OK",
+        },
+      ]),
+      sectionTitle("Carte sectorielle"),
+      dataTable<Sector>(args.sectors, [
+        { header: "Secteur", width: "*", render: (s) => s.name },
+        {
+          header: "Charge",
+          width: 60,
+          align: "right",
+          render: (s) => `${Math.round(s.load * 100)}%`,
+          color: (s) =>
+            s.load > 0.85
+              ? PDF_COLORS.danger
+              : s.load > 0.6
+                ? PDF_COLORS.warn
+                : PDF_COLORS.success,
+        },
+        {
+          header: "Cliniques",
+          width: 70,
+          align: "right",
+          render: (s) => s.clinics,
+        },
+        {
+          header: "Inactives",
+          width: 70,
+          align: "right",
+          render: (s) => s.inactive,
+          color: (s) => (s.inactive > 0 ? PDF_COLORS.danger : undefined),
+        },
+      ]),
+    ],
+  });
 }
 
 function SectorCell({ sector }: { sector: Sector }) {

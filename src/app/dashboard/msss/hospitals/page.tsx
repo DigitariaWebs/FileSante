@@ -9,6 +9,15 @@ import { Input } from "@/components/ui/input";
 import { useFileSante } from "@/hooks/useFileSante";
 import { isActive } from "@/lib/filesante/store";
 import type { HospitalCode } from "@/lib/filesante/types";
+import {
+  PDF_COLORS,
+  dataTable,
+  downloadPdf,
+  nowStamp,
+  reportHeader,
+  sectionTitle,
+  statTiles,
+} from "@/lib/pdf/export";
 
 const MIN = 60_000;
 const HOSPITALS: { code: HospitalCode; name: string; ciusss: string }[] = [
@@ -123,7 +132,7 @@ export default function MsssHospitals() {
         actions={
           <button
             type="button"
-            onClick={() => window.print()}
+            onClick={() => exportHospitalsPdf(filtered, totals, s.lwbs)}
             className="fs-btn fs-btn-pearl"
           >
             <Icon name="archive" size={14} />
@@ -240,6 +249,101 @@ export default function MsssHospitals() {
       </div>
     </>
   );
+}
+
+type HospitalRow = {
+  code: HospitalCode;
+  name: string;
+  ciusss: string;
+  total: number;
+  active: number;
+  arrived: number;
+  noShow: number;
+  cancelled: number;
+  avgWait: number;
+  responseRate: number;
+};
+
+async function exportHospitalsPdf(
+  rows: HospitalRow[],
+  totals: { total: number; active: number; arrived: number; noShow: number },
+  lwbs: number,
+) {
+  await downloadPdf({
+    filename: `filesante-msss-hopitaux-${nowStamp()}.pdf`,
+    pageOrientation: "landscape",
+    content: [
+      ...reportHeader({
+        eyebrow: "MSSS · Tous les hôpitaux",
+        title: "Performance par établissement",
+        subtitle:
+          "Comparaison des 4 hôpitaux pilotes — inscriptions, arrivées, no-show, attente.",
+        metadata: [
+          { label: "Édité", value: new Date().toLocaleString("fr-CA") },
+          { label: "Hôpitaux", value: String(rows.length) },
+        ],
+      }),
+      sectionTitle("Totaux réseau"),
+      statTiles([
+        { label: "Inscrits cumulés", value: totals.total },
+        { label: "Actifs", value: totals.active },
+        {
+          label: "Arrivés",
+          value: totals.arrived,
+          tone: "success",
+        },
+        {
+          label: "No-show + LWBS",
+          value: totals.noShow + lwbs,
+          tone: totals.noShow + lwbs > 0 ? "danger" : "default",
+        },
+      ]),
+      sectionTitle("Détail des établissements"),
+      dataTable<HospitalRow>(rows, [
+        { header: "Hôp.", width: 45, render: (h) => h.code },
+        { header: "Nom", width: "*", render: (h) => h.name },
+        { header: "CIUSSS", width: 100, render: (h) => h.ciusss },
+        {
+          header: "Inscrits",
+          width: 55,
+          align: "right",
+          render: (h) => h.total,
+        },
+        {
+          header: "Actifs",
+          width: 50,
+          align: "right",
+          render: (h) => h.active,
+        },
+        {
+          header: "Arrivés",
+          width: 55,
+          align: "right",
+          render: (h) => h.arrived,
+          color: () => PDF_COLORS.success,
+        },
+        {
+          header: "No-show",
+          width: 55,
+          align: "right",
+          render: (h) => h.noShow,
+          color: (h) => (h.noShow > 0 ? PDF_COLORS.danger : undefined),
+        },
+        {
+          header: "Att. moy.",
+          width: 60,
+          align: "right",
+          render: (h) => (h.avgWait > 0 ? `${h.avgWait} min` : "—"),
+        },
+        {
+          header: "Tx réponse",
+          width: 60,
+          align: "right",
+          render: (h) => (h.total > 0 ? `${h.responseRate}%` : "—"),
+        },
+      ]),
+    ],
+  });
 }
 
 function bucketSeries(

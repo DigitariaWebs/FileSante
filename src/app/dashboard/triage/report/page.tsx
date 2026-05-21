@@ -8,6 +8,15 @@ import { Icon } from "@/components/ui/Icon";
 import { useFileSante } from "@/hooks/useFileSante";
 import { isActive } from "@/lib/filesante/store";
 import type { HospitalCode, Patient } from "@/lib/filesante/types";
+import {
+  dataTable,
+  downloadPdf,
+  nowStamp,
+  paragraph,
+  reportHeader,
+  sectionTitle,
+  statTiles,
+} from "@/lib/pdf/export";
 
 const MIN = 60_000;
 const HOUR = 60 * MIN;
@@ -62,18 +71,32 @@ function ShiftReportInner() {
   const autoPrint = params.get("autoprint") === "1";
   const outgoingNurseName = params.get("nurse") ?? "—";
 
-  useEffect(() => {
-    if (autoPrint && typeof window !== "undefined") {
-      // Defer to next tick so layout + fonts settle before print.
-      const t = window.setTimeout(() => window.print(), 400);
-      return () => window.clearTimeout(t);
-    }
-  }, [autoPrint]);
-
   const report = useMemo(
     () => buildReport(s.patients, hospital, s),
     [s, hospital],
   );
+
+  const triggerDownload = useMemo(
+    () => () =>
+      exportTriageReportPdf({
+        hospital,
+        outgoingNurseName,
+        shiftLabel: s.staff.shiftLabel,
+        fallbackNurse: `${s.nurseShift.firstName} ${s.nurseShift.lastName}`,
+        report,
+        civAvail: s.staff.civieresAvail,
+        civTotal: s.staff.civieresTotal,
+        simClock: s.simClock,
+      }),
+    [hospital, outgoingNurseName, report, s.staff, s.nurseShift, s.simClock],
+  );
+
+  useEffect(() => {
+    if (autoPrint && typeof window !== "undefined") {
+      const t = window.setTimeout(triggerDownload, 250);
+      return () => window.clearTimeout(t);
+    }
+  }, [autoPrint, triggerDownload]);
 
   return (
     <>
@@ -106,16 +129,15 @@ function ShiftReportInner() {
           ← Retour
         </Link>
         <div className="text-[12.5px] text-[var(--ap-ink-muted-80)]">
-          Aperçu PDF — utilisez « Imprimer » du navigateur pour enregistrer en
-          PDF.
+          Aperçu rapport — téléchargez la version PDF pour archivage.
         </div>
         <button
           type="button"
-          onClick={() => window.print()}
+          onClick={triggerDownload}
           className="fs-btn fs-btn-primary fs-btn-sm"
         >
           <Icon name="archive" size={13} />
-          Imprimer / PDF
+          Télécharger PDF
         </button>
       </div>
 
@@ -365,6 +387,137 @@ function buildReport(
       annual,
     },
   };
+}
+
+type TriageReport = ReturnType<typeof buildReport>;
+
+async function exportTriageReportPdf(args: {
+  hospital: HospitalCode;
+  outgoingNurseName: string;
+  shiftLabel: string;
+  fallbackNurse: string;
+  report: TriageReport;
+  civAvail: number;
+  civTotal: number;
+  simClock: number;
+}) {
+  const { hospital, outgoingNurseName, shiftLabel, fallbackNurse, report, civAvail, civTotal, simClock } = args;
+  const occupancyPct = Math.round(
+    ((civTotal - civAvail) / Math.max(1, civTotal)) * 100,
+  );
+  await downloadPdf({
+    filename: `filesante-rapport-quart-${hospital}-${nowStamp()}.pdf`,
+    content: [
+      ...reportHeader({
+        eyebrow: "Rapport de quart · FileSanté",
+        title: HOSPITAL_LABEL[hospital],
+        metadata: [
+          {
+            label: "Infirmière sortante",
+            value: outgoingNurseName !== "—" ? outgoingNurseName : fallbackNurse,
+          },
+          { label: "Édité", value: new Date().toLocaleString("fr-CA") },
+          { label: "Quart", value: shiftLabel },
+          { label: "Code hôpital", value: hospital },
+        ],
+      }),
+      sectionTitle("Volume des inscriptions"),
+      statTiles([
+        { label: "Patients P4", value: report.p4Count },
+        { label: "Patients P5", value: report.p5Count },
+        { label: "Total session", value: report.total },
+        {
+          label: "Active fin de quart",
+          value: report.stillActive,
+          hint: "Transmis au quart entrant",
+        },
+      ]),
+      sectionTitle("Temps & flux"),
+      statTiles([
+        { label: "Attente moyenne", value: fmtMin(report.avgWaitMin) },
+        { label: "Attente médiane", value: fmtMin(report.medWaitMin) },
+        {
+          label: "Notifications envoyées",
+          value: report.notifsSent,
+          hint: `dont ${report.manualNotifs} manuelles`,
+        },
+        {
+          label: "Confirmés / Annulés",
+          value: `${report.confirmed} / ${report.cancelled}`,
+        },
+        {
+          label: "Sans réponse / No-show",
+          value: `${report.noResponse} / ${report.noShow}`,
+        },
+        { label: "Arrivés triage retour", value: report.arrived },
+      ]),
+      sectionTitle("Civières"),
+      statTiles([
+        {
+          label: "Disponibles fin de quart",
+          value: `${civAvail}/${civTotal}`,
+        },
+        { label: "Occupées", value: report.civieresOccupied },
+        { label: "Libérées (session)", value: report.civieresFreed },
+        { label: "Taux d'occupation", value: `${occupancyPct}%` },
+      ]),
+      sectionTitle("Événements de surcharge"),
+      dataTable(
+        report.surgeEvents,
+        [
+          {
+            header: "Début",
+            width: 80,
+            render: (e) => fmtSimMin(e.startedAt, simClock),
+          },
+          { header: "Délai", width: 60, render: (e) => `+${e.minutes} min` },
+          {
+            header: "Durée effective",
+            width: 90,
+            render: (e) =>
+              e.endedAt !== null ? fmtDuration(e.endedAt - e.startedAt) : "en cours",
+          },
+          {
+            header: "État",
+            width: "*",
+            render: (e) => (e.endedAt !== null ? "Levée" : "Active"),
+          },
+        ],
+        { emptyText: "Aucune surcharge déclenchée durant le quart." },
+      ),
+      sectionTitle("Économies estimées"),
+      statTiles([
+        {
+          label: "Économies du jour",
+          value: fmtCAD(report.savings.daily),
+          hint: "RAMQ + civières",
+          tone: "success",
+        },
+        {
+          label: "Projection annuelle",
+          value: fmtCAD(report.savings.annual),
+          hint: "× 365",
+        },
+        {
+          label: "Temps gagné / patient",
+          value: `${Math.round(report.savings.minSavedPerPatient)} min`,
+          hint: `baseline IEDM ${IEDM_BASELINE_MIN} min`,
+        },
+        {
+          label: "Civières × 1 200 $",
+          value: fmtCAD(report.savings.civSavings),
+        },
+      ]),
+      paragraph(
+        `Méthodologie : patients confirmés × (323 − attente moyenne) ÷ 60 × ${RAMQ_HOURLY} $/h + civières libérées × ${CIVIERE_NIGHT} $.`,
+        { muted: true },
+      ),
+      paragraph(
+        "Rapport généré côté client — aucune donnée PII transmise. Conserver 24h max selon politique Loi 25.",
+        { muted: true },
+      ),
+    ],
+  });
 }
 
 function Section({

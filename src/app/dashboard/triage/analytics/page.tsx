@@ -8,6 +8,16 @@ import { Donut } from "@/components/ui/Donut";
 import { Icon } from "@/components/ui/Icon";
 import { useFileSante } from "@/hooks/useFileSante";
 import { isActive } from "@/lib/filesante/store";
+import {
+  PDF_COLORS,
+  dataTable,
+  downloadPdf,
+  horizontalBars,
+  nowStamp,
+  reportHeader,
+  sectionTitle,
+  statTiles,
+} from "@/lib/pdf/export";
 
 const MIN = 60_000;
 const HOUR = 60 * MIN;
@@ -133,7 +143,9 @@ export default function AnalyticsPage() {
         actions={
           <button
             type="button"
-            onClick={() => window.print()}
+            onClick={() =>
+              exportAnalyticsPdf(kpi, hourly, hourlyLabels, donutSlices, history)
+            }
             className="fs-btn fs-btn-pearl"
           >
             <Icon name="archive" size={14} />
@@ -263,6 +275,150 @@ export default function AnalyticsPage() {
       </div>
     </>
   );
+}
+
+type AnalyticsKpi = {
+  total: number;
+  arrived: number;
+  noShow: number;
+  cancelled: number;
+  active: number;
+  noShowRate: number;
+  avgWait: number;
+};
+
+type HistoryRow = {
+  date: Date;
+  registered: number;
+  arrived: number;
+  noShow: number;
+  avgWait: number;
+  returnRate: number;
+  noShowRate: number;
+  peakHour: string;
+};
+
+type DonutSlice = { label: string; value: number; color: string };
+
+async function exportAnalyticsPdf(
+  kpi: AnalyticsKpi,
+  hourly: number[],
+  hourlyLabels: string[],
+  donut: DonutSlice[],
+  history: HistoryRow[],
+) {
+  const bars = hourlyLabels.map((label, i) => ({
+    label,
+    value: hourly[i] ?? 0,
+    color: PDF_COLORS.primary,
+  }));
+  await downloadPdf({
+    filename: `filesante-analytics-${nowStamp()}.pdf`,
+    content: [
+      ...reportHeader({
+        eyebrow: "Analytique · 12 dernières heures",
+        title: "Performance du triage",
+        subtitle:
+          "Distribution horaire, taux de retour, no-show et historique 7 jours.",
+        metadata: [
+          { label: "Édité", value: new Date().toLocaleString("fr-CA") },
+          { label: "Fenêtre", value: "12 heures glissantes" },
+        ],
+      }),
+      sectionTitle("Indicateurs"),
+      statTiles([
+        {
+          label: "Patients traités",
+          value: kpi.arrived,
+          hint: "Confirmés + arrivés",
+          tone: "success",
+        },
+        {
+          label: "Attente moyenne",
+          value: `${kpi.avgWait} min`,
+          hint: "Inscription → arrivée",
+        },
+        {
+          label: "Taux no-show",
+          value: `${kpi.noShowRate}%`,
+          hint: `${kpi.noShow} sur ${kpi.total} inscrits`,
+          tone: kpi.noShowRate > 10 ? "warn" : "default",
+        },
+        {
+          label: "Total inscrits",
+          value: kpi.total,
+          hint: `${kpi.active} actifs maintenant`,
+        },
+      ]),
+      sectionTitle("Inscriptions horaires (12 h)"),
+      horizontalBars(bars, { valueSuffix: "" }),
+      sectionTitle("Distribution des statuts"),
+      dataTable<DonutSlice>(
+        donut,
+        [
+          { header: "Issue", width: "*", render: (s) => s.label },
+          {
+            header: "Nb",
+            width: 50,
+            align: "right",
+            render: (s) => s.value,
+          },
+        ],
+      ),
+      sectionTitle("Historique — 7 derniers jours"),
+      dataTable<HistoryRow>(history, [
+        {
+          header: "Date",
+          width: 70,
+          render: (r) =>
+            r.date.toLocaleDateString("fr-CA", {
+              weekday: "short",
+              day: "2-digit",
+              month: "short",
+            }),
+        },
+        {
+          header: "Inscrits",
+          width: 45,
+          align: "right",
+          render: (r) => r.registered,
+        },
+        {
+          header: "Arrivés",
+          width: 45,
+          align: "right",
+          render: (r) => r.arrived,
+        },
+        {
+          header: "No-show",
+          width: 50,
+          align: "right",
+          render: (r) => r.noShow,
+          color: (r) => (r.noShow > 0 ? PDF_COLORS.danger : undefined),
+        },
+        {
+          header: "Retour",
+          width: 45,
+          align: "right",
+          render: (r) => `${r.returnRate}%`,
+        },
+        {
+          header: "Tx NS",
+          width: 45,
+          align: "right",
+          render: (r) => `${r.noShowRate}%`,
+          color: (r) => (r.noShowRate > 10 ? PDF_COLORS.warn : undefined),
+        },
+        {
+          header: "Att. moy.",
+          width: 55,
+          align: "right",
+          render: (r) => `${r.avgWait} min`,
+        },
+        { header: "Pointe", width: 45, render: (r) => r.peakHour },
+      ]),
+    ],
+  });
 }
 
 function Tile({
