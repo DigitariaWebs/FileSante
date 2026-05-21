@@ -59,7 +59,7 @@ export function Partners() {
               key={p.mark}
               className="group overflow-hidden rounded-2xl border border-[var(--fs-line)] bg-white shadow-sm transition-shadow hover:shadow-md"
             >
-              <div className="relative h-82 w-full overflow-hidden bg-[var(--fs-bg-soft-2)]">
+              <div className="relative h-48 sm:h-64 md:h-82 w-full overflow-hidden bg-fs-bg-soft-2">
                 <Image
                   src={p.img}
                   alt={p.name}

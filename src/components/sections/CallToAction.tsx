@@ -19,7 +19,7 @@ export function CallToAction({ onOpenLogin }: Props) {
               portail en 4 secondes.
             </p>
           </div>
-          <div className="flex flex-col items-end gap-3">
+          <div className="flex flex-col items-start sm:items-end gap-3">
             <button className="fs-pill" onClick={onOpenLogin} type="button">
               Se connecter
               <svg

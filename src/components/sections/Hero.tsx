@@ -8,26 +8,26 @@ type Props = {
 
 export function Hero({ onOpenLogin }: Props) {
   return (
-    <section className="overflow-hidden pt-12 pb-16">
+    <section className="overflow-hidden pt-8 pb-12 sm:pt-12 sm:pb-16">
       <div className="fs-shell">
-        <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_1fr]">
+        <div className="grid items-center gap-8 lg:gap-10 lg:grid-cols-[1.05fr_1fr]">
           <div>
-            <div className="mb-5 inline-flex items-center gap-2 text-xs font-semibold tracking-[0.18em] text-[var(--fs-primary)] uppercase">
+            <div className="mb-4 sm:mb-5 inline-flex items-center gap-2 text-xs font-semibold tracking-[0.18em] text-fs-primary uppercase">
               <span className="fs-pulse-dot" />
               Projet pilote · Montréal 2026
             </div>
-            <h1 className="text-[clamp(40px,4.8vw,64px)] leading-[1.02] tracking-[-0.03em]">
+            <h1 className="text-[clamp(32px,7vw,64px)] leading-[1.02] tracking-[-0.03em]">
               Le bon patient,
               <br />
               au bon endroit, <span className="fs-accent">en temps réel</span>.
             </h1>
-            <p className="mt-5 max-w-[520px] text-[17px] text-[var(--fs-ink-2)]">
+            <p className="mt-4 sm:mt-5 max-w-130 text-[15px] sm:text-[17px] text-fs-ink-2">
               FileSanté oriente les patients P4 et P5 vers les ressources de
               première ligne disponibles — GMF, CLSC, IPS, UMF — pour
               désengorger l&apos;urgence et réduire les temps d&apos;attente.
             </p>
-            <div className="mt-8 flex items-center gap-3">
-              <button className="fs-pill" onClick={onOpenLogin} type="button">
+            <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+              <button className="fs-pill w-full sm:w-auto" onClick={onOpenLogin} type="button">
                 Accéder au portail
                 <svg
                   width="16"
@@ -43,20 +43,22 @@ export function Hero({ onOpenLogin }: Props) {
                   <path d="m13 6 6 6-6 6" />
                 </svg>
               </button>
-              <a className="fs-pill fs-pill-ghost" href="#flow">
+              <a className="fs-pill fs-pill-ghost w-full sm:w-auto justify-center" href="#flow">
                 En savoir plus
               </a>
             </div>
-            <div className="mt-10 flex items-center gap-8">
+            <div className="mt-8 sm:mt-10 flex flex-wrap items-center gap-4 sm:gap-8">
               <HeroStat num="4" label="Hôpitaux pilotes" />
-              <div className="h-9 w-px bg-[var(--fs-line)]" />
+              <div className="h-7 sm:h-9 w-px bg-[var(--fs-line)]" />
               <HeroStat num="7" label="Portails de rôle" />
-              <div className="h-9 w-px bg-[var(--fs-line)]" />
+              <div className="h-7 sm:h-9 w-px bg-[var(--fs-line)]" />
               <HeroStat num="P4 / P5" label="Patients ciblés" />
             </div>
           </div>
 
-          <DashboardPanel />
+          <div className="hidden lg:block">
+            <DashboardPanel />
+          </div>
         </div>
       </div>
     </section>

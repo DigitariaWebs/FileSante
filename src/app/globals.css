@@ -1021,3 +1021,36 @@
     align-items: flex-start;
   }
 }
+
+@media (max-width: 640px) {
+  .fs-shell {
+    padding: 0 16px;
+  }
+  .fs-flow {
+    padding: 28px 16px;
+    border-radius: 14px;
+  }
+  .fs-flow-rail {
+    grid-template-columns: 1fr;
+  }
+  .fs-portals {
+    padding: 28px 16px;
+    border-radius: 14px;
+  }
+  .fs-cta-strip {
+    padding: 36px 20px;
+    border-radius: 14px;
+  }
+  .fs-feature {
+    min-height: unset;
+    padding: 20px;
+  }
+  .fs-portal {
+    min-height: unset;
+    padding: 20px;
+  }
+  .fs-stat-card {
+    min-height: unset;
+    padding: 20px;
+  }
+}

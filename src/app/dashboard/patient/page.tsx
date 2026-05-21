@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 
 import { Countdown } from "@/components/dashboard/Countdown";
 import { QrCard } from "@/components/dashboard/QrCard";
@@ -114,6 +114,8 @@ export default function PatientPage() {
 function PatientInner() {
   const s = useFileSante();
   const params = useSearchParams();
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => { setHydrated(true); }, []);
   // Accept both ?code= (legacy) and ?token= (QR payload) as aliases.
   const initialCode = (
     params.get("code") ??
@@ -156,7 +158,7 @@ function PatientInner() {
 
   return (
     <div
-      className="min-h-screen px-6 py-10 transition-colors"
+      className="min-h-screen px-4 py-6 sm:px-6 sm:py-10 transition-colors"
       style={{ background: PHASE_GRADIENT[phase] }}
     >
       <div className="mx-auto max-w-230">
@@ -167,7 +169,9 @@ function PatientInner() {
           phase={phase}
         />
 
-        {!patient ? (
+        {!hydrated ? (
+          <PatientSkeleton />
+        ) : !patient ? (
           <NotFound code={activeCode} />
         ) : (
           <PatientView
@@ -236,11 +240,21 @@ function LookupForm({
   );
 }
 
+function PatientSkeleton() {
+  return (
+    <div className="fs-dash-card animate-pulse px-6 py-14 flex flex-col items-center gap-4">
+      <div className="h-10 w-10 rounded-full bg-(--ap-surface-strong)" />
+      <div className="h-5 w-48 rounded-lg bg-(--ap-surface-strong)" />
+      <div className="h-4 w-64 rounded-lg bg-(--ap-surface-strong)" />
+    </div>
+  );
+}
+
 function NotFound({ code }: { code: string }) {
   const looksLikeToken = code.trim().length > 0;
   return (
     <div className="fs-dash-card flex flex-col items-center gap-3 px-6 py-14 text-center">
-      <div className="grid h-12 w-12 place-items-center rounded-full bg-[var(--ap-surface-strong)] text-[var(--ap-ink-muted-48)]">
+      <div className="grid h-12 w-12 place-items-center rounded-full bg-(--ap-surface-strong) text-(--ap-ink-muted-48)">
         <Icon name="search" size={22} />
       </div>
       <div>
@@ -249,7 +263,7 @@ function NotFound({ code }: { code: string }) {
             ? `QR ou code invalide : ${code}`
             : "Aucun code fourni"}
         </div>
-        <p className="mt-1 text-[14px] text-[var(--ap-ink-muted-80)]">
+        <p className="mt-1 text-[14px] text-(--ap-ink-muted-80)">
           {looksLikeToken
             ? "Ce QR n'est lié à aucun dossier actif. Présentez-vous au triage pour un nouveau code, ou composez 811."
             : "Scannez votre QR d'inscription ou saisissez votre code retour à 4 chiffres."}
@@ -308,7 +322,7 @@ function PatientView({
     <div className="flex flex-col gap-6">
       {/* Status hero */}
       <section
-        className={`relative overflow-hidden rounded-2xl border p-8 backdrop-blur-md ${
+        className={`relative overflow-hidden rounded-2xl border p-5 sm:p-8 backdrop-blur-md ${
           dark
             ? "border-white/20 bg-white/10 text-white"
             : "fs-dash-card"
@@ -331,7 +345,7 @@ function PatientView({
             </h1>
             <p
               className={`mt-2 max-w-[480px] text-[14px] ${
-                dark ? "text-white/85" : "text-[var(--ap-ink-muted-80)]"
+                dark ? "text-white/85" : "text-(--ap-ink-muted-80)"
               }`}
             >
               {patient.motif}
@@ -351,7 +365,7 @@ function PatientView({
 
           {!closed && deadline !== null && (
             <div
-              className={`rounded-lg border px-5 py-4 text-right ${
+              className={`rounded-lg border px-4 py-3 sm:px-5 sm:py-4 sm:text-right ${
                 dark
                   ? "border-white/30 bg-white/10"
                   : "border-[var(--ap-hairline-strong)] bg-[var(--ap-canvas-parchment)]"
@@ -390,7 +404,7 @@ function PatientView({
           <button
             type="button"
             onClick={() => markArrived(patient.id)}
-            className="mt-6 inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-[16px] font-semibold text-[#166534]"
+            className="mt-6 flex w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-[16px] font-semibold text-[#166534]"
           >
             <Icon name="checkCircle" size={18} />
             Je suis arrivé(e)
@@ -431,7 +445,7 @@ function PatientView({
             {patient.code}
           </div>
           {patient.contact === "SMS" && <QrCard value={qrPayload} size={156} />}
-          <p className="text-center text-[12px] text-[var(--ap-ink-muted-80)]">
+          <p className="text-center text-[12px] text-(--ap-ink-muted-80)">
             {patient.contact === "SMS"
               ? "Présentez ce code ou le QR au triage retour."
               : "Dictez ce code à l'infirmière au triage retour."}
@@ -501,10 +515,10 @@ function PatientView({
             <div className="text-[14px] font-semibold text-[var(--ap-ink)]">
               {hospital.name}
             </div>
-            <div className="mt-0.5 text-[12.5px] text-[var(--ap-ink-muted-80)]">
+            <div className="mt-0.5 text-[12.5px] text-(--ap-ink-muted-80)">
               {hospital.address}
             </div>
-            <div className="mt-1 font-mono text-[12.5px] tabular-nums text-[var(--ap-ink-muted-80)]">
+            <div className="mt-1 font-mono text-[12.5px] tabular-nums text-(--ap-ink-muted-80)">
               {hospital.phone}
             </div>
 
@@ -516,10 +530,10 @@ function PatientView({
                     {destinationClinic.name}
                   </span>
                 </div>
-                <div className="mt-1 text-[12px] text-[var(--ap-ink-muted-80)]">
+                <div className="mt-1 text-[12px] text-(--ap-ink-muted-80)">
                   Routage 811 — secteur {destinationClinic.sector}
                 </div>
-                <div className="mt-1 text-[12px] text-[var(--ap-ink-muted-48)]">
+                <div className="mt-1 text-[12px] text-(--ap-ink-muted-48)">
                   Heures : {destinationClinic.hours} · ETA{" "}
                   {destinationClinic.eta}
                 </div>
@@ -531,21 +545,21 @@ function PatientView({
           <div className="fs-dash-card p-6">
             <div className="fs-eyebrow mb-3">Détails de votre demande</div>
             <dl className="grid grid-cols-2 gap-y-3 text-[13.5px]">
-              <dt className="text-[var(--ap-ink-muted-80)]">Priorité CTAS</dt>
+              <dt className="text-(--ap-ink-muted-80)">Priorité CTAS</dt>
               <dd className="text-right font-medium text-[var(--ap-ink)]">
                 {patient.priority}
               </dd>
-              <dt className="text-[var(--ap-ink-muted-80)]">Origine</dt>
+              <dt className="text-(--ap-ink-muted-80)">Origine</dt>
               <dd className="text-right font-medium text-[var(--ap-ink)]">
                 {patient.origin === "DESK"
                   ? "Triage sur place"
                   : "811 / Domicile"}
               </dd>
-              <dt className="text-[var(--ap-ink-muted-80)]">Téléphone</dt>
+              <dt className="text-(--ap-ink-muted-80)">Téléphone</dt>
               <dd className="text-right font-mono tabular-nums text-[var(--ap-ink)]">
                 {patient.phone}
               </dd>
-              <dt className="text-[var(--ap-ink-muted-80)]">
+              <dt className="text-(--ap-ink-muted-80)">
                 Méthode de contact
               </dt>
               <dd className="text-right font-medium text-[var(--ap-ink)]">
@@ -565,19 +579,19 @@ function PatientView({
           </h2>
         </div>
         {sms.length === 0 ? (
-          <div className="px-6 py-10 text-center text-[13px] text-[var(--ap-ink-muted-80)]">
+          <div className="px-6 py-10 text-center text-[13px] text-(--ap-ink-muted-80)">
             Aucune notification pour l&apos;instant.
           </div>
         ) : (
           <ul className="divide-y divide-[var(--ap-hairline)]">
             {sms.map((m) => (
               <li key={m.id} className="flex items-start gap-3 px-6 py-4">
-                <div className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--ap-surface-strong)] text-[var(--ap-ink-muted-80)]">
+                <div className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-(--ap-surface-strong) text-(--ap-ink-muted-80)">
                   <Icon name="chat" size={14} />
                 </div>
                 <div className="flex-1 text-[13.5px]">
                   <p className="text-[var(--ap-ink)]">{m.body}</p>
-                  <div className="mt-1 font-mono text-[11px] text-[var(--ap-ink-muted-48)] tabular-nums">
+                  <div className="mt-1 font-mono text-[11px] text-(--ap-ink-muted-48) tabular-nums">
                     {formatT(m.at)}
                   </div>
                 </div>
@@ -610,13 +624,13 @@ function ActivationView({ patient }: { patient: Patient }) {
   }
 
   return (
-    <div className="fs-dash-card flex flex-col items-center gap-5 p-8 text-center">
+    <div className="fs-dash-card flex flex-col items-center gap-5 p-5 sm:p-8 text-center">
       <div className="grid h-14 w-14 place-items-center rounded-full bg-[rgba(30,144,214,0.1)] text-[var(--fs-primary)]">
         <Icon name="qr" size={26} />
       </div>
       <div>
         <h1 className="fs-display-md">Activez votre code</h1>
-        <p className="mt-2 max-w-[420px] text-[14px] text-[var(--ap-ink-muted-80)]">
+        <p className="mt-2 max-w-[420px] text-[14px] text-(--ap-ink-muted-80)">
           Confirmez votre numéro pour rejoindre la file FileSanté et recevoir
           les notifications.
         </p>
@@ -644,7 +658,7 @@ function ActivationView({ patient }: { patient: Patient }) {
             onCheckedChange={(v) => setAgree(v === true)}
             className="mt-0.5"
           />
-          <span className="text-[var(--ap-ink-muted-80)]">
+          <span className="text-(--ap-ink-muted-80)">
             <b className="text-[var(--ap-ink)] font-semibold">Loi 25.</b>{" "}
             J&apos;autorise FileSanté à m&apos;envoyer des SMS pour mon
             orientation et confirmation d&apos;arrivée.
@@ -692,7 +706,7 @@ function HelpBar({ phase }: { phase: Phase }) {
         </span>
         <div>
           <div className="text-[14px] font-semibold">Besoin d&apos;aide ? 811</div>
-          <div className={`text-[12px] ${dark ? "text-white/75" : "text-[var(--ap-ink-muted-48)]"}`}>
+          <div className={`text-[12px] ${dark ? "text-white/75" : "text-(--ap-ink-muted-48)"}`}>
             Info-Santé · 24 h sur 24
           </div>
         </div>
@@ -710,7 +724,7 @@ function HelpBar({ phase }: { phase: Phase }) {
         </span>
         <div>
           <div className="text-[14px] font-semibold">Urgence vitale ? 911</div>
-          <div className={`text-[12px] ${dark ? "text-white/75" : "text-[var(--ap-ink-muted-48)]"}`}>
+          <div className={`text-[12px] ${dark ? "text-white/75" : "text-(--ap-ink-muted-48)"}`}>
             AVC, douleur thoracique, perte de conscience
           </div>
         </div>
@@ -728,7 +742,7 @@ function StepRail({
 }) {
   const currentIdx = STEPS.findIndex((s) => s.key.includes(status));
   return (
-    <ol className="mt-8 grid gap-3 sm:grid-cols-4">
+    <ol className="mt-6 grid grid-cols-2 gap-2 sm:mt-8 sm:gap-3 sm:grid-cols-4">
       {STEPS.map((step, i) => {
         const done = currentIdx > i;
         const active = currentIdx === i;
@@ -757,7 +771,7 @@ function StepRail({
                       : "bg-[var(--ap-ink)] text-white"
                     : dark
                       ? "bg-white/20 text-white/70"
-                      : "bg-[var(--ap-surface-strong)] text-[var(--ap-ink-muted-48)]"
+                      : "bg-(--ap-surface-strong) text-(--ap-ink-muted-48)"
                 }`}
               >
                 {done ? "✓" : i + 1}
@@ -770,7 +784,7 @@ function StepRail({
                       : "text-white/60"
                     : active || done
                       ? "text-[var(--ap-ink)]"
-                      : "text-[var(--ap-ink-muted-48)]"
+                      : "text-(--ap-ink-muted-48)"
                 }`}
               >
                 {step.label}
@@ -778,7 +792,7 @@ function StepRail({
             </div>
             <p
               className={`mt-1 ml-7 text-[11.5px] ${
-                dark ? "text-white/75" : "text-[var(--ap-ink-muted-80)]"
+                dark ? "text-white/75" : "text-(--ap-ink-muted-80)"
               }`}
             >
               {step.tag}
@@ -812,7 +826,7 @@ function ActionCard({
   return (
     <div className={`rounded-lg border p-5 ${toneClasses[tone]}`}>
       <div className="fs-tagline text-[16px]!">{title}</div>
-      <p className="mt-1.5 text-[13.5px] text-[var(--ap-ink-muted-80)]">
+      <p className="mt-1.5 text-[13.5px] text-(--ap-ink-muted-80)">
         {body}
       </p>
       {actions && <div className="mt-4">{actions}</div>}
