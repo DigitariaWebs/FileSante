@@ -327,13 +327,16 @@ function ResourceRow({
             {pct}% charge · ETA {eta}
           </div>
         </div>
-        <button
-          type="button"
-          disabled={full}
-          className={`fs-btn fs-btn-sm ${full ? "fs-btn-pearl" : "fs-btn-primary"}`}
+        <span
+          className={`fs-chip ${full ? "" : "fs-chip-primary"} shrink-0`}
+          title={
+            full
+              ? "Ressource saturée"
+              : "Routez depuis Nouvelle évaluation"
+          }
         >
-          {full ? "Plein" : "Router"}
-        </button>
+          {full ? "Plein" : "Disponible"}
+        </span>
       </div>
       <div className="mt-3 h-1 overflow-hidden rounded-full bg-[var(--ap-surface-strong)]">
         <div
