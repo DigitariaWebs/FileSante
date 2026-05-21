@@ -18,7 +18,7 @@ export function PageHeader({
   actions,
 }: Props) {
   return (
-    <header className="flex flex-col gap-4 border-b border-[var(--ap-hairline)] bg-[var(--ap-canvas)] px-10 py-9">
+    <header className="flex flex-col gap-4 bg-white px-10 py-9">
       {crumbs && crumbs.length > 0 && (
         <nav className="flex items-center gap-1.5 text-[12.5px] text-[var(--ap-ink-muted-48)]">
           {crumbs.map((c, i) => (

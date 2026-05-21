@@ -183,7 +183,6 @@ function PatientInner() {
         )}
 
         <HelpBar phase={phase} />
-        <DemoBar patient={patient} />
       </div>
     </div>
   );
@@ -720,37 +719,6 @@ function HelpBar({ phase }: { phase: Phase }) {
           </div>
         </div>
       </a>
-    </section>
-  );
-}
-
-function DemoBar({ patient }: { patient?: Patient }) {
-  if (!patient) return null;
-  return (
-    <section className="mt-8 flex flex-wrap items-center gap-2 rounded-2xl border border-dashed border-[var(--ap-hairline-strong)] bg-[var(--ap-canvas)] px-4 py-3 text-[12.5px] text-[var(--ap-ink-muted-80)]">
-      <span className="fs-eyebrow">Démo</span>
-      <span>Basculer l&apos;état du patient :</span>
-      <button
-        type="button"
-        onClick={() => confirmPatient(patient.id)}
-        className="fs-btn fs-btn-pearl fs-btn-sm"
-      >
-        Confirmer (OUI)
-      </button>
-      <button
-        type="button"
-        onClick={() => cancelPatient(patient.id)}
-        className="fs-btn fs-btn-pearl fs-btn-sm"
-      >
-        Annuler (NON)
-      </button>
-      <button
-        type="button"
-        onClick={() => markArrived(patient.id)}
-        className="fs-btn fs-btn-pearl fs-btn-sm"
-      >
-        Marquer arrivé
-      </button>
     </section>
   );
 }

@@ -16,9 +16,25 @@ type Props = {
   onClose: () => void;
 };
 
+function buildLoginUrl(patient: Patient): string {
+  const origin =
+    typeof window !== "undefined" && window.location?.origin
+      ? window.location.origin
+      : "";
+  const params = new URLSearchParams({
+    id: patient.id,
+    code: patient.code,
+    fn: patient.firstName,
+    ln: patient.lastName,
+    h: patient.hospital,
+    p: patient.priority,
+  });
+  return `${origin}/q?${params.toString()}`;
+}
+
 export function RegistrationModal({ patient, onClose }: Props) {
   if (!patient) return null;
-  const qrPayload = `filesante:${patient.id}:${patient.code}`;
+  const qrPayload = buildLoginUrl(patient);
   return (
     <Dialog open={!!patient} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="fs-dash-page sm:max-w-[560px]">

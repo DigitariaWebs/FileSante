@@ -524,17 +524,18 @@
 
   /* ─── Dashboard aliases (keep current class names working) ─── */
   .fs-dash-page {
-    /* Warm dashboard surface tokens — scoped override.
-       Brand vars (--fs-primary etc) stay untouched: blue chips/buttons/links keep their color. */
-    --ap-canvas: #fffbf2;
-    --ap-canvas-parchment: #faf5ec;
+    /* Warm card/table surfaces on a white page.
+       Cards & tables inherit beige via --ap-canvas token; page bg stays pure white for max readability.
+       Brand vars (--fs-primary etc) untouched: blue chips/buttons/links keep their color. */
+    --ap-canvas: #fbf6ea;
+    --ap-canvas-parchment: #f5edd9;
     --ap-surface-pearl: #fff9eb;
-    --ap-surface-strong: #f3ead6;
-    --ap-hairline: #ecdec4;
-    --ap-hairline-strong: #e0cca4;
-    --ap-divider-soft: rgba(146, 98, 32, 0.06);
+    --ap-surface-strong: #ede2c4;
+    --ap-hairline: #e5d4ad;
+    --ap-hairline-strong: #d4bf8a;
+    --ap-divider-soft: rgba(146, 98, 32, 0.08);
 
-    background: var(--ap-canvas-parchment);
+    background: #ffffff;
     font-family: var(--ap-font-text);
     color: var(--ap-ink);
   }
