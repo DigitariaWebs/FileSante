@@ -10,7 +10,7 @@ export function PatientLogoutButton() {
 
   function logout() {
     auth.logout();
-    router.replace("/");
+    router.replace("/?logout=1");
   }
 
   return (

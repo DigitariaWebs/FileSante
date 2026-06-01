@@ -2,7 +2,15 @@
   "permissions": {
     "allow": [
       "Bash(bun run *)",
-      "Bash(bunx tsc *)"
+      "Bash(bunx tsc *)",
+      "Bash(bun install *)",
+      "Bash(curl -s -o /dev/null -w \"home status: %{http_code}\\\\n\" http://localhost:3000/)",
+      "Bash(bun --version)",
+      "Bash(bunx playwright *)",
+      "Bash(python -c 'import sys,json *)",
+      "Bash(python -c ' *)",
+      "Bash(python -c \"import sys; print\\(sys.stdin.read\\(\\)\\)\")",
+      "Bash(node verify-mobile.mjs)"
     ]
   }
 }

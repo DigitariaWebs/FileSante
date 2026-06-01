@@ -269,7 +269,7 @@ function NotFound({ code }: { code: string }) {
             : "Scannez votre QR d'inscription ou saisissez votre code retour à 4 chiffres."}
         </p>
       </div>
-      <Link href="/" className="fs-btn fs-btn-ghost">
+      <Link href="/?stay=1" className="fs-btn fs-btn-ghost">
         Retour à l&apos;accueil
       </Link>
     </div>

@@ -11,7 +11,7 @@ export default function PatientLayout({ children }: { children: ReactNode }) {
       <Ticker />
       <header className="fs-sub-nav sticky top-0 z-10">
         <div className="mx-auto flex h-15 max-w-230 items-center justify-between px-4 sm:px-6">
-          <Link href="/" className="flex items-center" aria-label="FileSanté">
+          <Link href="/?stay=1" className="flex items-center" aria-label="FileSanté">
             <Image
               src="/Logo.png"
               alt="FileSanté"

@@ -35,7 +35,11 @@ export function Navbar({ onOpenLogin }: Props) {
   return (
     <nav className="sticky top-0 z-50 border-b border-[rgba(219,231,240,0.7)] bg-white/78 backdrop-blur-md backdrop-saturate-150">
       <div className="mx-auto flex h-16 md:h-18 max-w-360 items-center justify-between px-4 sm:px-6 md:px-10">
-        <Link href="/" className="flex items-center" aria-label="FileSanté">
+        <Link
+          href={user ? "/?stay=1" : "/"}
+          className="flex items-center"
+          aria-label="FileSanté"
+        >
           <Image
             src="/Logo.png"
             alt="FileSanté"
